@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>BaseCap.CloudAbstractions</AssemblyName>
+    <AssemblyTitle>BaseCap Analytics Cloud Abstractions Package</AssemblyTitle>
+    <AssemblyCompany>BaseCap Analytics</AssemblyCompany>
+    <PackageId>BaseCap.CloudAbstractions</PackageId>
+    <Authors>BaseCap Analytics</Authors>
+    <Description>BaseCap Cloud Provider Helper Code</Description>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/basecap-analytics/CloudAbstractions/master/LICENSE</PackageLicenseUrl>
+    <Copyright>Copyright 2018 (c) BaseCap Analytics. All rights reserved.</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BaseCap.Security" Version="2.1.180207.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.6.4" />
+    <PackageReference Include="Microsoft.Azure.EventHubs" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Azure.KeyVault" Version="2.3.2" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="3.19.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="WindowsAzure.Storage" Version="9.1.1" />
+  </ItemGroup>
+
+</Project>
