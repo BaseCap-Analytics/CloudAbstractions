@@ -18,6 +18,13 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task InsertEntityAsync<T>(T entity, string table) where T: TableEntity, new();
 
         /// <summary>
+        /// Inserts a batch of entities into the same table
+        /// </summary>
+        /// <param name="entities">The entities to insert</param>
+        /// <param name-"table">The name of the table to insert into</param>
+        Task BulkInsertEntitiesAsync<T>(IEnumerable<T> entities, string table) where T: TableEntity, new();
+
+        /// <summary>
         /// Finds a specific entity in table storage by a unique ID and returns it
         /// </summary>
         /// <param name="id">The unique identifier of the entity to find</param>

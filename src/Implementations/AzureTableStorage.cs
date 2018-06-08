@@ -170,6 +170,22 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <summary>
+        /// Inserts a batch of entities into the same table
+        /// </summary>
+        public async Task BulkInsertEntitiesAsync<T>(IEnumerable<T> entities, string table) where T : TableEntity, new()
+        {
+            TableBatchOperation batch = new TableBatchOperation();
+            CloudTable tableRef = await GetTableReferenceAsync(table);
+
+            foreach (T item in entities)
+            {
+                batch.Add(TableOperation.Insert(item));
+            }
+
+            await tableRef.ExecuteBatchAsync(batch);
+        }
+
+        /// <summary>
         /// Updates a given entity given the specified version matches the version currently in the table
         /// </summary>
         public async Task UpdateEntityAsync<T>(string id, T newEntity, string table, string etag = "*") where T : TableEntity, new()
