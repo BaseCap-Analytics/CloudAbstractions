@@ -19,8 +19,6 @@ namespace BaseCap.CloudAbstractions.Implementations
         protected string _connectionString;
         protected string _partitionId;
         protected string _consumerGroup;
-        protected string _offset;
-        protected TimeSpan _timeout;
         protected PartitionReceiver _reader;
         protected EventHubRuntimeInformation _eventHubInfo;
         protected ICheckpointer _checkpointer;
@@ -39,14 +37,12 @@ namespace BaseCap.CloudAbstractions.Implementations
             string eventHubEntity,
             string partitionId,
             string consumerGroup,
-            TimeSpan maxWaitTime,
             ICheckpointer checkpointer)
         {
             EventHubsConnectionStringBuilder builder = new EventHubsConnectionStringBuilder(eventHubConnectionString) { EntityPath = eventHubEntity };
             _connectionString = builder.ToString();
             _partitionId = partitionId;
             _consumerGroup = consumerGroup;
-            _timeout = maxWaitTime;
             _checkpointer = checkpointer;
             _logger = new TelemetryClient(TelemetryConfiguration.Active);
             _eventIdCache = new MemoryCache(new MemoryCacheOptions());
@@ -82,16 +78,15 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <summary>
-        /// Reads up to a specified number of events from the stream, or waits a specified amount of time
-        /// for the events before returning
+        /// Reads up to a specified number of events from the stream
         /// </summary>
-        public virtual async Task<IEnumerable<EventMessage>> ReadEventsAsync(int count, TimeSpan timeout)
+        public virtual async Task<IEnumerable<EventMessage>> ReadEventsAsync(int count)
         {
             for (int i = 0; i < MAX_RETRIES; i++)
             {
                 try
                 {
-                    IEnumerable<EventData> events = await _reader.ReceiveAsync(count, timeout);
+                    IEnumerable<EventData> events = await _reader.ReceiveAsync(count);
                     if (events == null)
                     {
                         return Array.Empty<EventMessage>();
