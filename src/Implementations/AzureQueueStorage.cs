@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
 using Newtonsoft.Json;
+using System.Threading;
 
 namespace BaseCap.CloudAbstractions.Implementations
 {
@@ -47,11 +48,11 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <summary>
-        /// Retrieves the next message from the queue within the given timeout period
+        /// Retrieves the next message from the queue
         /// </summary>
-        public virtual async Task<QueueMessage> GetMessageAsync(TimeSpan timeout)
+        public virtual async Task<QueueMessage> GetMessageAsync(TimeSpan visibility, CancellationToken token)
         {
-            CloudQueueMessage msg = await _queue.GetMessageAsync(timeout, _options, null);
+            CloudQueueMessage msg = await _queue.GetMessageAsync(visibility, _options, null, token);
             if (msg == null)
                 return null;
             else
