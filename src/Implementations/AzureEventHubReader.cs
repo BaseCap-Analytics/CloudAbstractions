@@ -97,7 +97,7 @@ namespace BaseCap.CloudAbstractions.Implementations
 
                         foreach (EventData ed in events)
                         {
-                            object messageId = ed.SystemProperties["Offset"];
+                            string messageId = ed.SystemProperties.Offset;
 
                             // Check if we have received this message in the last 60 seconds...if so, ignore
                             // it since it has already been processed
