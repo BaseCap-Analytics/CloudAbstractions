@@ -34,8 +34,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// Reads up to the number of specified events from the event system
         /// </summary>
         /// <param name="count">The maximum number of events to retrieve</param>
-        /// <param name="timeout">The maximum amount of time to wait for events</param>
         /// <returns>Returns an enumeration of events, up to the number specified, on success</returns>
-        Task<IEnumerable<EventMessage>> ReadEventsAsync(int count, TimeSpan timeout);
+        Task<IEnumerable<EventMessage>> ReadEventsAsync(int count);
     }
 }

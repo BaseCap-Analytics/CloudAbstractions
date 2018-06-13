@@ -22,10 +22,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
             string eventHubEntity,
             string partitionId,
             string consumerGroup,
-            TimeSpan maxWaitTime,
             ICheckpointer checkpointer,
             byte[] encryptionKey)
-             : base(eventHubConnectionString, eventHubEntity, partitionId, consumerGroup, maxWaitTime, checkpointer)
+             : base(eventHubConnectionString, eventHubEntity, partitionId, consumerGroup, checkpointer)
         {
             _encryptionKey = encryptionKey;
         }
@@ -34,10 +33,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
         /// Read up to the number of events, or timeout after a time; whichever happens first
         /// </summary>
         /// <param name="count">The maximum number of events to read</param>
-        /// <param name="timeout">The maximum amount of time to wait for events</param>
-        public override async Task<IEnumerable<EventMessage>> ReadEventsAsync(int count, TimeSpan timeout)
+        public override async Task<IEnumerable<EventMessage>> ReadEventsAsync(int count)
         {
-            IEnumerable<EventMessage> msgs = await base.ReadEventsAsync(count, timeout);
+            IEnumerable<EventMessage> msgs = await base.ReadEventsAsync(count);
             List<EventMessage> output = new List<EventMessage>(msgs.Count());
             foreach (EventMessage m in msgs)
             {
