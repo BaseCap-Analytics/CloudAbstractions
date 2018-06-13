@@ -1,11 +1,11 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.EventHubs;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.WindowsAzure.Storage;
 
 namespace BaseCap.CloudAbstractions.Implementations
@@ -25,6 +25,7 @@ namespace BaseCap.CloudAbstractions.Implementations
         protected EventHubRuntimeInformation _eventHubInfo;
         protected ICheckpointer _checkpointer;
         protected TelemetryClient _logger;
+        protected MemoryCache _eventIdCache;
 
         public string PartitionId => _partitionId;
 
@@ -48,6 +49,7 @@ namespace BaseCap.CloudAbstractions.Implementations
             _timeout = maxWaitTime;
             _checkpointer = checkpointer;
             _logger = new TelemetryClient(TelemetryConfiguration.Active);
+            _eventIdCache = new MemoryCache(new MemoryCacheOptions());
         }
 
         /// <summary>
@@ -91,9 +93,28 @@ namespace BaseCap.CloudAbstractions.Implementations
                 {
                     IEnumerable<EventData> events = await _reader.ReceiveAsync(count, timeout);
                     if (events == null)
+                    {
                         return Array.Empty<EventMessage>();
+                    }
                     else
-                        return events.Select(s => new EventMessage(s));
+                    {
+                        List<EventMessage> messages = new List<EventMessage>();
+
+                        foreach (EventData ed in events)
+                        {
+                            object messageId = ed.SystemProperties["Offset"];
+
+                            // Check if we have received this message in the last 60 seconds...if so, ignore
+                            // it since it has already been processed
+                            if (_eventIdCache.TryGetValue(messageId, out _) == false)
+                            {
+                                _eventIdCache.Set(messageId, messageId, TimeSpan.FromMinutes(1));
+                                messages.Add(new EventMessage(ed));
+                            }
+                        }
+
+                        return messages;
+                    }
                 }
                 catch (StorageException sx)
                 {
