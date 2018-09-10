@@ -34,5 +34,19 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="name">The name of the secret to retrieve</param>
         /// <param name="version">The version of the secret value to retrieve</param>
         Task<string> GetSecretAsync(string name, string version);
+
+        /// <summary>
+        /// Writes a secret value to the storage medium
+        /// </summary>
+        /// <param name="name">The name of the secret</param>
+        /// <param name="value">The secret value to store</param>
+        Task SetSecretAsync(string name, string value);
+
+        /// <summary>
+        /// Writes a secret value to the storage medium
+        /// </summary>
+        /// <param name="name">The name of the secret</param>
+        /// <param name="value">The secret value to store</param>
+        void SetSecret(string name, string value);
     }
 }

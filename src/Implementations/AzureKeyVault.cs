@@ -1,9 +1,9 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using System;
-using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.KeyVault.Models;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using System;
+using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations
 {
@@ -78,6 +78,22 @@ namespace BaseCap.CloudAbstractions.Implementations
         {
             SecretBundle s = await _vaultClient.GetSecretAsync(_vaultUrl, name, version);
             return s.Value;
+        }
+
+        /// <summary>
+        /// Writes a secret value to the storage medium
+        /// </summary>
+        public Task SetSecretAsync(string name, string value)
+        {
+            return _vaultClient.SetSecretAsync(_vaultUrl, name, value);
+        }
+
+        /// <summary>
+        /// Writes a secret value to the storage medium
+        /// </summary>
+        public void SetSecret(string name, string value)
+        {
+            SetSecretAsync(name, value).ConfigureAwait(false).GetAwaiter().GetResult();
         }
     }
 }
