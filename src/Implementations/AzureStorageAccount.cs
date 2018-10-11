@@ -80,13 +80,5 @@ namespace BaseCap.CloudAbstractions.Implementations
 
             return _tableStorage;
         }
-
-        /// <summary>
-        /// Overwrites the generic Table Storage instance with a specialized version
-        /// </summary>
-        public void SetTableStorageInstance(ITableStorage storage)
-        {
-            _tableStorage = storage;
-        }
     }
 }
