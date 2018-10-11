@@ -1,11 +1,12 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using System;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
+using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Newtonsoft.Json;
+using System;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations
 {
@@ -14,6 +15,8 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// </summary>
     public class AzureQueueStorage : IQueue
     {
+        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(20);
+        private static readonly IRetryPolicy RETRY_POLICY = new ExponentialRetry();
         protected CloudQueue _queue;
         protected QueueRequestOptions _options;
 
@@ -26,8 +29,21 @@ namespace BaseCap.CloudAbstractions.Implementations
             _queue = account.CreateCloudQueueClient().GetQueueReference(queueName);
             _options = new QueueRequestOptions()
             {
-                RetryPolicy = new Microsoft.WindowsAzure.Storage.RetryPolicies.ExponentialRetry(),
-                ServerTimeout = TimeSpan.FromSeconds(20),
+                RetryPolicy = RETRY_POLICY,
+                ServerTimeout = TIMEOUT,
+            };
+        }
+
+        /// <summary>
+        /// Creates a new connection to an Azure Queue Storage container
+        /// </summary>
+        internal AzureQueueStorage(CloudStorageAccount account, string queueName)
+        {
+            _queue = account.CreateCloudQueueClient().GetQueueReference(queueName);
+            _options = new QueueRequestOptions()
+            {
+                RetryPolicy = RETRY_POLICY,
+                ServerTimeout = TIMEOUT,
             };
         }
 

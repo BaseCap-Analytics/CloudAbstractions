@@ -25,6 +25,14 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <summary>
+        /// Creates a connection to Azure Blob Storage
+        /// </summary>
+        internal AzureBlobStorage(CloudStorageAccount account, string container)
+        {
+            _blobStorage = account.CreateCloudBlobClient().GetContainerReference(container);
+        }
+
+        /// <summary>
         /// Initializes the connection with Azure
         /// </summary>
         public virtual async Task SetupAsync()

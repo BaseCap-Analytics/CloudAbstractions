@@ -11,7 +11,7 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// <summary>
     /// Provides a connection for manipulating Azure Storage Tables
     /// </summary>
-    public abstract class AzureTableStorage : ITableStorage
+    public class AzureTableStorage : ITableStorage
     {
         private CloudTableClient _tables;
 
@@ -21,6 +21,14 @@ namespace BaseCap.CloudAbstractions.Implementations
         public AzureTableStorage(string storageConnectionString)
         {
             CloudStorageAccount account = CloudStorageAccount.Parse(storageConnectionString);
+            _tables = account.CreateCloudTableClient();
+        }
+
+        /// <summary>
+        /// Creates a new connection to Azure Table Storage
+        /// </summary>
+        internal AzureTableStorage(CloudStorageAccount account)
+        {
             _tables = account.CreateCloudTableClient();
         }
 

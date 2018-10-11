@@ -1,4 +1,5 @@
 using BaseCap.Security;
+using Microsoft.WindowsAzure.Storage;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -16,6 +17,14 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
         /// Creates a new connection to a Azure Blob Storage container with a given encryption key
         /// </summary>
         public AzureEncryptedBlobStorage(string storageConnectionString, string container, byte[] encryptionKey) : base(storageConnectionString, container)
+        {
+            _encryptionKey = encryptionKey;
+        }
+
+        /// <summary>
+        /// Creates a new connection to a Azure Blob Storage container with a given encryption key
+        /// </summary>
+        internal AzureEncryptedBlobStorage(CloudStorageAccount account, string container, byte[] encryptionKey) : base(account, container)
         {
             _encryptionKey = encryptionKey;
         }
