@@ -1,11 +1,12 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Queue;
+using Newtonsoft.Json;
 using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.WindowsAzure.Storage.Queue;
-using Newtonsoft.Json;
 
 namespace BaseCap.CloudAbstractions.Implementations.Secure
 {
@@ -20,6 +21,14 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
         /// Creates a new connection to a Azure Queue Storage container with a given encryption key
         /// </summary>
         public AzureEncryptedQueueStorage(string storageConnectionString, string queueName, byte[] encryptionKey) : base(storageConnectionString, queueName)
+        {
+            _encryptionKey = encryptionKey;
+        }
+
+        /// <summary>
+        /// Creates a new connection to a Azure Queue Storage container with a given encryption key
+        /// </summary>
+        internal AzureEncryptedQueueStorage(CloudStorageAccount account, string container, byte[] encryptionKey) : base(account, container)
         {
             _encryptionKey = encryptionKey;
         }
