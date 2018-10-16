@@ -13,7 +13,9 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// </summary>
     public class AzureTableStorage : ITableStorage
     {
+        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(30);
         private CloudTableClient _tables;
+        private TableRequestOptions _options;
 
         /// <summary>
         /// Creates a new connection to Azure Table Storage
@@ -22,6 +24,12 @@ namespace BaseCap.CloudAbstractions.Implementations
         {
             CloudStorageAccount account = CloudStorageAccount.Parse(storageConnectionString);
             _tables = account.CreateCloudTableClient();
+            _options = new TableRequestOptions()
+            {
+                MaximumExecutionTime = TIMEOUT,
+                RetryPolicy = new Microsoft.WindowsAzure.Storage.RetryPolicies.ExponentialRetry(),
+                ServerTimeout = TIMEOUT,
+            };
         }
 
         /// <summary>
@@ -30,21 +38,19 @@ namespace BaseCap.CloudAbstractions.Implementations
         internal AzureTableStorage(CloudStorageAccount account)
         {
             _tables = account.CreateCloudTableClient();
+            _options = new TableRequestOptions()
+            {
+                MaximumExecutionTime = TIMEOUT,
+                RetryPolicy = new Microsoft.WindowsAzure.Storage.RetryPolicies.ExponentialRetry(),
+                ServerTimeout = TIMEOUT,
+            };
         }
 
         private async Task<CloudTable> GetTableReferenceAsync(string tableName)
         {
             CloudTable table = _tables.GetTableReference(tableName);
-            await table.CreateIfNotExistsAsync(GetRequestOptions(), null);
+            await table.CreateIfNotExistsAsync(_options, null);
             return table;
-        }
-
-        private TableRequestOptions GetRequestOptions()
-        {
-            return new TableRequestOptions()
-            {
-                RetryPolicy = new ExponentialRetry()
-            };
         }
 
         /// <sumamry>
@@ -54,7 +60,7 @@ namespace BaseCap.CloudAbstractions.Implementations
         {
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableOperation delete = TableOperation.Delete(entity);
-            await tableRef.ExecuteAsync(delete, GetRequestOptions(), null);
+            await tableRef.ExecuteAsync(delete, _options, null);
         }
 
         /// <sumamry>
@@ -74,7 +80,7 @@ namespace BaseCap.CloudAbstractions.Implementations
         {
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableQuery<T> query = new TableQuery<T>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, id));
-            TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, null, GetRequestOptions(), null);
+            TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, null, _options, null);
             if (segment.Results.Count == 0)
                 return null;
             else if (segment.Results.Count == 1)
@@ -95,7 +101,7 @@ namespace BaseCap.CloudAbstractions.Implementations
 
             do
             {
-                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, GetRequestOptions(), null);
+                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, _options, null);
                 token = segment.ContinuationToken;
                 entities.AddRange(segment.Results);
             }
@@ -116,7 +122,7 @@ namespace BaseCap.CloudAbstractions.Implementations
 
             do
             {
-                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, GetRequestOptions(), null);
+                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, _options, null);
                 token = segment.ContinuationToken;
                 entities.AddRange(segment.Results);
             }
@@ -137,7 +143,7 @@ namespace BaseCap.CloudAbstractions.Implementations
 
             do
             {
-                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, GetRequestOptions(), null);
+                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, _options, null);
                 token = segment.ContinuationToken;
                 entities.AddRange(segment.Results);
             }
@@ -158,7 +164,7 @@ namespace BaseCap.CloudAbstractions.Implementations
 
             do
             {
-                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, GetRequestOptions(), null);
+                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, _options, null);
                 token = segment.ContinuationToken;
                 entities.AddRange(segment.Results);
             }
@@ -174,7 +180,7 @@ namespace BaseCap.CloudAbstractions.Implementations
         {
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableOperation insert = TableOperation.Insert(entity);
-            await tableRef.ExecuteAsync(insert);
+            await tableRef.ExecuteAsync(insert, _options, null);
         }
 
         /// <summary>
@@ -190,7 +196,7 @@ namespace BaseCap.CloudAbstractions.Implementations
                 batch.Add(TableOperation.Insert(item));
             }
 
-            await tableRef.ExecuteBatchAsync(batch);
+            await tableRef.ExecuteBatchAsync(batch, _options, null);
         }
 
         /// <summary>
@@ -205,7 +211,7 @@ namespace BaseCap.CloudAbstractions.Implementations
             newEntity.ETag = etag;
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableOperation update = TableOperation.Replace(newEntity);
-            await tableRef.ExecuteAsync(update);
+            await tableRef.ExecuteAsync(update, _options, null);
         }
 
         /// <summary>
@@ -218,7 +224,7 @@ namespace BaseCap.CloudAbstractions.Implementations
 
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableOperation update = TableOperation.Replace(newEntity);
-            await tableRef.ExecuteAsync(update);
+            await tableRef.ExecuteAsync(update, _options, null);
         }
     }
 }
