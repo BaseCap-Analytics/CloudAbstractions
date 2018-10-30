@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace BaseCap.CloudAbstractions.Implementations
@@ -13,7 +12,9 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// </summary>
     public class AzureTableStorage : ITableStorage
     {
-        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(30);
+        private static readonly TimeSpan SERVER_TIMEOUT = TimeSpan.FromSeconds(30);
+        private static readonly TimeSpan RETRY_DELTA = TimeSpan.FromSeconds(1);
+        private const int MAX_ATTEMPTS = 5;
         private CloudTableClient _tables;
         private TableRequestOptions _options;
 
@@ -26,9 +27,9 @@ namespace BaseCap.CloudAbstractions.Implementations
             _tables = account.CreateCloudTableClient();
             _options = new TableRequestOptions()
             {
-                MaximumExecutionTime = TIMEOUT,
-                RetryPolicy = new Microsoft.WindowsAzure.Storage.RetryPolicies.ExponentialRetry(),
-                ServerTimeout = TIMEOUT,
+                MaximumExecutionTime = SERVER_TIMEOUT,
+                RetryPolicy = new Microsoft.WindowsAzure.Storage.RetryPolicies.LinearRetry(RETRY_DELTA, MAX_ATTEMPTS),
+                ServerTimeout = SERVER_TIMEOUT,
             };
         }
 
@@ -40,9 +41,9 @@ namespace BaseCap.CloudAbstractions.Implementations
             _tables = account.CreateCloudTableClient();
             _options = new TableRequestOptions()
             {
-                MaximumExecutionTime = TIMEOUT,
-                RetryPolicy = new Microsoft.WindowsAzure.Storage.RetryPolicies.ExponentialRetry(),
-                ServerTimeout = TIMEOUT,
+                MaximumExecutionTime = SERVER_TIMEOUT,
+                RetryPolicy = new Microsoft.WindowsAzure.Storage.RetryPolicies.LinearRetry(RETRY_DELTA, MAX_ATTEMPTS),
+                ServerTimeout = SERVER_TIMEOUT,
             };
         }
 
