@@ -14,6 +14,11 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task SetupAsync();
 
         /// <summary>
+        /// Closes the connection to the stream
+        /// </summary>
+        Task CloseAsync();
+
+        /// <summary>
         /// Sends a single event to the eventing system on the specified partition
         /// </summary>
         /// <param name="msg">The message to send to the system</param>

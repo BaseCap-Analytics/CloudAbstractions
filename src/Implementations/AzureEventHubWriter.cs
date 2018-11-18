@@ -1,9 +1,9 @@
 using BaseCap.CloudAbstractions.Abstractions;
+using Microsoft.Azure.EventHubs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.EventHubs;
 
 namespace BaseCap.CloudAbstractions.Implementations
 {
@@ -37,16 +37,19 @@ namespace BaseCap.CloudAbstractions.Implementations
         public Task SetupAsync()
         {
             _client = EventHubClient.CreateFromConnectionString(_connectionString);
-            _client.RetryPolicy = GetRetryPolicy();
-            return Task.CompletedTask;
-        }
-
-        protected RetryPolicy GetRetryPolicy()
-        {
-            return new RetryExponential(
+            _client.RetryPolicy = new RetryExponential(
                 TimeSpan.FromSeconds(MIN_TIMEOUT_IN_SECONDS),
                 TimeSpan.FromSeconds(MAX_TIMEOUT_IN_SECONDS),
                 MAX_RETRIES);
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Closes the connection to the stream
+        /// </summary>
+        public Task CloseAsync()
+        {
+            return _client.CloseAsync();
         }
 
         /// <summary>
