@@ -1,9 +1,8 @@
-using System;
+using BaseCap.CloudAbstractions.Abstractions;
+using BaseCap.Security;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BaseCap.CloudAbstractions.Abstractions;
-using BaseCap.Security;
 
 namespace BaseCap.CloudAbstractions.Implementations.Secure
 {

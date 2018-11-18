@@ -1,12 +1,12 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.EventHubs;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.WindowsAzure.Storage;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations
 {
@@ -75,6 +75,14 @@ namespace BaseCap.CloudAbstractions.Implementations
                 position = EventPosition.FromOffset(offset, false);
             }
             _reader = client.CreateReceiver(_consumerGroup, _partitionId, position);
+        }
+
+        /// <summary>
+        /// Closes the connection to the event stream
+        /// </summary>
+        public Task CloseAsync()
+        {
+            return _reader.CloseAsync();
         }
 
         /// <summary>

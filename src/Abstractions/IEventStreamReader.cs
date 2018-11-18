@@ -31,6 +31,11 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task SetupAsync(string offset);
 
         /// <summary>
+        /// Closes the connection to the event stream
+        /// </summary>
+        Task CloseAsync();
+
+        /// <summary>
         /// Reads up to the number of specified events from the event system
         /// </summary>
         /// <param name="count">The maximum number of events to retrieve</param>
