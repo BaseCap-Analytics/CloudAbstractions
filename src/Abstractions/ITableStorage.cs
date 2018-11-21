@@ -38,7 +38,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<IEnumerable<T>> FindEntitiesByColumnAsync<T>(string columnName, string value, string table) where T : TableEntity, new();
 
         /// <summary>
-        /// Retrieves all entities in the specified table with the specified guid filter
+        /// Retrieves all entities in the specified table with the specified Guid filter
         /// </summary>
         Task<IEnumerable<T>> FindEntitiesByColumnAsync<T>(string columnName, Guid value, string table) where T : TableEntity, new();
 
