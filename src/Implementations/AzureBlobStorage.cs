@@ -1,10 +1,12 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using System;
-using System.IO;
-using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations
 {
@@ -119,6 +121,47 @@ namespace BaseCap.CloudAbstractions.Implementations
         {
             CloudBlockBlob blob = _blobStorage.GetBlockBlobReference(path);
             return blob.DeleteIfExistsAsync();
+        }
+
+        /// <summary>
+        /// Retrieves metadata about every blob in the storage medium
+        /// </summary>
+        public async Task<IEnumerable<BlobItem>> GetAllBlobMetadatasAsync()
+        {
+            List<BlobItem> blobs = new List<BlobItem>();
+            BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
+                null,
+                true,
+                BlobListingDetails.All,
+                null,
+                null,
+                null,
+                null);
+
+            do
+            {
+                foreach (IListBlobItem blob in segment.Results)
+                {
+                    if (blob is CloudBlobDirectory)
+                    {
+                        Console.WriteLine($"{((CloudBlobDirectory)blob).Uri}");
+                        continue;
+                    }
+
+                    CloudBlockBlob cbb = (CloudBlockBlob)blob;
+
+                    // Don't add deleted blobs since they're there as artifacts
+                    if (cbb.IsDeleted == false)
+                    {
+                        blobs.Add(new BlobItem(cbb));
+                    }
+                }
+
+                segment = await _blobStorage.ListBlobsSegmentedAsync(segment.ContinuationToken);
+            }
+            while ((segment.ContinuationToken != null) && (segment.Results.Any()));
+
+            return blobs;
         }
     }
 }

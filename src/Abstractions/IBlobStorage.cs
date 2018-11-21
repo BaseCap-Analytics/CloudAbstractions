@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -51,5 +52,10 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <param name="path">The blob to delete</param>
         Task DeleteBlobAsync(string path);
+
+        /// <summary>
+        /// Retrieves metadata about every blob in the storage medium
+        /// </summary>
+        Task<IEnumerable<BlobItem>> GetAllBlobMetadatasAsync();
     }
 }
