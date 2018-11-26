@@ -67,12 +67,6 @@ namespace BaseCap.CloudAbstractions.Implementations
             Microsoft.Azure.Batch.CloudJob job = _batch.JobOperations.CreateJob(jobInput.Id, new PoolInformation() { PoolId = _poolId });
             job.DisplayName = jobInput.Name;
             job.OnTaskFailure = OnTaskFailure.PerformExitOptionsJobAction;
-            job.CommonEnvironmentSettings = new List<EnvironmentSetting>()
-            {
-                new EnvironmentSetting("AppId", _appId),
-                new EnvironmentSetting("AppSecret", _appSecret),
-                new EnvironmentSetting("VaultUrl", _vaultUrl),
-            };
             await job.CommitAsync();
 
             CloudTask cloudTask = new CloudTask(taskInput.Id, taskInput.CommandLine)
@@ -84,7 +78,13 @@ namespace BaseCap.CloudAbstractions.Implementations
                     {
                         new ExitCodeMapping(0, new ExitOptions() { JobAction = JobAction.Terminate }),
                     }
-                }
+                },
+                EnvironmentSettings = new List<EnvironmentSetting>()
+                {
+                    new EnvironmentSetting("AppId", _appId),
+                    new EnvironmentSetting("AppSecret", _appSecret),
+                    new EnvironmentSetting("VaultUrl", _vaultUrl),
+                },
             };
             await _batch.JobOperations.AddTaskAsync(job.Id, cloudTask);
 
