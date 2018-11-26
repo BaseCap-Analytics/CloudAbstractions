@@ -6,6 +6,6 @@ namespace BaseCap.CloudAbstractions.Abstractions
     public interface IJobScheduler : IDisposable
     {
         Task SetupAsync();
-        Task CreateJobAsync(Abstractions.CloudJob jobInput, CloudJobTask taskInput);
+        Task CreateJobAsync(Abstractions.CloudJob jobInput, CloudJobTask taskInput, string poolId);
     }
 }
