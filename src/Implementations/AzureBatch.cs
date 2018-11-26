@@ -17,17 +17,17 @@ namespace BaseCap.CloudAbstractions.Implementations
         private string _appSecret;
         private string _authorityUrl;
         private string _poolId;
-        private string _taskAppId;
+        private string _vaultUrl;
         private BatchClient _batch;
 
-        public AzureBatch(string accountUrl, string appId, string appSecret, string tenantId, string poolId, string taskAppId)
+        public AzureBatch(string accountUrl, string appId, string appSecret, string tenantId, string poolId, string keyVaultUrl)
         {
             _accountUrl = accountUrl;
             _appId = appId;
             _appSecret = appSecret;
             _authorityUrl = $"https://login.microsoftonline.com/{tenantId}";
             _poolId = poolId;
-            _taskAppId = taskAppId;
+            _vaultUrl = keyVaultUrl;
             _batch = null;
         }
 
@@ -67,6 +67,12 @@ namespace BaseCap.CloudAbstractions.Implementations
             Microsoft.Azure.Batch.CloudJob job = _batch.JobOperations.CreateJob(jobInput.Id, new PoolInformation() { PoolId = _poolId });
             job.DisplayName = jobInput.Name;
             job.OnTaskFailure = OnTaskFailure.PerformExitOptionsJobAction;
+            job.CommonEnvironmentSettings = new List<EnvironmentSetting>()
+            {
+                new EnvironmentSetting("AppId", _appId),
+                new EnvironmentSetting("AppSecret", _appSecret),
+                new EnvironmentSetting("VaultUrl", _vaultUrl),
+            };
             await job.CommitAsync();
 
             CloudTask cloudTask = new CloudTask(taskInput.Id, taskInput.CommandLine)
