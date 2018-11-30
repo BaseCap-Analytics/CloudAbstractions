@@ -2,7 +2,6 @@ using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.Azure.Batch;
 using Microsoft.Azure.Batch.Auth;
 using Microsoft.Azure.Batch.Common;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -11,20 +10,27 @@ namespace BaseCap.CloudAbstractions.Implementations
 {
     public class AzureBatch : IJobScheduler
     {
-        private const string BatchResourceUri = "https://batch.core.windows.net/";
-        private string _accountUrl;
         private string _appId;
         private string _appSecret;
-        private string _authorityUrl;
+        private string _batchAccountUrl;
+        private string _batchAccountName;
+        private string _batchAccountKey;
         private string _vaultUrl;
         private BatchClient _batch;
 
-        public AzureBatch(string accountUrl, string appId, string appSecret, string tenantId, string keyVaultUrl)
+        public AzureBatch(
+            string accountUrl,
+            string accountName,
+            string accountKey,
+            string appId,
+            string appSecret,
+            string keyVaultUrl)
         {
-            _accountUrl = accountUrl;
+            _batchAccountUrl = accountUrl;
+            _batchAccountName = accountName;
+            _batchAccountKey = accountKey;
             _appId = appId;
             _appSecret = appSecret;
-            _authorityUrl = $"https://login.microsoftonline.com/{tenantId}";
             _vaultUrl = keyVaultUrl;
             _batch = null;
         }
@@ -46,17 +52,9 @@ namespace BaseCap.CloudAbstractions.Implementations
             GC.SuppressFinalize(this);
         }
 
-        private async Task<string> GetAuthenticationTokenAsync()
-        {
-            AuthenticationContext authContext = new AuthenticationContext(_authorityUrl);
-            AuthenticationResult authResult = await authContext.AcquireTokenAsync(BatchResourceUri, new ClientCredential(_appId, _appSecret));
-
-            return authResult.AccessToken;
-        }
-
         public Task SetupAsync()
         {
-            _batch = BatchClient.Open(new BatchTokenCredentials(_accountUrl, () => GetAuthenticationTokenAsync()));
+            _batch = BatchClient.Open(new BatchSharedKeyCredentials(_batchAccountUrl, _batchAccountName, _batchAccountKey));
             return Task.CompletedTask;
         }
 
