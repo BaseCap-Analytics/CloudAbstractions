@@ -19,6 +19,7 @@
     <PackageReference Include="Microsoft.Azure.Batch" Version="9.0.1" />
     <PackageReference Include="Microsoft.Azure.EventHubs" Version="2.2.1" />
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.0" />
+    <PackageReference Include="Microsoft.Azure.Management.Batch" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.1.2" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="3.19.8" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
