@@ -157,12 +157,29 @@ namespace BaseCap.CloudAbstractions.Implementations
             // Apply the application to the pools
             foreach (string poolName in poolNames)
             {
-                Pool pool = await _management.Pool.GetAsync(_resourceGroup, _batchAccountName, poolName);
-                Pool poolToChange = new Pool(id: pool.Id, applicationPackages: pool.ApplicationPackages);
+                Pool currentPool = await _management.Pool.GetAsync(_resourceGroup, _batchAccountName, poolName);
+                Pool poolToChange = new Pool(id: currentPool.Id, applicationPackages: currentPool.ApplicationPackages);
                 string addAppId = $"/subscriptions/{_subscriptionId}/resourceGroups/{_resourceGroup}/providers/Microsoft.Batch/batchAccounts/{_batchAccountName}/applications/{application.Id}";
-                pool.ApplicationPackages.Add(new Microsoft.Azure.Management.Batch.Models.ApplicationPackageReference(application.Id, application.Version));
-                await _management.Pool.UpdateAsync(_resourceGroup, _batchAccountName, poolName, pool);
+                currentPool.ApplicationPackages.Add(new Microsoft.Azure.Management.Batch.Models.ApplicationPackageReference(application.Id, application.Version));
+                await _management.Pool.UpdateAsync(_resourceGroup, _batchAccountName, poolName, currentPool);
             }
+        }
+
+        public async Task ChangePoolSizeAsync(string poolName, int newSize)
+        {
+            Pool currentPool = await _management.Pool.GetAsync(_resourceGroup, _batchAccountName, poolName);
+            Pool poolUpdate = new Pool(id: currentPool.Id)
+            {
+                ScaleSettings = new ScaleSettings()
+                {
+                    FixedScale = new FixedScaleSettings()
+                    {
+                        NodeDeallocationOption = Microsoft.Azure.Management.Batch.Models.ComputeNodeDeallocationOption.TaskCompletion,
+                        TargetDedicatedNodes = newSize,
+                    }
+                }
+            };
+            await _management.Pool.UpdateAsync(_resourceGroup, _batchAccountName, poolName, poolUpdate);
         }
     }
 }
