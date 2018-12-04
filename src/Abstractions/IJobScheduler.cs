@@ -9,6 +9,9 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task SetupAsync();
         Task CreateJobAsync(Abstractions.CloudJob jobInput, CloudJobTask taskInput, string poolId);
         Task CreateOrUpdateCloudJobApplicationAsync(IBlobStorage sourceBlobStorage, CloudJobApplication application, IEnumerable<string> poolNames);
+        Task<bool> DoesApplicationPackageExistAsync(string appId, string version);
         Task ChangePoolSizeAsync(string poolName, int newSize);
+        Task CreatedScheduledJobAsync(CloudScheduledJob scheduledJob, Abstractions.CloudJob jobToRun, CloudJobTask taskToRun, string poolId);
+        Task<bool> DoesScheduledJobExistAsync(string scheduleId);
     }
 }
