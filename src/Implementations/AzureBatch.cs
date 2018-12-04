@@ -165,6 +165,19 @@ namespace BaseCap.CloudAbstractions.Implementations
             }
         }
 
+        public async Task<bool> DoesApplicationPackageExistAsync(string appId, string version)
+        {
+            try
+            {
+                ApplicationPackage pack = await _management.ApplicationPackage.GetAsync(_resourceGroup, _batchAccountName, appId, version);
+                return pack?.Id == appId;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public async Task ChangePoolSizeAsync(string poolName, int newSize)
         {
             Pool currentPool = await _management.Pool.GetAsync(_resourceGroup, _batchAccountName, poolName);
@@ -180,6 +193,51 @@ namespace BaseCap.CloudAbstractions.Implementations
                 }
             };
             await _management.Pool.UpdateAsync(_resourceGroup, _batchAccountName, poolName, poolUpdate);
+        }
+
+        public async Task CreatedScheduledJobAsync(CloudScheduledJob scheduledJob, Abstractions.CloudJob jobToRun, CloudJobTask taskToRun, string poolId)
+        {
+            CloudJobSchedule schedule = _batch.JobScheduleOperations.CreateJobSchedule(
+                scheduledJob.Id,
+                new Schedule()
+                {
+                    RecurrenceInterval = scheduledJob.Recurrence,
+                },
+                new JobSpecification()
+                {
+                    DisplayName = scheduledJob.Name,
+                    OnAllTasksComplete = OnAllTasksComplete.TerminateJob,
+                    OnTaskFailure = OnTaskFailure.PerformExitOptionsJobAction,
+                    PoolInformation = new PoolInformation()
+                    {
+                        PoolId = poolId,
+                    },
+                    JobManagerTask = new JobManagerTask(taskToRun.Id, taskToRun.CommandLine)
+                    {
+                        KillJobOnCompletion = true,
+                        EnvironmentSettings = new List<Microsoft.Azure.Batch.EnvironmentSetting>()
+                        {
+                            new Microsoft.Azure.Batch.EnvironmentSetting("AppId", _appId),
+                            new Microsoft.Azure.Batch.EnvironmentSetting("AppSecret", _appSecret),
+                            new Microsoft.Azure.Batch.EnvironmentSetting("VaultUrl", _vaultUrl),
+                        },
+                    }
+                });
+            await schedule.CommitAsync();
+            await _batch.JobScheduleOperations.EnableJobScheduleAsync(schedule.Id);
+        }
+
+        public async Task<bool> DoesScheduledJobExistAsync(string scheduleId)
+        {
+            try
+            {
+                CloudJobSchedule schedule = await _batch.JobScheduleOperations.GetJobScheduleAsync(scheduleId);
+                return schedule?.Id == scheduleId;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
