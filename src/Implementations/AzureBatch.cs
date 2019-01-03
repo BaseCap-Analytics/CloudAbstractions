@@ -77,7 +77,7 @@ namespace BaseCap.CloudAbstractions.Implementations
             _management = new BatchManagementClient(new TokenCredentials(token, "Bearer")) { SubscriptionId = _subscriptionId };
         }
 
-        public async Task SetPoolStartTaskAndRebootAsync(string poolId, string commandLine)
+        public async Task SetPoolStartTaskAsync(string poolId, string commandLine)
         {
             Pool currentPool = await _management.Pool.GetAsync(_resourceGroup, _batchAccountName, poolId);
             Pool poolUpdate = new Pool(id: currentPool.Id)
