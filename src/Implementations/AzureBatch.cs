@@ -77,6 +77,29 @@ namespace BaseCap.CloudAbstractions.Implementations
             _management = new BatchManagementClient(new TokenCredentials(token, "Bearer")) { SubscriptionId = _subscriptionId };
         }
 
+        public async Task SetPoolStartTaskAndRebootAsync(string poolId, string commandLine)
+        {
+            Pool currentPool = await _management.Pool.GetAsync(_resourceGroup, _batchAccountName, poolId);
+            Pool poolUpdate = new Pool(id: currentPool.Id)
+            {
+                StartTask = new Microsoft.Azure.Management.Batch.Models.StartTask()
+                {
+                    CommandLine = commandLine,
+                    MaxTaskRetryCount = 0,
+                    WaitForSuccess = true,
+                    UserIdentity = new Microsoft.Azure.Management.Batch.Models.UserIdentity()
+                    {
+                        AutoUser = new Microsoft.Azure.Management.Batch.Models.AutoUserSpecification()
+                        {
+                            ElevationLevel = Microsoft.Azure.Management.Batch.Models.ElevationLevel.Admin,
+                            Scope = Microsoft.Azure.Management.Batch.Models.AutoUserScope.Task,
+                        }
+                    }
+                }
+            };
+            await _management.Pool.UpdateAsync(_resourceGroup, _batchAccountName, poolId, poolUpdate);
+        }
+
         private async Task<string> GetActiveDirectoryTokenAsync()
         {
             AuthenticationResult result = null;
