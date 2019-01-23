@@ -1,6 +1,5 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using System;
@@ -32,9 +31,7 @@ namespace BaseCap.CloudAbstractions.Implementations
         /// </summary>
         public AzureBlobStorage(string containerSasUrl)
         {
-            string containerName = new Uri(containerSasUrl).Segments[1];
-            CloudStorageAccount account = new CloudStorageAccount(new StorageCredentials(containerSasUrl), true);
-            _blobStorage = account.CreateCloudBlobClient().GetContainerReference(containerName);
+            _blobStorage = new CloudBlobContainer(new Uri(containerSasUrl));
         }
 
         /// <summary>
