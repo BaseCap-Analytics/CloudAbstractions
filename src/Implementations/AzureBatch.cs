@@ -181,10 +181,15 @@ namespace BaseCap.CloudAbstractions.Implementations
             foreach (string poolName in poolNames)
             {
                 Pool currentPool = await _management.Pool.GetAsync(_resourceGroup, _batchAccountName, poolName);
-                Pool poolToChange = new Pool(id: currentPool.Id, applicationPackages: currentPool.ApplicationPackages);
+                Pool poolToChange = new Pool(id: currentPool.Id, applicationPackages: currentPool.ApplicationPackages, etag: currentPool.Etag);
                 string addAppId = $"/subscriptions/{_subscriptionId}/resourceGroups/{_resourceGroup}/providers/Microsoft.Batch/batchAccounts/{_batchAccountName}/applications/{application.Id}";
-                currentPool.ApplicationPackages.Add(new Microsoft.Azure.Management.Batch.Models.ApplicationPackageReference(application.Id, application.Version));
-                await _management.Pool.UpdateAsync(_resourceGroup, _batchAccountName, poolName, currentPool);
+                if (currentPool.ApplicationPackages == null)
+                {
+                    poolToChange.ApplicationPackages = new List<Microsoft.Azure.Management.Batch.Models.ApplicationPackageReference>();
+                }
+
+                poolToChange.ApplicationPackages.Add(new Microsoft.Azure.Management.Batch.Models.ApplicationPackageReference(addAppId, application.Version));
+                await _management.Pool.UpdateAsync(_resourceGroup, _batchAccountName, poolName, poolToChange, "*");
             }
         }
 
