@@ -56,6 +56,11 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Retrieves metadata about every blob in the storage medium
         /// </summary>
-        Task<IEnumerable<BlobItem>> GetAllBlobMetadatasAsync();
+        Task<IEnumerable<BlobItem>> GetAllBlobMetadatasAsync(string path);
+
+        /// <summary>
+        /// Retrieves metadata about every directory in the storage medium under the given path
+        /// </summary>
+        Task<IEnumerable<BlobItem>> GetAllDirectoriesInPathAsync(string path);
     }
 }
