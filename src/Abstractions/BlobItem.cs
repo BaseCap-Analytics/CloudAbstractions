@@ -21,6 +21,11 @@ namespace BaseCap.CloudAbstractions.Abstractions
         public string RelativePath { get; set; }
 
         /// <summary>
+        /// The fully qualified path to this blob
+        /// </summary>
+        public Uri FullPath { get; set; }
+
+        /// <summary>
         /// The name of the Container that this Blob is contained in
         /// </summary>
         public string ContainerName { get; set; }
@@ -39,6 +44,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         {
             Name = Path.GetFileName(blobItem.Name);
             RelativePath = blobItem.Name;
+            FullPath = blobItem.Uri;
             ContainerName = blobItem.Container.Name;
             Created = blobItem.Properties.Created.HasValue ?
                             blobItem.Properties.Created.Value :
@@ -52,6 +58,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         {
             Name = Path.GetDirectoryName(directory.Prefix);
             RelativePath = directory.Prefix;
+            FullPath = directory.Uri;
             ContainerName = directory.Container.Name;
             Created = DateTimeOffset.MinValue;
             LastModified = DateTimeOffset.MinValue;
