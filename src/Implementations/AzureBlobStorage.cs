@@ -132,15 +132,53 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <summary>
-        /// Retrieves metadata about every blob in the storage medium
+        /// Retrieves metadata about every blob in the storage medium under the given path
         /// </summary>
-        public async Task<IEnumerable<BlobItem>> GetAllBlobMetadatasAsync()
+        public async Task<IEnumerable<BlobItem>> GetAllBlobMetadatasAsync(string path)
         {
             List<BlobItem> blobs = new List<BlobItem>();
             BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
+                path,
+                false,
+                BlobListingDetails.Metadata,
                 null,
-                true,
-                BlobListingDetails.All,
+                null,
+                null,
+                null);
+
+            do
+            {
+                foreach (IListBlobItem blob in segment.Results)
+                {
+                    if (blob is CloudBlockBlob)
+                    {
+                        CloudBlockBlob cbb = (CloudBlockBlob)blob;
+
+                        // Don't add deleted blobs since they're there as artifacts
+                        if (cbb.IsDeleted == false)
+                        {
+                            blobs.Add(new BlobItem(cbb));
+                        }
+                    }
+                }
+
+                segment = await _blobStorage.ListBlobsSegmentedAsync(segment.ContinuationToken);
+            }
+            while ((segment.ContinuationToken != null) && (segment.Results.Any()));
+
+            return blobs;
+        }
+
+        /// <summary>
+        /// Retrieves metadata about every directory in the storage medium under the given path
+        /// </summary>
+        public async Task<IEnumerable<BlobItem>> GetAllDirectoriesInPathAsync(string path)
+        {
+            List<BlobItem> blobs = new List<BlobItem>();
+            BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
+                path,
+                false,
+                BlobListingDetails.Metadata,
                 null,
                 null,
                 null,
@@ -152,16 +190,8 @@ namespace BaseCap.CloudAbstractions.Implementations
                 {
                     if (blob is CloudBlobDirectory)
                     {
-                        Console.WriteLine($"{((CloudBlobDirectory)blob).Uri}");
+                        blobs.Add(new BlobItem((CloudBlobDirectory)blob));
                         continue;
-                    }
-
-                    CloudBlockBlob cbb = (CloudBlockBlob)blob;
-
-                    // Don't add deleted blobs since they're there as artifacts
-                    if (cbb.IsDeleted == false)
-                    {
-                        blobs.Add(new BlobItem(cbb));
                     }
                 }
 

@@ -47,5 +47,14 @@ namespace BaseCap.CloudAbstractions.Abstractions
                             blobItem.Properties.LastModified.Value :
                             DateTimeOffset.MinValue;
         }
+
+        internal BlobItem(CloudBlobDirectory directory)
+        {
+            Name = Path.GetDirectoryName(directory.Prefix);
+            RelativePath = directory.Prefix;
+            ContainerName = directory.Container.Name;
+            Created = DateTimeOffset.MinValue;
+            LastModified = DateTimeOffset.MinValue;
+        }
     }
 }
