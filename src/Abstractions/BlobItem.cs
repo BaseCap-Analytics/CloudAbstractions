@@ -56,7 +56,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
 
         internal BlobItem(CloudBlobDirectory directory)
         {
-            Name = Path.GetDirectoryName(directory.Prefix);
+            Name = Path.GetFileName(Path.GetDirectoryName(directory.Prefix));
             RelativePath = directory.Prefix;
             FullPath = directory.Uri;
             ContainerName = directory.Container.Name;
