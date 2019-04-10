@@ -84,5 +84,13 @@ namespace BaseCap.CloudAbstractions.Implementations
             byte[] raw = Encoding.UTF8.GetBytes(serialized);
             await _queue.AddMessageAsync(CloudQueueMessage.CreateCloudQueueMessageFromByteArray(raw), null, null, _options, null);
         }
+
+        /// <inheritdoc />
+        public virtual async Task PushObjectAsMessageAsync(object data, TimeSpan initialDelay)
+        {
+            string serialized = JsonConvert.SerializeObject(data);
+            byte[] raw = Encoding.UTF8.GetBytes(serialized);
+            await _queue.AddMessageAsync(CloudQueueMessage.CreateCloudQueueMessageFromByteArray(raw), null, initialDelay, _options, null);
+        }
     }
 }
