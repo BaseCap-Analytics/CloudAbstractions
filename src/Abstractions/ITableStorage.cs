@@ -80,5 +80,12 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="table">The table to remove the entity from</param>
         /// <param name="etag">The etag of the entity to remove; used to prevent stale data deletes</param>
         Task DeleteEntity(string id, string table, string etag = "*");
+
+        /// <summary>
+        /// Retrieves the number of rows in the specified table
+        /// </summary>
+        /// <param name="table">The table to query on</param>
+        /// <returns>Returns an awaitable Task to retrieve the count</returns>
+        Task<long> Count(string table);
     }
 }
