@@ -87,5 +87,14 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="table">The table to query on</param>
         /// <returns>Returns an awaitable Task to retrieve the count</returns>
         Task<long> Count(string table);
+
+        /// <summary>
+        /// Traverses all entities in a Table and executes an action on them.
+        /// Results of this action will not be saved
+        /// </summary>
+        /// <param name="tableName">The name of the table to traverse</param>
+        /// <param name="perEntityAction">The action to take on each entity</param>
+        /// <returns>Returns an awaitable Task</returns>
+        Task TraverseTableEntitiesAsync<T>(string tableName, Action<T> perEntityAction) where T : TableEntity, new();
     }
 }
