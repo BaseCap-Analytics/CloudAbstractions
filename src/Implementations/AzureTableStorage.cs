@@ -227,5 +227,27 @@ namespace BaseCap.CloudAbstractions.Implementations
             TableOperation update = TableOperation.Replace(newEntity);
             await tableRef.ExecuteAsync(update, _options, null);
         }
+
+        /// <inheritdoc />
+        public async Task<long> Count(string table)
+        {
+            long count = 0;
+            CloudTable tableRef = await GetTableReferenceAsync(table);
+            TableQuery<DynamicTableEntity> query = new TableQuery<DynamicTableEntity>()
+                .Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.NotEqual, string.Empty))
+                .Select(new string[] { "PartitionKey" });
+            EntityResolver<string> resolver = (pk, rk, ts, props, etag) => props.ContainsKey("PartitionKey") ? props["PartitionKey"].StringValue : null;
+            TableContinuationToken token = null;
+
+            do
+            {
+                TableQuerySegment<DynamicTableEntity> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, _options, null);
+                token = segment.ContinuationToken;
+                count += segment.Results.Count;
+            }
+            while (token != null);
+
+            return count;
+        }
     }
 }
