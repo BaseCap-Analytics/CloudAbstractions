@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage.Table;
 
@@ -94,7 +95,8 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <param name="tableName">The name of the table to traverse</param>
         /// <param name="perEntityAction">The action to take on each entity</param>
+        /// <param name="cancelToken">Cancellation Token to cancel the traversal</param>
         /// <returns>Returns an awaitable Task</returns>
-        Task TraverseTableEntitiesAsync<T>(string tableName, Action<T> perEntityAction) where T : TableEntity, new();
+        Task TraverseTableEntitiesAsync<T>(string tableName, Action<T> perEntityAction, CancellationToken cancelToken) where T : TableEntity, new();
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.WindowsAzure.Storage;
@@ -251,7 +252,7 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <inheritdoc />
-        public async Task TraverseTableEntitiesAsync<T>(string tableName, Action<T> perEntityAction) where T : TableEntity, new()
+        public async Task TraverseTableEntitiesAsync<T>(string tableName, Action<T> perEntityAction, CancellationToken cancelToken) where T : TableEntity, new()
         {
             CloudTable tableRef = await GetTableReferenceAsync(tableName);
             TableQuery<T> query = new TableQuery<T>();
@@ -259,7 +260,7 @@ namespace BaseCap.CloudAbstractions.Implementations
 
             do
             {
-                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, _options, null);
+                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, _options, null, cancelToken);
                 token = segment.ContinuationToken;
                 segment.Results.ForEach(perEntityAction);
             }
