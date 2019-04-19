@@ -249,5 +249,21 @@ namespace BaseCap.CloudAbstractions.Implementations
 
             return count;
         }
+
+        /// <inheritdoc />
+        public async Task TraverseTableEntitiesAsync<T>(string tableName, Action<T> perEntityAction) where T : TableEntity, new()
+        {
+            CloudTable tableRef = await GetTableReferenceAsync(tableName);
+            TableQuery<T> query = new TableQuery<T>();
+            TableContinuationToken token = null;
+
+            do
+            {
+                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, _options, null);
+                token = segment.ContinuationToken;
+                segment.Results.ForEach(perEntityAction);
+            }
+            while (token != null);
+        }
     }
 }
