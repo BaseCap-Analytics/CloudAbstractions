@@ -1,6 +1,8 @@
+using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Abstractions
@@ -62,5 +64,13 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// Retrieves metadata about every directory in the storage medium under the given path
         /// </summary>
         Task<IEnumerable<BlobItem>> GetAllDirectoriesInPathAsync(string path);
+
+        /// <summary>
+        /// Deletes blobs older than the specified cutOffDate
+        /// </summary>
+        /// <param name="cutOffDate">The DateTimeOffSet to delete blobs older than</param>
+        /// <param name="cancellationToken">CancellationToken used to cancel the async execution</param>
+        /// <returns></returns>
+        Task DeleteBlobsAync(DateTimeOffset cutOffDate, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

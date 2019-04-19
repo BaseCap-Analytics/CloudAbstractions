@@ -1,9 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations
 {
@@ -12,6 +14,7 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// </summary>
     public class AzureTableStorage : ITableStorage
     {
+        private const int MAX_BATCH_SIZE = 100;
         private static readonly TimeSpan SERVER_TIMEOUT = TimeSpan.FromSeconds(30);
         private static readonly TimeSpan RETRY_DELTA = TimeSpan.FromSeconds(1);
         private const int MAX_ATTEMPTS = 5;
@@ -156,7 +159,7 @@ namespace BaseCap.CloudAbstractions.Implementations
         /// <summary>
         /// Retrieves all entries in the specified table
         /// </summary>
-        public async Task<IEnumerable<T>> GetAllEntitiesAsync<T>(string table) where T: TableEntity, new()
+        public async Task<IEnumerable<T>> GetAllEntitiesAsync<T>(string table) where T : TableEntity, new()
         {
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableQuery<T> query = new TableQuery<T>();
@@ -226,6 +229,65 @@ namespace BaseCap.CloudAbstractions.Implementations
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableOperation update = TableOperation.Replace(newEntity);
             await tableRef.ExecuteAsync(update, _options, null);
+        }
+
+        /// <inheritdoc />
+        public async Task DeleteInBatchAsync(
+            string tableName,
+            DateTimeOffset cutOffDate,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            CloudTable table = await GetTableReferenceAsync(tableName);
+            TableQuery<DynamicTableEntity> query = new TableQuery<DynamicTableEntity>().Where(TableQuery.GenerateFilterConditionForDate("Timestamp", QueryComparisons.LessThan, cutOffDate));
+            IEnumerable<DynamicTableEntity> entities = await GetEntitiesAsync<DynamicTableEntity>(table, query, cancellationToken);
+            await DeleteInBatchAsync<DynamicTableEntity>(table, entities);
+
+        }
+
+        private async Task DeleteInBatchAsync<T>(CloudTable table, IEnumerable<T> tableEntities) where T : ITableEntity, new()
+        {
+            IEnumerable<IGrouping<string, T>> partitionGroups = tableEntities.GroupBy(arg => arg.PartitionKey);
+            TableBatchOperation tableBatchOperation = new TableBatchOperation();
+            foreach (IGrouping<string, T> groupedEntities in partitionGroups)
+            {
+                foreach (T item in groupedEntities)
+                {
+                    if (tableBatchOperation.Count() < MAX_BATCH_SIZE)
+                    {
+                        tableBatchOperation.Add(TableOperation.Delete(item));
+                    }
+                    else
+                    {
+                        await table.ExecuteBatchAsync(tableBatchOperation);
+                        tableBatchOperation = new TableBatchOperation
+                         {
+                             TableOperation.Delete(item)
+                         };
+                    }
+                }
+            }
+
+            if (tableBatchOperation.Count() > 0)
+            {
+                await table.ExecuteBatchAsync(tableBatchOperation);
+            }
+        }
+
+        private async Task<List<T>> GetEntitiesAsync<T>(
+                CloudTable table,
+                TableQuery<T> query,
+                CancellationToken cancellationToken = default(CancellationToken)) where T : ITableEntity, new()
+        {
+            List<T> entities = new List<T>();
+            TableContinuationToken continuationToken = null;
+            do
+            {
+                TableQuerySegment<T> querySegment = await table.ExecuteQuerySegmentedAsync<T>(query, continuationToken);
+                continuationToken = querySegment.ContinuationToken;
+                entities.AddRange(querySegment.Results);
+            } while (continuationToken != null && (cancellationToken == null || cancellationToken.IsCancellationRequested == false));
+
+            return entities;
         }
     }
 }
