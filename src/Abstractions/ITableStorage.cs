@@ -1,8 +1,8 @@
-using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.WindowsAzure.Storage.Table;
 
 namespace BaseCap.CloudAbstractions.Abstractions
 {
@@ -81,6 +81,23 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="table">The table to remove the entity from</param>
         /// <param name="etag">The etag of the entity to remove; used to prevent stale data deletes</param>
         Task DeleteEntity(string id, string table, string etag = "*");
+
+        /// <summary>
+        /// Retrieves the number of rows in the specified table
+        /// </summary>
+        /// <param name="table">The table to query on</param>
+        /// <returns>Returns an awaitable Task to retrieve the count</returns>
+        Task<long> Count(string table);
+
+        /// <summary>
+        /// Traverses all entities in a Table and executes an action on them.
+        /// Results of this action will not be saved
+        /// </summary>
+        /// <param name="tableName">The name of the table to traverse</param>
+        /// <param name="perEntityAction">The action to take on each entity</param>
+        /// <param name="cancelToken">Cancellation Token to cancel the traversal</param>
+        /// <returns>Returns an awaitable Task</returns>
+        Task TraverseTableEntitiesAsync<T>(string tableName, Action<T> perEntityAction, CancellationToken cancelToken) where T : TableEntity, new();
 
         /// <summary>
         /// Deletes entities in batches in a given table

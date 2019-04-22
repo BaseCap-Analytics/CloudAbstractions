@@ -232,6 +232,44 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <inheritdoc />
+        public async Task<long> Count(string table)
+        {
+            long count = 0;
+            CloudTable tableRef = await GetTableReferenceAsync(table);
+            TableQuery<DynamicTableEntity> query = new TableQuery<DynamicTableEntity>()
+                .Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.NotEqual, string.Empty))
+                .Select(new string[] { "PartitionKey" });
+            EntityResolver<string> resolver = (pk, rk, ts, props, etag) => props.ContainsKey("PartitionKey") ? props["PartitionKey"].StringValue : null;
+            TableContinuationToken token = null;
+
+            do
+            {
+                TableQuerySegment<DynamicTableEntity> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, _options, null);
+                token = segment.ContinuationToken;
+                count += segment.Results.Count;
+            }
+            while (token != null);
+
+            return count;
+        }
+
+        /// <inheritdoc />
+        public async Task TraverseTableEntitiesAsync<T>(string tableName, Action<T> perEntityAction, CancellationToken cancelToken) where T : TableEntity, new()
+        {
+            CloudTable tableRef = await GetTableReferenceAsync(tableName);
+            TableQuery<T> query = new TableQuery<T>();
+            TableContinuationToken token = null;
+
+            do
+            {
+                TableQuerySegment<T> segment = await tableRef.ExecuteQuerySegmentedAsync(query, token, _options, null, cancelToken);
+                token = segment.ContinuationToken;
+                segment.Results.ForEach(perEntityAction);
+            }
+            while (token != null);
+        }
+
+        /// <inheritdoc />
         public async Task DeleteInBatchAsync(
             string tableName,
             DateTimeOffset cutOffDate,
@@ -247,9 +285,10 @@ namespace BaseCap.CloudAbstractions.Implementations
         private async Task DeleteInBatchAsync<T>(CloudTable table, IEnumerable<T> tableEntities) where T : ITableEntity, new()
         {
             IEnumerable<IGrouping<string, T>> partitionGroups = tableEntities.GroupBy(arg => arg.PartitionKey);
-            TableBatchOperation tableBatchOperation = new TableBatchOperation();
+
             foreach (IGrouping<string, T> groupedEntities in partitionGroups)
             {
+                TableBatchOperation tableBatchOperation = new TableBatchOperation();
                 foreach (T item in groupedEntities)
                 {
                     if (tableBatchOperation.Count() < MAX_BATCH_SIZE)
@@ -265,11 +304,10 @@ namespace BaseCap.CloudAbstractions.Implementations
                          };
                     }
                 }
-            }
-
-            if (tableBatchOperation.Count() > 0)
-            {
-                await table.ExecuteBatchAsync(tableBatchOperation);
+                if (tableBatchOperation.Count() > 0)
+                {
+                    await table.ExecuteBatchAsync(tableBatchOperation);
+                }
             }
         }
 
