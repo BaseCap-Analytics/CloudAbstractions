@@ -215,7 +215,7 @@ namespace BaseCap.CloudAbstractions.Implementations
                     .Where(x => x.Properties.LastModified < cutOffDate);
                 foreach (CloudBlockBlob blob in blobs)
                 {
-                    await blob.DeleteAsync();
+                    await blob.DeleteIfExistsAsync();
                 }
             }
             while (continuationToken != null && (cancellationToken == null || cancellationToken.IsCancellationRequested == false));

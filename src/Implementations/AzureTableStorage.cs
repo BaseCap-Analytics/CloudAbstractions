@@ -249,7 +249,6 @@ namespace BaseCap.CloudAbstractions.Implementations
                 count += segment.Results.Count;
             }
             while (token != null);
-
             return count;
         }
 
@@ -270,48 +269,36 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <inheritdoc />
-        public async Task DeleteInBatchAsync(
-            string tableName,
-            DateTimeOffset cutOffDate,
-            CancellationToken cancellationToken = default(CancellationToken))
+        public async Task DeleteInBatchAsync(string tableName, DateTimeOffset cutOffDate, CancellationToken cancellationToken)
         {
-            CloudTable table = await GetTableReferenceAsync(tableName);
-            TableQuery<DynamicTableEntity> query = new TableQuery<DynamicTableEntity>().Where(TableQuery.GenerateFilterConditionForDate("Timestamp", QueryComparisons.LessThan, cutOffDate));
-            IEnumerable<DynamicTableEntity> entities = await GetEntitiesAsync<DynamicTableEntity>(table, query, cancellationToken);
-            await DeleteInBatchAsync<DynamicTableEntity>(table, entities);
-
-        }
-
-        private async Task DeleteInBatchAsync<T>(CloudTable table, IEnumerable<T> tableEntities) where T : ITableEntity, new()
-        {
-            IEnumerable<IGrouping<string, T>> partitionGroups = tableEntities.GroupBy(arg => arg.PartitionKey);
-
-            foreach (IGrouping<string, T> groupedEntities in partitionGroups)
+            CloudTable tableRef = await GetTableReferenceAsync(tableName);
+            TableQuery<DynamicTableEntity> selectPartitionKeyQuery = new TableQuery<DynamicTableEntity>()
             {
-                TableBatchOperation tableBatchOperation = new TableBatchOperation();
-                foreach (T item in groupedEntities)
+                FilterString = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.NotEqual, string.Empty),
+                SelectColumns = new string[] { "PartitionKey" }
+            };
+            TableContinuationToken continuationToken = null;
+            do
+            {
+                TableQuerySegment<DynamicTableEntity> segment = await tableRef.ExecuteQuerySegmentedAsync(selectPartitionKeyQuery, continuationToken, _options, null);
+                continuationToken = segment.ContinuationToken;
+
+                foreach (DynamicTableEntity entity in segment.Results)
                 {
-                    if (tableBatchOperation.Count() < MAX_BATCH_SIZE)
+                    string partitionFilter = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, entity.PartitionKey);
+                    string timeStampFilter = TableQuery.GenerateFilterConditionForDate("Timestamp", QueryComparisons.LessThan, cutOffDate);
+                    TableQuery<DynamicTableEntity> deleteQuery = new TableQuery<DynamicTableEntity>()
                     {
-                        tableBatchOperation.Add(TableOperation.Delete(item));
-                    }
-                    else
-                    {
-                        await table.ExecuteBatchAsync(tableBatchOperation);
-                        tableBatchOperation = new TableBatchOperation
-                         {
-                             TableOperation.Delete(item)
-                         };
-                    }
-                }
-                if (tableBatchOperation.Count() > 0)
-                {
-                    await table.ExecuteBatchAsync(tableBatchOperation);
+                        SelectColumns = new[] { "PartitionKey", "RowKey", "Timestamp" },
+                        FilterString = TableQuery.CombineFilters(partitionFilter, TableOperators.And, timeStampFilter)
+                    };
+                    await DeleteInBatchByPartitionKeyAsync(tableRef, deleteQuery, cancellationToken);
                 }
             }
+            while (continuationToken != null && (cancellationToken == null || cancellationToken.IsCancellationRequested == false));
         }
 
-        private async Task<List<T>> GetEntitiesAsync<T>(
+        private async Task DeleteInBatchByPartitionKeyAsync<T>(
                 CloudTable table,
                 TableQuery<T> query,
                 CancellationToken cancellationToken = default(CancellationToken)) where T : ITableEntity, new()
@@ -322,10 +309,44 @@ namespace BaseCap.CloudAbstractions.Implementations
             {
                 TableQuerySegment<T> querySegment = await table.ExecuteQuerySegmentedAsync<T>(query, continuationToken);
                 continuationToken = querySegment.ContinuationToken;
+                if (entities.Count == MAX_BATCH_SIZE)
+                {
+                    await DeleteInBatchAsync(table, entities);
+                    entities = new List<T>();
+                }
                 entities.AddRange(querySegment.Results);
-            } while (continuationToken != null && (cancellationToken == null || cancellationToken.IsCancellationRequested == false));
+            }
 
-            return entities;
+            while (continuationToken != null && (cancellationToken == null || cancellationToken.IsCancellationRequested == false));
+
+            if (entities.Count > 0)
+            {
+                await DeleteInBatchAsync(table, entities);
+            }
+        }
+
+        private async Task DeleteInBatchAsync<T>(CloudTable table, IEnumerable<T> tableEntities) where T : ITableEntity, new()
+        {
+            TableBatchOperation tableBatchOperation = new TableBatchOperation();
+            foreach (T item in tableEntities)
+            {
+                if (tableBatchOperation.Count() < MAX_BATCH_SIZE)
+                {
+                    tableBatchOperation.Add(TableOperation.Delete(item));
+                }
+                else
+                {
+                    await table.ExecuteBatchAsync(tableBatchOperation);
+                    tableBatchOperation = new TableBatchOperation
+                         {
+                             TableOperation.Delete(item)
+                         };
+                }
+            }
+            if (tableBatchOperation.Count() > 0)
+            {
+                await table.ExecuteBatchAsync(tableBatchOperation);
+            }
         }
     }
 }
