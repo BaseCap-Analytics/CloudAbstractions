@@ -15,7 +15,8 @@
 
   <ItemGroup>
     <PackageReference Include="BaseCap.Security" Version="2.1.180207.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.8.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.6.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.Kubernetes" Version="1.0.2" />
     <PackageReference Include="Microsoft.Azure.Batch" Version="10.0.0" />
     <PackageReference Include="Microsoft.Azure.EventHubs" Version="2.2.1" />
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.2" />
