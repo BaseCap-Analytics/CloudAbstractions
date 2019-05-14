@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace BaseCap.Common.Fundamentals.Logging
+namespace BaseCap.CloudAbstractions.Implementations
 {
     /// <summary>
     /// Adds logging functionality targeting Azure App Insights
