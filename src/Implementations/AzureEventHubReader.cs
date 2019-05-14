@@ -6,6 +6,8 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.WindowsAzure.Storage;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations
@@ -13,93 +15,58 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// <summary>
     /// Provides a connection for data coming out of an Event Hub partition
     /// </summary>
-    public class AzureEventHubReader : IEventStreamReader
+    internal class AzureEventHubReader
     {
+        public string PartitionId => _reader.PartitionId;
         private const int MAX_RETRIES = 3;
-        protected string _connectionString;
-        protected string _partitionId;
-        protected string _consumerGroup;
+        private const int MAX_MESSAGES = 100;
         protected PartitionReceiver _reader;
-        protected EventHubRuntimeInformation _eventHubInfo;
-        protected ICheckpointer _checkpointer;
-        protected TelemetryClient _logger;
-        protected MemoryCache _eventIdCache;
-
-        public string PartitionId => _partitionId;
-
-        public int PartitionCount => _eventHubInfo.PartitionCount;
+        protected Task _readerTask;
+        protected readonly Func<IEnumerable<EventMessage>, string, Task> _onMessagesReceived;
+        protected readonly Func<PartitionReceiver, Task<PartitionReceiver>> _receiverRefreshAsync;
+        protected readonly ILogger _logger;
+        protected readonly MemoryCache _eventIdCache;
 
         /// <summary>
         /// Creates a new connection to a plaintext Event Hub partition
         /// </summary>
-        public AzureEventHubReader(
-            string eventHubConnectionString,
-            string eventHubEntity,
-            string partitionId,
-            string consumerGroup,
-            ICheckpointer checkpointer)
+        internal AzureEventHubReader(
+            PartitionReceiver reader,
+            Func<PartitionReceiver, Task<PartitionReceiver>> receiverRefresh,
+            Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived,
+            ILogger logger)
         {
-            EventHubsConnectionStringBuilder builder = new EventHubsConnectionStringBuilder(eventHubConnectionString) { EntityPath = eventHubEntity };
-            _connectionString = builder.ToString();
-            _partitionId = partitionId;
-            _consumerGroup = consumerGroup;
-            _checkpointer = checkpointer;
-            _logger = new TelemetryClient(TelemetryConfiguration.Active);
+            _reader = reader;
+            _receiverRefreshAsync = receiverRefresh;
+            _onMessagesReceived = onMessagesReceived;
+            _logger = logger;
             _eventIdCache = new MemoryCache(new MemoryCacheOptions());
-        }
-
-        /// <summary>
-        /// Initializes the connection with Azure from the last read location in the event stream
-        /// </summary>
-        public async Task SetupAsync()
-        {
-            string offset = await _checkpointer.GetCheckpointAsync(_partitionId);
-            await this.SetupAsync(offset);
-        }
-
-        /// <summary>
-        /// Initializes the connection with Azure from the specified offset in the event stream
-        /// </summary>
-        public async Task SetupAsync(string offset)
-        {
-            EventHubClient client = EventHubClient.CreateFromConnectionString(_connectionString);
-            _eventHubInfo = await client.GetRuntimeInformationAsync();
-
-            EventPosition position;
-            if (string.IsNullOrEmpty(offset))
-            {
-                position = EventPosition.FromStart();
-            }
-            else
-            {
-                position = EventPosition.FromOffset(offset, false);
-            }
-            _reader = client.CreateReceiver(_consumerGroup, _partitionId, position);
         }
 
         /// <summary>
         /// Closes the connection to the event stream
         /// </summary>
-        public Task CloseAsync()
+        internal Task CloseAsync()
         {
             return _reader.CloseAsync();
+        }
+
+        internal void Open(CancellationToken token)
+        {
+            _readerTask = Task.Run(async () => await ReadEventsAsync(token));
         }
 
         /// <summary>
         /// Reads up to a specified number of events from the stream
         /// </summary>
-        public virtual async Task<IEnumerable<EventMessage>> ReadEventsAsync(int count)
+        internal virtual async Task ReadEventsAsync(CancellationToken token)
         {
-            for (int i = 0; i < MAX_RETRIES; i++)
+            while (token.IsCancellationRequested == false)
             {
                 try
                 {
-                    IEnumerable<EventData> events = await _reader.ReceiveAsync(count);
-                    if (events == null)
-                    {
-                        return Array.Empty<EventMessage>();
-                    }
-                    else
+                    IEnumerable<EventData> events = await _reader.ReceiveAsync(MAX_MESSAGES);
+                    if ((events != null) && (events.Any()))
                     {
                         List<EventMessage> messages = new List<EventMessage>();
 
@@ -116,28 +83,22 @@ namespace BaseCap.CloudAbstractions.Implementations
                             }
                         }
 
-                        return messages;
+                        await _onMessagesReceived(messages, _reader.PartitionId);
                     }
                 }
                 catch (StorageException sx)
                 {
                     // This usually means a problem with the reader; rebuild it and try again
-                    await SetupAsync();
-                    _logger.TrackException(sx, new Dictionary<string, string>()
-                    {
-                        ["Partition"] = _partitionId,
-                        ["ConsumerGroup"] = _consumerGroup,
-                        ["RetryCount"] = i.ToString(),
-                    });
+                    _reader = await _receiverRefreshAsync(_reader);
+                    await _logger.LogExceptionAsync(
+                        sx,
+                        new Dictionary<string, string>()
+                        {
+                            ["Partition"] = _reader.PartitionId,
+                            ["ConsumerGroup"] = _reader.ConsumerGroupName,
+                        });
                 }
             }
-
-            _logger.TrackEvent($"{nameof(ReadEventsAsync)} hit max retry count", new Dictionary<string, string>()
-            {
-                ["Partition"] = _partitionId,
-                ["ConsumerGroup"] = _consumerGroup,
-            });
-            return Array.Empty<EventMessage>();
         }
     }
 }
