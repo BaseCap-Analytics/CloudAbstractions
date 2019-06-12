@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaseCap.CloudAbstractions.Abstractions;
@@ -209,6 +210,23 @@ namespace BaseCap.CloudAbstractions.Implementations
             while (token != null);
 
             return entities;
+        }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<string>> GetAllTableNamesAsync(CancellationToken token)
+        {
+            List<string> tableNames = new List<string>();
+            TableContinuationToken continuationToken = null;
+
+            do
+            {
+                TableResultSegment result = await _tables.ListTablesSegmentedAsync(continuationToken);
+                continuationToken = result.ContinuationToken;
+                tableNames.AddRange(result.Results.Select(t => t.Name));
+            }
+            while ((continuationToken != null) && (token.IsCancellationRequested == false));
+
+            return tableNames;
         }
 
         /// <summary>

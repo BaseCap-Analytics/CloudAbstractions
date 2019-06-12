@@ -44,6 +44,12 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<IEnumerable<T>> FindEntitiesByColumnAsync<T>(string columnName, Guid value, string table) where T : TableEntity, new();
 
         /// <summary>
+        /// Retrieves all Tables in the storage account
+        /// </summary>
+        /// <returns>Returns a List of table names</returns>
+        Task<IEnumerable<string>> GetAllTableNamesAsync(CancellationToken token);
+
+        /// <summary>
         /// Retrieves all stored entities in a table
         /// </summary>
         /// <param name="table">The name of the table to search</param>
