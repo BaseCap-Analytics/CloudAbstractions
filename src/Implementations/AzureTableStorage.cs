@@ -13,9 +13,10 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// </summary>
     public class AzureTableStorage : ITableStorage
     {
+        private const int MAX_BATCH_SIZE = 100;
+        private const int MAX_ATTEMPTS = 5;
         private static readonly TimeSpan SERVER_TIMEOUT = TimeSpan.FromSeconds(30);
         private static readonly TimeSpan RETRY_DELTA = TimeSpan.FromSeconds(1);
-        private const int MAX_ATTEMPTS = 5;
         private CloudTableClient _tables;
         private TableRequestOptions _options;
 
@@ -73,6 +74,62 @@ namespace BaseCap.CloudAbstractions.Implementations
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableEntity entity = await FindEntityByIdAsync<TableEntity>(id, table);
             await DeleteEntity<TableEntity>(entity, table);
+        }
+
+        /// <inheritdoc />
+        public async Task DeleteOldEntitiesAsync(string table, string columnName, TimeSpan age, CancellationToken token)
+        {
+            CloudTable tableRef = await GetTableReferenceAsync(table);
+            DateTimeOffset ageCutoff = DateTimeOffset.Now - age;
+            TableQuery<DynamicTableEntity> selectPartitionKeyQuery = new TableQuery<DynamicTableEntity>()
+            {
+                FilterString = TableQuery.GenerateFilterConditionForDate(columnName, QueryComparisons.LessThan, ageCutoff),
+                SelectColumns = new string[] { "PartitionKey", "RowKey" },
+            };
+            TableContinuationToken continuationToken = null;
+            do
+            {
+                TableQuerySegment<DynamicTableEntity> segment = await tableRef.ExecuteQuerySegmentedAsync(selectPartitionKeyQuery, continuationToken, _options, null);
+                continuationToken = segment.ContinuationToken;
+                await DeleteInBatchAsync(tableRef, segment);
+            }
+            while ((continuationToken != null) && (token.IsCancellationRequested == false));
+        }
+
+        private async Task DeleteInBatchAsync(CloudTable table, TableQuerySegment<DynamicTableEntity> tableEntities)
+        {
+            Dictionary<string, TableBatchOperation> operations = new Dictionary<string, TableBatchOperation>();
+            foreach (DynamicTableEntity item in tableEntities.Results)
+            {
+                string key = item.PartitionKey;
+                if (operations.ContainsKey(key) == false)
+                {
+                    operations[key] = new TableBatchOperation();
+                }
+
+                operations[key].Add(TableOperation.Delete(item));
+
+                if (operations[key].Count >= MAX_BATCH_SIZE)
+                {
+                    await table.ExecuteBatchAsync(operations[key]);
+                    operations[key] = new TableBatchOperation();
+                }
+            }
+
+            foreach (TableBatchOperation op in operations.Values)
+            {
+                if (op.Count > 0)
+                {
+                    await table.ExecuteBatchAsync(op);
+                }
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task DeleteTableAsync(string table)
+        {
+            CloudTable tableRef = await GetTableReferenceAsync(table);
+            await tableRef.DeleteIfExistsAsync();
         }
 
         /// <summary>
