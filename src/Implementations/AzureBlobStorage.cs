@@ -138,17 +138,19 @@ namespace BaseCap.CloudAbstractions.Implementations
         public async Task<IEnumerable<BlobItem>> GetAllBlobMetadatasAsync(string path)
         {
             List<BlobItem> blobs = new List<BlobItem>();
-            BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
-                path,
-                false,
-                BlobListingDetails.Metadata,
-                null,
-                null,
-                null,
-                null);
+            BlobContinuationToken continuationToken = null;
 
             do
             {
+                BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
+                    path,
+                    false,
+                    BlobListingDetails.Metadata,
+                    null,
+                    continuationToken,
+                    null,
+                    null);
+                continuationToken = segment.ContinuationToken;
                 foreach (IListBlobItem blob in segment.Results)
                 {
                     if (blob is CloudBlockBlob)
@@ -162,10 +164,8 @@ namespace BaseCap.CloudAbstractions.Implementations
                         }
                     }
                 }
-
-                segment = await _blobStorage.ListBlobsSegmentedAsync(segment.ContinuationToken);
             }
-            while ((segment.ContinuationToken != null) && (segment.Results.Any()));
+            while (continuationToken != null);
 
             return blobs;
         }
@@ -176,17 +176,19 @@ namespace BaseCap.CloudAbstractions.Implementations
         public async Task<IEnumerable<BlobItem>> GetAllDirectoriesInPathAsync(string path)
         {
             List<BlobItem> blobs = new List<BlobItem>();
-            BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
-                path,
-                false,
-                BlobListingDetails.Metadata,
-                null,
-                null,
-                null,
-                null);
+            BlobContinuationToken continuationToken = null;
 
             do
             {
+                BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
+                    path,
+                    false,
+                    BlobListingDetails.Metadata,
+                    null,
+                    continuationToken,
+                    null,
+                    null);
+                continuationToken = segment.ContinuationToken;
                 foreach (IListBlobItem blob in segment.Results)
                 {
                     if (blob is CloudBlobDirectory)
@@ -195,10 +197,8 @@ namespace BaseCap.CloudAbstractions.Implementations
                         continue;
                     }
                 }
-
-                segment = await _blobStorage.ListBlobsSegmentedAsync(segment.ContinuationToken);
             }
-            while ((segment.ContinuationToken != null) && (segment.Results.Any()));
+            while (continuationToken != null);
 
             return blobs;
         }
@@ -206,26 +206,33 @@ namespace BaseCap.CloudAbstractions.Implementations
         /// <inheritdoc />
         public async Task DeleteOldBlobsAsync(string parentPath, TimeSpan age, CancellationToken token)
         {
-            BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
-                parentPath,
-                true,
-                BlobListingDetails.Metadata,
-                null,
-                null,
-                new BlobRequestOptions() { AbsorbConditionalErrorsOnRetry = true, RetryPolicy = new LinearRetry() },
-                null);
+            BlobContinuationToken continuationToken = null;
 
             do
             {
-                IEnumerable<CloudBlockBlob> oldBlobs = segment.Results.OfType<CloudBlockBlob>().Where(b => (b.Properties.LastModified - DateTimeOffset.Now) > age);
+                BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
+                    parentPath,
+                    true,
+                    BlobListingDetails.Metadata,
+                    null,
+                    continuationToken,
+                    new BlobRequestOptions() { AbsorbConditionalErrorsOnRetry = true, RetryPolicy = new LinearRetry() },
+                    null);
+                IEnumerable<CloudBlockBlob> oldBlobs = segment.Results.OfType<CloudBlockBlob>().Where(b => (b.Properties.LastModified - DateTimeOffset.Now) < age);
+                continuationToken = segment.ContinuationToken;
                 foreach (CloudBlockBlob blob in oldBlobs)
                 {
-                    await blob.DeleteAsync();
+                    try
+                    {
+                        await blob.DeleteAsync();
+                    }
+                    catch
+                    {
+                        // Fail silently
+                    }
                 }
-
-                segment = await _blobStorage.ListBlobsSegmentedAsync(segment.ContinuationToken);
             }
-            while ((segment.ContinuationToken != null) && (segment.Results.Any()) && (token.IsCancellationRequested == false));
+            while ((continuationToken != null) && (token.IsCancellationRequested == false));
         }
     }
 }
