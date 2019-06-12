@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations
@@ -200,6 +201,31 @@ namespace BaseCap.CloudAbstractions.Implementations
             while ((segment.ContinuationToken != null) && (segment.Results.Any()));
 
             return blobs;
+        }
+
+        /// <inheritdoc />
+        public async Task DeleteOldBlobsAsync(string parentPath, TimeSpan age, CancellationToken token)
+        {
+            BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
+                parentPath,
+                true,
+                BlobListingDetails.Metadata,
+                null,
+                null,
+                new BlobRequestOptions() { AbsorbConditionalErrorsOnRetry = true, RetryPolicy = new LinearRetry() },
+                null);
+
+            do
+            {
+                IEnumerable<CloudBlockBlob> oldBlobs = segment.Results.OfType<CloudBlockBlob>().Where(b => (b.Properties.LastModified - DateTimeOffset.Now) > age);
+                foreach (CloudBlockBlob blob in oldBlobs)
+                {
+                    await blob.DeleteAsync();
+                }
+
+                segment = await _blobStorage.ListBlobsSegmentedAsync(segment.ContinuationToken);
+            }
+            while ((segment.ContinuationToken != null) && (segment.Results.Any()) && (token.IsCancellationRequested == false));
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Abstractions
@@ -62,5 +63,13 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// Retrieves metadata about every directory in the storage medium under the given path
         /// </summary>
         Task<IEnumerable<BlobItem>> GetAllDirectoriesInPathAsync(string path);
+
+        /// <summary>
+        /// Deletes blobs older than a certain age
+        /// </summary>
+        /// <param name="parentPath">The root path to search under</param>
+        /// <param name="age">The maximum age of a blob before it is deleted</param>
+        /// <param name="token">Cancellation token for cancelling the task</param>
+        Task DeleteOldBlobsAsync(string parentPath, TimeSpan age, CancellationToken token);
     }
 }

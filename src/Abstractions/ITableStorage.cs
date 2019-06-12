@@ -83,6 +83,21 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task DeleteEntity(string id, string table, string etag = "*");
 
         /// <summary>
+        /// Deletes all entities in a table that are older than a specified age
+        /// </summary>
+        /// <param name="table">The table to search through</param>
+        /// <param name="columnName">The column to filter by</param>
+        /// <param name="age">The maximum age of an entity</param>
+        /// <param name="token">The CancellationToken for cancelling the task</param>
+        Task DeleteOldEntitiesAsync(string table, string columnName, TimeSpan age, CancellationToken token);
+
+        /// <summary>
+        /// Deletes the specified table
+        /// </summary>
+        /// <param name="table">The table to delete</param>
+        Task DeleteTableAsync(string table);
+
+        /// <summary>
         /// Retrieves the number of rows in the specified table
         /// </summary>
         /// <param name="table">The table to query on</param>
