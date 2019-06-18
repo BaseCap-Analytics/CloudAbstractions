@@ -70,6 +70,17 @@ namespace BaseCap.CloudAbstractions.Implementations
         /// <inheritdoc />
         public Task SetCacheObjectAsync<T>(string key, T obj) where T : class
         {
+            return SetCacheObjectInternalAsync(key, obj, null);
+        }
+
+        /// <inheritdoc />
+        public Task SetCacheObjectAsync<T>(string key, T obj, TimeSpan expiry) where T : class
+        {
+            return SetCacheObjectInternalAsync(key, obj, expiry);
+        }
+
+        private Task SetCacheObjectInternalAsync<T>(string key, T obj, TimeSpan? expiry) where T : class
+        {
             if (string.IsNullOrWhiteSpace(key))
             {
                 throw new ArgumentNullException(nameof(key));
@@ -80,7 +91,7 @@ namespace BaseCap.CloudAbstractions.Implementations
             }
 
             string str = JsonConvert.SerializeObject(obj);
-            return _database.StringSetAsync(key, RedisValue.Unbox(str));
+            return _database.StringSetAsync(key, RedisValue.Unbox(str), expiry);
         }
 
         /// <inheritdoc />

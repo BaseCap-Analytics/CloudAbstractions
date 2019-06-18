@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Abstractions
@@ -18,6 +19,14 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="key">The key to store the value as</param>
         /// <param name="obj">The object to store in the cache</param>
         Task SetCacheObjectAsync<T>(string key, T obj) where T : class;
+
+        /// <summary>
+        /// Sets a cache value with an expiration
+        /// </summary>
+        /// <param name="key">The key to store the value as</param>
+        /// <param name="obj">The object to store in the cache</param>
+        /// <param name="expiry">The time it takes for this cache entry to be evicted</param>
+        Task SetCacheObjectAsync<T>(string key, T obj, TimeSpan expiry) where T : class;
 
         /// <summary>
         /// Retrieves a previously set value
