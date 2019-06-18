@@ -2,6 +2,8 @@ using BaseCap.CloudAbstractions.Abstractions;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations
@@ -48,6 +50,16 @@ namespace BaseCap.CloudAbstractions.Implementations
             _database = _cacheConnection.GetDatabase();
         }
 
+        protected virtual Task<string> SerializeObject(object o)
+        {
+            return Task.FromResult(JsonConvert.SerializeObject(o));
+        }
+
+        protected virtual Task<T> DeserializeObject<T>(string value)
+        {
+            return Task.FromResult(JsonConvert.DeserializeObject<T>(value));
+        }
+
         /// <inheritdoc />
         public async Task<T> GetCacheObjectAsync<T>(string key) where T : class
         {
@@ -63,7 +75,7 @@ namespace BaseCap.CloudAbstractions.Implementations
             }
             else
             {
-                return JsonConvert.DeserializeObject<T>(value);
+                return await DeserializeObject<T>(value);
             }
         }
 
@@ -79,7 +91,7 @@ namespace BaseCap.CloudAbstractions.Implementations
             return SetCacheObjectInternalAsync(key, obj, expiry);
         }
 
-        private Task SetCacheObjectInternalAsync<T>(string key, T obj, TimeSpan? expiry) where T : class
+        private async Task SetCacheObjectInternalAsync<T>(string key, T obj, TimeSpan? expiry) where T : class
         {
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -90,8 +102,8 @@ namespace BaseCap.CloudAbstractions.Implementations
                 throw new ArgumentNullException(nameof(obj));
             }
 
-            string str = JsonConvert.SerializeObject(obj);
-            return _database.StringSetAsync(key, RedisValue.Unbox(str), expiry);
+            string str = await SerializeObject(obj);
+            await _database.StringSetAsync(key, RedisValue.Unbox(str), expiry);
         }
 
         /// <inheritdoc />
@@ -103,6 +115,32 @@ namespace BaseCap.CloudAbstractions.Implementations
             }
 
             return _database.KeyDeleteAsync(key);
+        }
+
+        /// <inheritdoc />
+        public Task AddToListAsync(string key, string value)
+        {
+            return _database.ListRightPushAsync(key, value);
+        }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<string>> GetListAsync(string key)
+        {
+            RedisValue[] values = await _database.ListRangeAsync(key);
+            if (values == null)
+            {
+                return Array.Empty<string>();
+            }
+            else
+            {
+                return values.Select(v => v.Box() as string);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<long> GetListCountAsync(string key)
+        {
+            return _database.ListLengthAsync(key);
         }
     }
 }

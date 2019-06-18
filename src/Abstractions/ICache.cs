@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Abstractions
@@ -12,6 +13,22 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// Initializes the connection
         /// </summary>
         Task SetupAsync();
+
+        /// <summary>
+        /// Adds a value to a list
+        /// </summary>
+        Task AddToListAsync(string key, string value);
+
+        /// <summary>
+        /// Retrieves all values in a List
+        /// </summary>
+        Task<IEnumerable<string>> GetListAsync(string key);
+
+        /// <summary>
+        /// Retrieves the number of entries in a list
+        /// </summary>
+        /// <returns>Returns the number of entries in the list</returns>
+        Task<long> GetListCountAsync(string key);
 
         /// <summary>
         /// Sets a cache value
