@@ -17,25 +17,24 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Adds a value to a list
         /// </summary>
-        Task AddToListAsync(string key, string value);
+        /// <param name="key">The key to store the value as</param>
+        /// <param name="value">The value to add to the list in the cache</param>
+        /// <returns>Returns the length of the list after the push operation</returns>
+        Task<long> AddToListAsync(string key, string value);
 
         /// <summary>
         /// Retrieves all values in a List
         /// </summary>
+        /// <param name="key">The key to store the value as</param>
+        /// <returns>Returns the values in the list</returns>
         Task<IEnumerable<string>> GetListAsync(string key);
 
         /// <summary>
         /// Retrieves the number of entries in a list
         /// </summary>
+        /// <param name="key">The key to store the value as</param>
         /// <returns>Returns the number of entries in the list</returns>
         Task<long> GetListCountAsync(string key);
-
-        /// <summary>
-        /// Sets a cache value
-        /// </summary>
-        /// <param name="key">The key to store the value as</param>
-        /// <param name="obj">The object to store in the cache</param>
-        Task SetCacheObjectAsync<T>(string key, T obj) where T : class;
 
         /// <summary>
         /// Sets a cache value with an expiration
@@ -56,6 +55,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// Deletes a value from the cache
         /// </summary>
         /// <param name="key">The key of the value to delete</param>
-        Task DeleteCacheObjectAsync(string key);
+        /// <returns>Returns true if the entry was deleted; otherwise, returns false</returns>
+        Task<bool> DeleteCacheObjectAsync(string key);
     }
 }
