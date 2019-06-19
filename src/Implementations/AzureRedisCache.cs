@@ -138,7 +138,7 @@ namespace BaseCap.CloudAbstractions.Implementations
             }
             else
             {
-                return values.Select(v => v.Box() as string);
+                return values.Select(v => (string)v);
             }
         }
 
