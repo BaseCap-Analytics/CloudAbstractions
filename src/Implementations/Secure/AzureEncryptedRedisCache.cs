@@ -13,7 +13,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
     {
         private byte[] _encryptionKey;
 
-        public AzureEncryptedRedisCache(string connectionString, byte[] encryptionKey) : base(connectionString)
+        public AzureEncryptedRedisCache(string endpoint, string password, byte[] encryptionKey) : base(endpoint, password)
         {
             _encryptionKey = encryptionKey;
         }

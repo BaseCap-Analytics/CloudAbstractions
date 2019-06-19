@@ -13,16 +13,24 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// </summary>
     public class AzureRedisCache : ICache, IDisposable
     {
-        private readonly string _connectionString;
+        private const int DATABASE_ID = 12;
+        private readonly ConfigurationOptions _options;
         private ConnectionMultiplexer _cacheConnection;
         private IDatabaseAsync _database;
 
         /// <summary>
         /// Creates a new AzureRedisCache
         /// </summary>
-        public AzureRedisCache(string connectionString)
+        public AzureRedisCache(string endpoint, string password)
         {
-            _connectionString = connectionString;
+            _options = new ConfigurationOptions()
+            {
+                AbortOnConnectFail = false,
+                ConnectRetry = 3,
+                Password = password,
+                Ssl = true,
+            };
+            _options.EndPoints.Add(endpoint);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -46,8 +54,8 @@ namespace BaseCap.CloudAbstractions.Implementations
         /// <inheritdoc />
         public async Task SetupAsync()
         {
-            _cacheConnection = await ConnectionMultiplexer.ConnectAsync(_connectionString);
-            _database = _cacheConnection.GetDatabase();
+            _cacheConnection = await ConnectionMultiplexer.ConnectAsync(_options);
+            _database = _cacheConnection.GetDatabase(DATABASE_ID);
         }
 
         protected virtual Task<string> SerializeObject(object o)
@@ -80,12 +88,6 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <inheritdoc />
-        public Task SetCacheObjectAsync<T>(string key, T obj) where T : class
-        {
-            return SetCacheObjectInternalAsync(key, obj, null);
-        }
-
-        /// <inheritdoc />
         public Task SetCacheObjectAsync<T>(string key, T obj, TimeSpan expiry) where T : class
         {
             return SetCacheObjectInternalAsync(key, obj, expiry);
@@ -103,11 +105,14 @@ namespace BaseCap.CloudAbstractions.Implementations
             }
 
             string str = await SerializeObject(obj);
-            await _database.StringSetAsync(key, RedisValue.Unbox(str), expiry);
+            if (await _database.StringSetAsync(key, RedisValue.Unbox(str), expiry) == false)
+            {
+                throw new InvalidOperationException($"Failed to set cache entry for '{key}'");
+            }
         }
 
         /// <inheritdoc />
-        public Task DeleteCacheObjectAsync(string key)
+        public Task<bool> DeleteCacheObjectAsync(string key)
         {
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -118,7 +123,7 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <inheritdoc />
-        public Task AddToListAsync(string key, string value)
+        public Task<long> AddToListAsync(string key, string value)
         {
             return _database.ListRightPushAsync(key, value);
         }
