@@ -47,13 +47,13 @@ namespace BaseCap.CloudAbstractions.Implementations
         /// <summary>
         /// Initializes the connection into Azure
         /// </summary>
-        public Task SetupAsync(Func<QueueMessage, Task> onMessageReceived)
+        public Task SetupAsync(Func<QueueMessage, Task> onMessageReceived, int numberOfReaders)
         {
             MessageHandlerOptions options = new MessageHandlerOptions(OnExceptionAsync)
             {
                 AutoComplete = false,
                 MaxAutoRenewDuration = TimeSpan.FromMinutes(5),
-                MaxConcurrentCalls = 1,
+                MaxConcurrentCalls = numberOfReaders,
             };
             _queue.RegisterMessageHandler(OnMessageReceivedAsync, OnExceptionAsync);
             _onMessageReceived = onMessageReceived;

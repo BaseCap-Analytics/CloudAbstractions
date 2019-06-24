@@ -11,7 +11,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Constructs the underlying stream connection
         /// </summary>
-        Task SetupAsync(Func<QueueMessage, Task> onMessageReceived);
+        Task SetupAsync(Func<QueueMessage, Task> onMessageReceived, int numberOfReaders);
 
         /// <summary>
         /// Pushes a new object, as a message, into the Queue
