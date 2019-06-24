@@ -1,9 +1,8 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Queue;
-using Microsoft.WindowsAzure.Storage.RetryPolicies;
+using Microsoft.Azure.ServiceBus;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,84 +12,101 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// <summary>
     /// Provides a connection for data be passed to and from Azure Blob Queue Storage
     /// </summary>
-    public class AzureQueueStorage : IQueue
+    public class AzureQueueStorage : IQueue, IDisposable
     {
-        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(20);
-        private static readonly IRetryPolicy RETRY_POLICY = new ExponentialRetry();
-        protected CloudQueue _queue;
-        protected QueueRequestOptions _options;
+        protected IQueueClient _queue;
+        protected Func<QueueMessage, Task> _onMessageReceived;
+        protected ILogger _logger;
 
         /// <summary>
-        /// Creates a new connection to an Azure Queue Storage container
+        /// Creates a new connection to an Azure Queue Storage
         /// </summary>
-        public AzureQueueStorage(string storageConnectionString, string queueName)
+        public AzureQueueStorage(string serviceBusConnectionString, string queueName, ILogger logger)
         {
-            CloudStorageAccount account = CloudStorageAccount.Parse(storageConnectionString);
-            _queue = account.CreateCloudQueueClient().GetQueueReference(queueName);
-            _options = new QueueRequestOptions()
-            {
-                RetryPolicy = RETRY_POLICY,
-                ServerTimeout = TIMEOUT,
-            };
+            _queue = new QueueClient(serviceBusConnectionString, queueName, ReceiveMode.PeekLock, new RetryExponential(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(60), 5));
+            _logger = logger;
         }
 
-        /// <summary>
-        /// Creates a new connection to an Azure Queue Storage container
-        /// </summary>
-        internal AzureQueueStorage(CloudStorageAccount account, string queueName)
+        protected virtual void Dispose(bool disposing)
         {
-            _queue = account.CreateCloudQueueClient().GetQueueReference(queueName);
-            _options = new QueueRequestOptions()
+            if (disposing && _queue != null)
             {
-                RetryPolicy = RETRY_POLICY,
-                ServerTimeout = TIMEOUT,
-            };
+                _queue.CloseAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                _queue = null;
+            }
+        }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
         /// Initializes the connection into Azure
         /// </summary>
-        public Task SetupAsync()
+        public Task SetupAsync(Func<QueueMessage, Task> onMessageReceived)
         {
-            return _queue.CreateIfNotExistsAsync(_options, null);
+            MessageHandlerOptions options = new MessageHandlerOptions(OnExceptionAsync)
+            {
+                AutoComplete = false,
+                MaxAutoRenewDuration = TimeSpan.FromMinutes(5),
+                MaxConcurrentCalls = 1,
+            };
+            _queue.RegisterMessageHandler(OnMessageReceivedAsync, OnExceptionAsync);
+            _onMessageReceived = onMessageReceived;
+            return Task.CompletedTask;
+        }
+
+        protected virtual Task OnMessageReceivedAsync(Message m, CancellationToken token)
+        {
+            if (m != null)
+            {
+                return _onMessageReceived(new QueueMessage(m));
+            }
+
+            return Task.CompletedTask;
+        }
+
+        protected virtual Task OnExceptionAsync(ExceptionReceivedEventArgs e)
+        {
+            return _logger.LogExceptionAsync(
+                e.Exception,
+                new Dictionary<string, string>()
+                {
+                    ["Action"] = e.ExceptionReceivedContext.Action,
+                    ["ClientId"] = e.ExceptionReceivedContext.ClientId,
+                    ["Endpoint"] = e.ExceptionReceivedContext.Endpoint,
+                    ["EntityPath"] = e.ExceptionReceivedContext.EntityPath,
+                });
         }
 
         /// <summary>
         /// Deletes the specified message from the queue
         /// </summary>
-        public virtual async Task DeleteMessageAsync(QueueMessage msg)
+        public virtual Task DeleteMessageAsync(QueueMessage msg)
         {
-            await _queue.DeleteMessageAsync(msg.Id, msg.PopReceipt);
-        }
-
-        /// <summary>
-        /// Retrieves the next message from the queue
-        /// </summary>
-        public virtual async Task<QueueMessage> GetMessageAsync(TimeSpan visibility, CancellationToken token)
-        {
-            CloudQueueMessage msg = await _queue.GetMessageAsync(visibility, _options, null, token);
-            if (msg == null)
-                return null;
-            else
-                return new QueueMessage(msg);
-        }
-
-        /// <summary>
-        /// Adds a new object onto the queue
-        /// </summary>
-        public virtual async Task PushObjectAsMessageAsync(object data)
-        {
-            string serialized = JsonConvert.SerializeObject(data);
-            byte[] raw = Encoding.UTF8.GetBytes(serialized);
-            await _queue.AddMessageAsync(CloudQueueMessage.CreateCloudQueueMessageFromByteArray(raw), null, null, _options, null);
+            return _queue.CompleteAsync(msg.LockToken);
         }
 
         /// <inheritdoc />
-        public virtual async Task PushObjectAsMessageAsync(object data, TimeSpan initialDelay)
+        public virtual Task PushObjectAsMessageAsync(object data)
         {
             string serialized = JsonConvert.SerializeObject(data);
             byte[] raw = Encoding.UTF8.GetBytes(serialized);
-            await _queue.AddMessageAsync(CloudQueueMessage.CreateCloudQueueMessageFromByteArray(raw), null, initialDelay, _options, null);
+            Message m = new Message(raw);
+            return _queue.SendAsync(m);
+        }
+
+        /// <inheritdoc />
+        public virtual Task PushObjectAsMessageAsync(object data, TimeSpan initialDelay)
+        {
+            string serialized = JsonConvert.SerializeObject(data);
+            byte[] raw = Encoding.UTF8.GetBytes(serialized);
+            Message m = new Message(raw);
+            return _queue.ScheduleMessageAsync(m, DateTimeOffset.UtcNow + initialDelay);
         }
     }
 }

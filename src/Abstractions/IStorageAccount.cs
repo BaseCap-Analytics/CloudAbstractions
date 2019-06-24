@@ -8,11 +8,6 @@ namespace BaseCap.CloudAbstractions.Abstractions
     public interface IStorageAccount
     {
         /// <summary>
-        /// Retrieves a specific Queue from Storage
-        /// </summary>
-        Task<IQueue> GetQueueStorageAsync(string queueName);
-
-        /// <summary>
         /// Retrieves a contract to Table storage
         /// </summary>
         ITableStorage GetTableStorage();

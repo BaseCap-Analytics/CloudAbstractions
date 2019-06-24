@@ -1,11 +1,9 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Queue;
+using Microsoft.Azure.ServiceBus;
 using Newtonsoft.Json;
 using System;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Secure
@@ -20,44 +18,30 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
         /// <summary>
         /// Creates a new connection to a Azure Queue Storage container with a given encryption key
         /// </summary>
-        public AzureEncryptedQueueStorage(string storageConnectionString, string queueName, byte[] encryptionKey) : base(storageConnectionString, queueName)
+        public AzureEncryptedQueueStorage(string serviceBusConnectionString, string queueName, byte[] encryptionKey, ILogger logger)
+            : base(serviceBusConnectionString, queueName, logger)
         {
             _encryptionKey = encryptionKey;
         }
 
-        /// <summary>
-        /// Creates a new connection to a Azure Queue Storage container with a given encryption key
-        /// </summary>
-        internal AzureEncryptedQueueStorage(CloudStorageAccount account, string container, byte[] encryptionKey) : base(account, container)
-        {
-            _encryptionKey = encryptionKey;
-        }
-
-        /// <summary>
-        /// Retrieves the next message from the queue
-        /// </summary>
-        public override async Task<QueueMessage> GetMessageAsync(TimeSpan visibility, CancellationToken token)
-        {
-            CloudQueueMessage msg = await _queue.GetMessageAsync(visibility, _options, null, token);
-            if (msg == null)
-                return null;
-            else
-            {
-                byte[] decrypted = await EncryptionHelpers.DecryptDataAsync(msg.AsBytes, _encryptionKey);
-                msg.SetMessageContent(decrypted);
-                return new QueueMessage(msg);
-            }
-        }
-
-        /// <summary>
-        /// Wraps an object into a queue message and pushes it onto the queue
-        /// </summary>
+        /// <inheritdoc />
         public override async Task PushObjectAsMessageAsync(object data)
         {
             string serialized = JsonConvert.SerializeObject(data);
             byte[] raw = Encoding.UTF8.GetBytes(serialized);
             byte[] encrypted = await EncryptionHelpers.EncryptDataAsync(raw, _encryptionKey);
-            await _queue.AddMessageAsync(CloudQueueMessage.CreateCloudQueueMessageFromByteArray(encrypted), null, null, _options, null);
+            Message m = new Message(encrypted);
+            await _queue.SendAsync(m);
+        }
+
+        /// <inheritdoc />
+        public override async Task PushObjectAsMessageAsync(object data, TimeSpan initialDelay)
+        {
+            string serialized = JsonConvert.SerializeObject(data);
+            byte[] raw = Encoding.UTF8.GetBytes(serialized);
+            byte[] encrypted = await EncryptionHelpers.EncryptDataAsync(raw, _encryptionKey);
+            Message m = new Message(encrypted);
+            await _queue.ScheduleMessageAsync(m, DateTimeOffset.UtcNow + initialDelay);
         }
     }
 }

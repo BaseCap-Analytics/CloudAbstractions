@@ -47,19 +47,5 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
 
             return _storageContainers[containerName];
         }
-
-        /// <summary>
-        /// Retrieves a connection to a Queue Storage queue which encrypts the data at-rest
-        /// </summary>
-        public override async Task<IQueue> GetQueueStorageAsync(string queueName)
-        {
-            if (_queueContainers.ContainsKey(queueName) == false)
-            {
-                _queueContainers[queueName] = new AzureEncryptedQueueStorage(_account, queueName, _encryptionKey);
-                await _queueContainers[queueName].SetupAsync();
-            }
-
-            return _queueContainers[queueName];
-        }
     }
 }

@@ -55,20 +55,6 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <summary>
-        /// Retrieves a connection to a Queue Storage queue
-        /// </summary>
-        public virtual async Task<IQueue> GetQueueStorageAsync(string queueName)
-        {
-            if (_queueContainers.ContainsKey(queueName) == false)
-            {
-                _queueContainers[queueName] = new AzureQueueStorage(_account, queueName);
-                await _queueContainers[queueName].SetupAsync();
-            }
-
-            return _queueContainers[queueName];
-        }
-
-        /// <summary>
         /// Retrieves a connection to Table Storage
         /// </summary>
         public ITableStorage GetTableStorage()
