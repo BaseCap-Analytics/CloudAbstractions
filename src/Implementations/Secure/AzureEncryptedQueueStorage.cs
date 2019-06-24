@@ -4,6 +4,7 @@ using Microsoft.Azure.ServiceBus;
 using Newtonsoft.Json;
 using System;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Secure
@@ -42,6 +43,17 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
             byte[] encrypted = await EncryptionHelpers.EncryptDataAsync(raw, _encryptionKey);
             Message m = new Message(encrypted);
             await _queue.ScheduleMessageAsync(m, DateTimeOffset.UtcNow + initialDelay);
+        }
+
+        protected override async Task OnMessageReceivedAsync(Message m, CancellationToken token)
+        {
+            if (m != null)
+            {
+                byte[] decrypted = await EncryptionHelpers.DecryptDataAsync(m.Body, _encryptionKey);
+                m.Body = decrypted;
+            }
+
+            await base.OnMessageReceivedAsync(m, token);
         }
     }
 }
