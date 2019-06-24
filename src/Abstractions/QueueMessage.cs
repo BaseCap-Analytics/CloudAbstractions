@@ -1,5 +1,5 @@
+using Microsoft.Azure.ServiceBus;
 using System;
-using Microsoft.WindowsAzure.Storage.Queue;
 
 namespace BaseCap.CloudAbstractions.Abstractions
 {
@@ -29,9 +29,9 @@ namespace BaseCap.CloudAbstractions.Abstractions
         public DateTimeOffset? ExpirationTime { get; set; }
 
         /// <summary>
-        /// A timestamp of when this message will be visible again; correlated to <see cref="QueueMessage.ExpirationTime" />
+        /// A TimeSpan of how long this message has until it is visible again
         /// </summary>
-        public DateTimeOffset? NextVisibleTime { get; set; }
+        public TimeSpan TimeToLive { get; set; }
 
         /// <summary>
         /// The number of times this message has been delivered
@@ -41,20 +41,20 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// State identifier used to delete a message
         /// </summary>
-        internal string PopReceipt { get; set; }
+        internal string LockToken { get; set; }
 
         /// <summary>
         /// Converts an Azure message into our abstraction
         /// </summary>
-        internal QueueMessage(CloudQueueMessage message)
+        internal QueueMessage(Message message)
         {
-            Id = message.Id;
-            Content = message.AsBytes;
-            InsertionTime = message.InsertionTime;
-            ExpirationTime = message.ExpirationTime;
-            NextVisibleTime = message.NextVisibleTime;
-            DequeueCount = message.DequeueCount;
-            PopReceipt = message.PopReceipt;
+            Id = message.MessageId;
+            Content = message.Body;
+            InsertionTime = message.SystemProperties.EnqueuedTimeUtc;
+            ExpirationTime = message.ExpiresAtUtc;
+            TimeToLive = message.TimeToLive;
+            DequeueCount = message.SystemProperties.DeliveryCount;
+            LockToken = message.SystemProperties.LockToken;
         }
 
         /// <summary>

@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Abstractions
@@ -12,15 +11,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Constructs the underlying stream connection
         /// </summary>
-        Task SetupAsync();
-
-        /// <summary>
-        /// Retrieves the next message from the queue and retrieves it
-        /// </summary>
-        /// <param name="visibility">The time this message should be invisible to other readers</param>
-        /// <param name="token">A cancellation token to escape waiting</param>
-        /// <returns>Returns a <see cref="BaseCap.Azure.Abstractions.QueueMessage" />
-        Task<QueueMessage> GetMessageAsync(TimeSpan visibility, CancellationToken token);
+        Task SetupAsync(Func<QueueMessage, Task> onMessageReceived);
 
         /// <summary>
         /// Pushes a new object, as a message, into the Queue
