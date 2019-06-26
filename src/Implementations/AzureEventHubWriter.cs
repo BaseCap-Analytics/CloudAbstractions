@@ -55,10 +55,12 @@ namespace BaseCap.CloudAbstractions.Implementations
         /// <summary>
         /// Sends the event into the specified partition
         /// </summary>
-        public virtual Task SendEventDataAsync(EventMessage msg, string partition)
+        public virtual async Task SendEventDataAsync(EventMessage msg, string partition)
         {
-            EventData data = msg.ToEventData();
-            return _client.SendAsync(data, partition);
+            using (EventData data = msg.ToEventData())
+            {
+                await _client.SendAsync(data, partition).ConfigureAwait(false);
+            }
         }
 
         /// <summary>
