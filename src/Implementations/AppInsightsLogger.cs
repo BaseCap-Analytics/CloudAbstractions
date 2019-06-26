@@ -1,8 +1,6 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,27 +12,11 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// </summary>
     public sealed class AppInsightsLogger : ILogger
     {
-        private const string _tempDirectory = "telemetry_temp";
-        private TelemetryClient _logger;
+        private readonly TelemetryClient _logger;
 
         /// <inheritdoc />
         public AppInsightsLogger()
         {
-            // When running on non-Windows machine, we need to specify a location for
-            // telemetry data to be saved locally when AppInsights uses ServerTelemetryChannels.
-            foreach (TelemetrySink sink in TelemetryConfiguration.Active.TelemetrySinks)
-            {
-                ITelemetryChannel channel = sink.TelemetryChannel;
-                if (channel is ServerTelemetryChannel)
-                {
-                    if (System.IO.Directory.Exists(_tempDirectory) == false)
-                    {
-                        System.IO.Directory.CreateDirectory(_tempDirectory);
-                    }
-                    ((ServerTelemetryChannel)channel).StorageFolder = System.IO.Path.GetFullPath(_tempDirectory);
-                }
-            }
-
             _logger = new TelemetryClient(TelemetryConfiguration.Active);
         }
 
