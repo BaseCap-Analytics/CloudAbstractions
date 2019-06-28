@@ -55,7 +55,7 @@ namespace BaseCap.CloudAbstractions.Implementations
                 MaxAutoRenewDuration = TimeSpan.FromMinutes(5),
                 MaxConcurrentCalls = numberOfReaders,
             };
-            _queue.RegisterMessageHandler(OnMessageReceivedAsync, OnExceptionAsync);
+            _queue.RegisterMessageHandler(OnMessageReceivedAsync, options);
             _onMessageReceived = onMessageReceived;
             return Task.CompletedTask;
         }
