@@ -26,6 +26,8 @@ namespace BaseCap.CloudAbstractions.Implementations
         /// </summary>
         public AzureQueueStorage(string serviceBusConnectionString, string queueName, ILogger logger)
         {
+            _connectionString = serviceBusConnectionString;
+            _queueName = queueName;
             _queue = new QueueClient(serviceBusConnectionString, queueName, ReceiveMode.PeekLock, new RetryExponential(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(60), 5));
             _logger = logger;
         }
