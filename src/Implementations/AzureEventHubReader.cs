@@ -1,6 +1,4 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.EventHubs;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.WindowsAzure.Storage;
@@ -90,7 +88,7 @@ namespace BaseCap.CloudAbstractions.Implementations
                 {
                     // This usually means a problem with the reader; rebuild it and try again
                     _reader = await _receiverRefreshAsync(_reader);
-                    await _logger.LogExceptionAsync(
+                    _logger.LogException(
                         sx,
                         new Dictionary<string, string>()
                         {

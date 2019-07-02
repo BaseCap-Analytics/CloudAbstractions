@@ -14,30 +14,26 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <param name="ex">The exception record to log</param>
         /// <param name="additionalData">Additional contextual data to add to the log</param>
-        /// <returns>Returns an awaitable Task</returns>
-        Task LogExceptionAsync(Exception ex, IDictionary<string, string> additionalData);
+        void LogException(Exception ex, IDictionary<string, string> additionalData);
 
         /// <summary>
         /// Log an exception record
         /// </summary>
         /// <param name="ex">The exception record to log</param>
-        /// <returns>Returns an awaitable Task</returns>
-        Task LogExceptionAsync(Exception ex);
+        void LogException(Exception ex);
 
         /// <summary>
         /// Log a debugging statement
         /// </summary>
         /// <param name="message">The message to log</param>
-        /// <returns>Returns an awaitable Task</returns>
-        Task LogLineAsync(string message);
+        void LogLine(string message);
 
         /// <summary>
         /// Log a debugging statement
         /// </summary>
         /// <param name="message">The message to log</param>
         /// <param name="additionalData">Additional contextual data to add to the log</param>
-        /// <returns>Returns an awaitable Task</returns>
-        Task LogLineAsync(string message, IDictionary<string, string> additionalData);
+        void LogLine(string message, IDictionary<string, string> additionalData);
 
         /// <summary>
         /// Log an Event with additional data and metrics
@@ -45,8 +41,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="eventName">The event name to log</param>
         /// <param name="additionalData">Additional contextual data to add to the log</param>
         /// <param name="metrics">The metrics to add to the log entry</param>
-        /// <returns>Returns an awaitable Task</returns>
-        Task LogEventAsync(
+        void LogEvent(
             string eventName,
             IDictionary<string, string> additionalData,
             IDictionary<string, double> metrics);
@@ -56,8 +51,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <param name="eventName">The event name to log</param>
         /// <param name="metrics">The metrics to add to the log entry</param>
-        /// <returns>Returns an awaitable Task</returns>
-        Task LogEventAsync(
+        void LogEvent(
             string eventName,
             IDictionary<string, double> metrics);
 
@@ -66,8 +60,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <param name="eventName">The event name to log</param>
         /// <param name="additionalData">Additional contextual data to add to the log</param>
-        /// <returns>Returns an awaitable Task</returns>
-        Task LogEventAsync(
+        void LogEvent(
             string eventName,
             IDictionary<string, string> additionalData);
     }

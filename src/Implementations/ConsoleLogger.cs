@@ -2,7 +2,6 @@ using BaseCap.CloudAbstractions.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations
 {
@@ -12,7 +11,7 @@ namespace BaseCap.CloudAbstractions.Implementations
     public sealed class ConsoleLogger : ILogger
     {
         /// <inheritdoc />
-        public Task LogEventAsync(string eventName, IDictionary<string, string> additionalData, IDictionary<string, double> metrics)
+        public void LogEvent(string eventName, IDictionary<string, string> additionalData, IDictionary<string, double> metrics)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Event Name: {eventName}");
@@ -30,11 +29,10 @@ namespace BaseCap.CloudAbstractions.Implementations
             }
 
             Console.WriteLine(sb.ToString());
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogEventAsync(string eventName, IDictionary<string, double> metrics)
+        public void LogEvent(string eventName, IDictionary<string, double> metrics)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Event Name: {eventName}");
@@ -46,11 +44,10 @@ namespace BaseCap.CloudAbstractions.Implementations
             }
 
             Console.WriteLine(sb.ToString());
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogEventAsync(string eventName, IDictionary<string, string> additionalData)
+        public void LogEvent(string eventName, IDictionary<string, string> additionalData)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Event Name: {eventName}");
@@ -61,11 +58,10 @@ namespace BaseCap.CloudAbstractions.Implementations
             }
 
             Console.WriteLine(sb.ToString());
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogExceptionAsync(Exception ex, IDictionary<string, string> additionalData)
+        public void LogException(Exception ex, IDictionary<string, string> additionalData)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Exception Message: {ex.Message}");
@@ -77,28 +73,25 @@ namespace BaseCap.CloudAbstractions.Implementations
             }
 
             Console.WriteLine(sb.ToString());
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogExceptionAsync(Exception ex)
+        public void LogException(Exception ex)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Exception Message: {ex.Message}");
             sb.AppendLine($"Exception Stack: {ex.StackTrace}");
             Console.WriteLine(sb.ToString());
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogLineAsync(string message)
+        public void LogLine(string message)
         {
             Console.WriteLine($"Message: '{message}'");
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogLineAsync(string message, IDictionary<string, string> additionalData)
+        public void LogLine(string message, IDictionary<string, string> additionalData)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Message: '{message}'");
@@ -109,7 +102,6 @@ namespace BaseCap.CloudAbstractions.Implementations
             }
 
             Console.WriteLine(sb.ToString());
-            return Task.CompletedTask;
         }
     }
 }

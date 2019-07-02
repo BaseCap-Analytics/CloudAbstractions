@@ -26,7 +26,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
         }
 
         /// <inheritdoc />
-        public override async Task PushObjectAsMessageAsync(object data)
+        protected override async Task InternalPushObjectAsMessageAsync(object data)
         {
             string serialized = JsonConvert.SerializeObject(data);
             byte[] raw = Encoding.UTF8.GetBytes(serialized);
@@ -36,7 +36,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
         }
 
         /// <inheritdoc />
-        public override async Task PushObjectAsMessageAsync(object data, TimeSpan initialDelay)
+        protected override async Task InternalPushObjectAsMessageAsync(object data, TimeSpan initialDelay)
         {
             string serialized = JsonConvert.SerializeObject(data);
             byte[] raw = Encoding.UTF8.GetBytes(serialized);
