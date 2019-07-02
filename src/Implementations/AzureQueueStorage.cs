@@ -14,8 +14,11 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// </summary>
     public class AzureQueueStorage : IQueue, IDisposable
     {
+        private string _connectionString;
+        private string _queueName;
         protected IQueueClient _queue;
         protected Func<QueueMessage, Task> _onMessageReceived;
+        protected int _numberOfReaders;
         protected ILogger _logger;
 
         /// <summary>
@@ -57,6 +60,7 @@ namespace BaseCap.CloudAbstractions.Implementations
             };
             _queue.RegisterMessageHandler(OnMessageReceivedAsync, options);
             _onMessageReceived = onMessageReceived;
+            _numberOfReaders = numberOfReaders;
             return Task.CompletedTask;
         }
 
@@ -72,7 +76,7 @@ namespace BaseCap.CloudAbstractions.Implementations
 
         protected virtual Task OnExceptionAsync(ExceptionReceivedEventArgs e)
         {
-            return _logger.LogExceptionAsync(
+            _logger.LogException(
                 e.Exception,
                 new Dictionary<string, string>()
                 {
@@ -81,6 +85,7 @@ namespace BaseCap.CloudAbstractions.Implementations
                     ["Endpoint"] = e.ExceptionReceivedContext.Endpoint,
                     ["EntityPath"] = e.ExceptionReceivedContext.EntityPath,
                 });
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -92,7 +97,68 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <inheritdoc />
-        public virtual Task PushObjectAsMessageAsync(object data)
+        public async Task PushObjectAsMessageAsync(object data)
+        {
+            try
+            {
+                await InternalPushObjectAsMessageAsync(data).ConfigureAwait(false);
+            }
+            catch (System.Net.Sockets.SocketException soc)
+            {
+                await ResetQueueAsync().ConfigureAwait(false);
+                _logger.LogEvent(
+                    "QueueReset",
+                    new Dictionary<string, string>()
+                    {
+                        ["ExceptionMessage"] = soc.Message,
+                        ["Stack"] = soc.StackTrace,
+                    });
+            }
+            catch (System.InvalidOperationException ioex)
+            {
+                await ResetQueueAsync().ConfigureAwait(false);
+                _logger.LogEvent(
+                    "QueueReset",
+                    new Dictionary<string, string>()
+                    {
+                        ["ExceptionMessage"] = ioex.Message,
+                        ["Stack"] = ioex.StackTrace,
+                    });
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task PushObjectAsMessageAsync(object data, TimeSpan initialDelay)
+        {
+            try
+            {
+                await InternalPushObjectAsMessageAsync(data, initialDelay).ConfigureAwait(false);
+            }
+            catch (System.Net.Sockets.SocketException soc)
+            {
+                await ResetQueueAsync().ConfigureAwait(false);
+                _logger.LogEvent(
+                    "QueueReset",
+                    new Dictionary<string, string>()
+                    {
+                        ["ExceptionMessage"] = soc.Message,
+                        ["Stack"] = soc.StackTrace,
+                    });
+            }
+            catch (System.InvalidOperationException ioex)
+            {
+                await ResetQueueAsync().ConfigureAwait(false);
+                _logger.LogEvent(
+                    "QueueReset",
+                    new Dictionary<string, string>()
+                    {
+                        ["ExceptionMessage"] = ioex.Message,
+                        ["Stack"] = ioex.StackTrace,
+                    });
+            }
+        }
+
+        protected virtual Task InternalPushObjectAsMessageAsync(object data)
         {
             string serialized = JsonConvert.SerializeObject(data);
             byte[] raw = Encoding.UTF8.GetBytes(serialized);
@@ -100,13 +166,27 @@ namespace BaseCap.CloudAbstractions.Implementations
             return _queue.SendAsync(m);
         }
 
-        /// <inheritdoc />
-        public virtual Task PushObjectAsMessageAsync(object data, TimeSpan initialDelay)
+        protected virtual Task InternalPushObjectAsMessageAsync(object data, TimeSpan initialDelay)
         {
             string serialized = JsonConvert.SerializeObject(data);
             byte[] raw = Encoding.UTF8.GetBytes(serialized);
             Message m = new Message(raw);
             return _queue.ScheduleMessageAsync(m, DateTimeOffset.UtcNow + initialDelay);
+        }
+
+        private async Task ResetQueueAsync()
+        {
+            try
+            {
+                await _queue.CloseAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // No-op
+            }
+
+            _queue = new QueueClient(_connectionString, _queueName, ReceiveMode.PeekLock, new RetryExponential(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(60), 5));
+            await SetupAsync(_onMessageReceived, _numberOfReaders);
         }
     }
 }

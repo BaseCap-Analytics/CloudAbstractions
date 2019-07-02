@@ -3,7 +3,6 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations
 {
@@ -21,52 +20,45 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <inheritdoc />
-        public Task LogEventAsync(string eventName, IDictionary<string, string> additionalData, IDictionary<string, double> metrics)
+        public void LogEvent(string eventName, IDictionary<string, string> additionalData, IDictionary<string, double> metrics)
         {
             _logger.TrackEvent(eventName, additionalData, metrics);
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogEventAsync(string eventName, IDictionary<string, double> metrics)
+        public void LogEvent(string eventName, IDictionary<string, double> metrics)
         {
             _logger.TrackEvent(eventName, null, metrics);
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogEventAsync(string eventName, IDictionary<string, string> additionalData)
+        public void LogEvent(string eventName, IDictionary<string, string> additionalData)
         {
             _logger.TrackEvent(eventName, additionalData);
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogExceptionAsync(Exception ex, IDictionary<string, string> additionalData)
+        public void LogException(Exception ex, IDictionary<string, string> additionalData)
         {
             _logger.TrackException(ex, additionalData);
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogExceptionAsync(Exception ex)
+        public void LogException(Exception ex)
         {
             _logger.TrackException(ex);
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogLineAsync(string message)
+        public void LogLine(string message)
         {
             _logger.TrackTrace(message);
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task LogLineAsync(string message, IDictionary<string, string> additionalData)
+        public void LogLine(string message, IDictionary<string, string> additionalData)
         {
             _logger.TrackTrace(message, additionalData);
-            return Task.CompletedTask;
         }
     }
 }
