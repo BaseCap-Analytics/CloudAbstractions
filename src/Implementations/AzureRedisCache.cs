@@ -21,14 +21,14 @@ namespace BaseCap.CloudAbstractions.Implementations
         /// <summary>
         /// Creates a new AzureRedisCache
         /// </summary>
-        public AzureRedisCache(string endpoint, string password)
+        public AzureRedisCache(string endpoint, string password, bool useSsl)
         {
             _options = new ConfigurationOptions()
             {
                 AbortOnConnectFail = false,
                 ConnectRetry = 3,
                 Password = password,
-                Ssl = true,
+                Ssl = useSsl,
             };
             _options.EndPoints.Add(endpoint);
         }
