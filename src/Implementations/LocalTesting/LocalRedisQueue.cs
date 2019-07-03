@@ -38,7 +38,6 @@ namespace BaseCap.CloudAbstractions.Implementations.LocalTesting
         {
             if (disposing && (_cacheConnection != null))
             {
-                _queue.UnsubscribeAll();
                 _cacheConnection.Close();
                 _cacheConnection.Dispose();
                 _cacheConnection = null;
@@ -58,6 +57,11 @@ namespace BaseCap.CloudAbstractions.Implementations.LocalTesting
             _onMessageReceived = onMessageReceived;
             _queue.Subscribe(_queueName, OnMessageReceivedAsync);
             return Task.CompletedTask;
+        }
+
+        public Task StopAsync()
+        {
+            return _queue.UnsubscribeAllAsync();
         }
 
         protected virtual void OnMessageReceivedAsync(RedisChannel channel, RedisValue value)
