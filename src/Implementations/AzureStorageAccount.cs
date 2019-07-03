@@ -14,7 +14,6 @@ namespace BaseCap.CloudAbstractions.Implementations
     {
         protected CloudStorageAccount _account;
         protected Dictionary<string, AzureBlobStorage> _storageContainers;
-        protected Dictionary<string, AzureQueueStorage> _queueContainers;
         private ITableStorage _tableStorage;
 
         /// <summary>
@@ -24,7 +23,6 @@ namespace BaseCap.CloudAbstractions.Implementations
         {
             _account = CloudStorageAccount.Parse(connectionString);
             _storageContainers = new Dictionary<string, AzureBlobStorage>();
-            _queueContainers = new Dictionary<string, AzureQueueStorage>();
             _tableStorage = null;
         }
 
@@ -36,7 +34,6 @@ namespace BaseCap.CloudAbstractions.Implementations
             StorageCredentials credentials = new StorageCredentials(accountName, accountKey);
             _account = new CloudStorageAccount(credentials, blobStorageEndpoint, queueStorageEndpoint, tableStorageEndpoint, fileStorageEndpoint);
             _storageContainers = new Dictionary<string, AzureBlobStorage>();
-            _queueContainers = new Dictionary<string, AzureQueueStorage>();
             _tableStorage = null;
         }
 
