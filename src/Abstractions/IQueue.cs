@@ -14,6 +14,11 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task SetupAsync(Func<QueueMessage, Task> onMessageReceived, int numberOfReaders);
 
         /// <summary>
+        /// Stops reading from the queue
+        /// </summary>
+        Task StopAsync();
+
+        /// <summary>
         /// Pushes a new object, as a message, into the Queue
         /// </summary>
         /// <param name="data">The object data to serialize and push into the queue</param>

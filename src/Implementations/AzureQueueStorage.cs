@@ -12,7 +12,7 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// <summary>
     /// Provides a connection for data be passed to and from Azure Blob Queue Storage
     /// </summary>
-    public class AzureQueueStorage : IQueue, IDisposable
+    public class AzureQueueStorage : IQueue
     {
         private string _connectionString;
         private string _queueName;
@@ -32,23 +32,6 @@ namespace BaseCap.CloudAbstractions.Implementations
             _logger = logger;
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing && _queue != null)
-            {
-                _queue.CloseAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-                _queue = null;
-            }
-        }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         /// <summary>
         /// Initializes the connection into Azure
         /// </summary>
@@ -64,6 +47,11 @@ namespace BaseCap.CloudAbstractions.Implementations
             _onMessageReceived = onMessageReceived;
             _numberOfReaders = numberOfReaders;
             return Task.CompletedTask;
+        }
+
+        public Task StopAsync()
+        {
+            return _queue.CloseAsync();
         }
 
         protected virtual Task OnMessageReceivedAsync(Message m, CancellationToken token)
