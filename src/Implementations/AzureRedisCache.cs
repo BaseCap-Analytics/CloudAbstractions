@@ -13,7 +13,6 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// </summary>
     public class AzureRedisCache : ICache, IDisposable
     {
-        private const int DATABASE_ID = 12;
         private readonly ConfigurationOptions _options;
         private ConnectionMultiplexer _cacheConnection;
         private IDatabaseAsync _database;
@@ -55,7 +54,7 @@ namespace BaseCap.CloudAbstractions.Implementations
         public async Task SetupAsync()
         {
             _cacheConnection = await ConnectionMultiplexer.ConnectAsync(_options);
-            _database = _cacheConnection.GetDatabase(DATABASE_ID);
+            _database = _cacheConnection.GetDatabase();
         }
 
         protected virtual Task<string> SerializeObject(object o)
