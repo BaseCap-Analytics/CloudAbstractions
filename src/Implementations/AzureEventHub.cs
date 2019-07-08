@@ -1,9 +1,5 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.EventHubs;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.WindowsAzure.Storage;
 using System;
 using System.Collections.Generic;
 using System.Threading;

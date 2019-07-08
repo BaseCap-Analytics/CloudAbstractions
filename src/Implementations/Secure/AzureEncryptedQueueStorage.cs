@@ -1,10 +1,10 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
-using Microsoft.Azure.ServiceBus;
 using Newtonsoft.Json;
+using StackExchange.Redis;
 using System;
+using System.Collections.Generic;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Secure
@@ -19,8 +19,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
         /// <summary>
         /// Creates a new connection to a Azure Queue Storage container with a given encryption key
         /// </summary>
-        public AzureEncryptedQueueStorage(string serviceBusConnectionString, string queueName, byte[] encryptionKey, ILogger logger)
-            : base(serviceBusConnectionString, queueName, logger)
+        public AzureEncryptedQueueStorage(string endpoint, string password, string queueName, bool useSsl, byte[] encryptionKey, ILogger logger)
+            : base(endpoint, password, queueName, useSsl, logger)
         {
             _encryptionKey = encryptionKey;
         }
@@ -30,30 +30,37 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
         {
             string serialized = JsonConvert.SerializeObject(data);
             byte[] raw = Encoding.UTF8.GetBytes(serialized);
-            byte[] encrypted = await EncryptionHelpers.EncryptDataAsync(raw, _encryptionKey);
-            Message m = new Message(encrypted);
-            await _queue.SendAsync(m);
+            byte[] rawEncrypted = await EncryptionHelpers.EncryptDataAsync(raw, _encryptionKey);
+            string encrypted = Convert.ToBase64String(rawEncrypted);
+            QueueMessage msg = new QueueMessage(encrypted);
+            string msgString = JsonConvert.SerializeObject(msg);
+            await _queue.PublishAsync(_queueName, msgString);
         }
 
-        /// <inheritdoc />
-        protected override async Task InternalPushObjectAsMessageAsync(object data, TimeSpan initialDelay)
+        protected override void OnMessageReceived(RedisChannel queueName, RedisValue message)
         {
-            string serialized = JsonConvert.SerializeObject(data);
-            byte[] raw = Encoding.UTF8.GetBytes(serialized);
-            byte[] encrypted = await EncryptionHelpers.EncryptDataAsync(raw, _encryptionKey);
-            Message m = new Message(encrypted);
-            await _queue.ScheduleMessageAsync(m, DateTimeOffset.UtcNow + initialDelay);
-        }
-
-        protected override async Task OnMessageReceivedAsync(Message m, CancellationToken token)
-        {
-            if (m != null)
+            try
             {
-                byte[] decrypted = await EncryptionHelpers.DecryptDataAsync(m.Body, _encryptionKey);
-                m.Body = decrypted;
+                // Decrypt the message then push to the base function for processing
+                string decryptedMsg;
+                QueueMessage msg = JsonConvert.DeserializeObject<QueueMessage>(message);
+                byte[] encryptedBytes = Convert.FromBase64String(msg.Content);
+                byte[] decryptedBytes = EncryptionHelpers.DecryptDataAsync(encryptedBytes, _encryptionKey).GetAwaiter().GetResult();
+                string decrypted = Encoding.UTF8.GetString(decryptedBytes);
+                msg.Content = decrypted;
+                decryptedMsg = JsonConvert.SerializeObject(msg);
+                base.OnMessageReceived(queueName, decryptedMsg);
             }
-
-            await base.OnMessageReceivedAsync(m, token);
+            catch
+            {
+                _logger.LogEvent(
+                    "UnknownEncryptedQueueMessage",
+                    new Dictionary<string, string>()
+                    {
+                        ["QueueName"] = _queueName,
+                        ["Message"] = message,
+                    });
+            }
         }
     }
 }

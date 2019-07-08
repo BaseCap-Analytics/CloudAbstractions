@@ -1,10 +1,8 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Microsoft.Azure.ServiceBus;
 using Newtonsoft.Json;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations
@@ -12,171 +10,191 @@ namespace BaseCap.CloudAbstractions.Implementations
     /// <summary>
     /// Provides a connection for data be passed to and from Azure Blob Queue Storage
     /// </summary>
-    public class AzureQueueStorage : IQueue
+    public class AzureQueueStorage : IQueue, IDisposable
     {
-        private string _connectionString;
-        private string _queueName;
-        protected IQueueClient _queue;
-        protected Func<QueueMessage, Task> _onMessageReceived;
-        protected int _numberOfReaders;
-        protected ILogger _logger;
+        private const string DEADLETTER_QUEUE = "DEADLETTER";
+        protected readonly string _queueName;
+        private readonly string _processingQueueName;
+        protected readonly ILogger _logger;
+        private ConnectionMultiplexer _cacheConnection;
+        protected ISubscriber _queue;
+        private IDatabase _database;
+        protected Func<QueueMessage, Task<bool>> _onMessageReceived;
 
         /// <summary>
         /// Creates a new connection to an Azure Queue Storage
         /// </summary>
-        public AzureQueueStorage(string serviceBusConnectionString, string queueName, ILogger logger)
+        public AzureQueueStorage(string endpoint, string password, string queueName, bool useSsl, ILogger logger)
         {
-            _connectionString = serviceBusConnectionString;
             _queueName = queueName;
-            _queue = new QueueClient(serviceBusConnectionString, queueName, ReceiveMode.PeekLock, new RetryExponential(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(60), 5));
+            _processingQueueName = $"{queueName}_processing";
             _logger = logger;
-        }
-
-        /// <summary>
-        /// Initializes the connection into Azure
-        /// </summary>
-        public Task SetupAsync(Func<QueueMessage, Task> onMessageReceived, int numberOfReaders)
-        {
-            MessageHandlerOptions options = new MessageHandlerOptions(OnExceptionAsync)
+            ConfigurationOptions options = new ConfigurationOptions()
             {
-                AutoComplete = false,
-                MaxAutoRenewDuration = TimeSpan.FromMinutes(5),
-                MaxConcurrentCalls = numberOfReaders,
+                AbortOnConnectFail = false,
+                ConnectRetry = 3,
+                Password = password,
+                Ssl = useSsl,
             };
-            _queue.RegisterMessageHandler(OnMessageReceivedAsync, options);
-            _onMessageReceived = onMessageReceived;
-            _numberOfReaders = numberOfReaders;
-            return Task.CompletedTask;
+            options.EndPoints.Add(endpoint);
+            _cacheConnection = ConnectionMultiplexer.Connect(options);
+            _cacheConnection.ConnectionFailed += OnConnectionFailure;
+            _cacheConnection.ConnectionRestored += OnConnectionRestored;
+            _cacheConnection.ErrorMessage += OnError;
+            _cacheConnection.InternalError += OnRedisInternalError;
+            _cacheConnection.IncludeDetailInExceptions = true;
+            _cacheConnection.IncludePerformanceCountersInExceptions = true;
+            _queue = _cacheConnection.GetSubscriber();
+            _database = _cacheConnection.GetDatabase();
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing && (_cacheConnection != null))
+            {
+                _cacheConnection.Close(false);
+                _cacheConnection.Dispose();
+                _cacheConnection = null;
+            }
+        }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <inheritdoc />
+        public Task SetupAsync(Func<QueueMessage, Task<bool>> onMessageReceived)
+        {
+            _onMessageReceived = onMessageReceived;
+            return _queue.SubscribeAsync(_queueName, OnMessageReceived);
+        }
+
+        /// <inheritdoc />
         public Task StopAsync()
         {
-            return _queue.CloseAsync();
+            return _queue.UnsubscribeAllAsync();
         }
 
-        protected virtual Task OnMessageReceivedAsync(Message m, CancellationToken token)
+        protected virtual void OnMessageReceived(RedisChannel queueName, RedisValue message)
         {
-            if (m != null)
+            try
             {
-                return _onMessageReceived(new QueueMessage(m));
-            }
+                // Dequeue our message and push to the processing list
+                string processingMsg;
+                QueueMessage msg = JsonConvert.DeserializeObject<QueueMessage>(message);
+                msg.DequeueCount++;
+                processingMsg = JsonConvert.SerializeObject(msg);
 
-            return Task.CompletedTask;
+                // If we need to deadletter this message, do it and don't send to a listener
+                if (msg.DequeueCount > 5)
+                {
+                    _database.ListLeftPush(DEADLETTER_QUEUE, processingMsg);
+                    _logger.LogEvent(
+                        "QueueDeadletter",
+                        new Dictionary<string, string>()
+                        {
+                            ["Message"] = processingMsg,
+                            ["Queue"] = _queueName,
+                        });
+                    return;
+                }
+                else
+                {
+                    _database.ListLeftPush(_processingQueueName, processingMsg);
+                }
+
+                // Send to the received and see if they are successful
+                bool result = _onMessageReceived(msg).ConfigureAwait(false).GetAwaiter().GetResult();
+                if (result == false)
+                {
+                    // They weren't successful so re-queue the new message
+                    _queue.Publish(_queueName, processingMsg);
+                }
+
+                // We got a response so delete the message from the processing list
+                _database.ListRemove(_processingQueueName, processingMsg);
+            }
+            catch
+            {
+                _logger.LogEvent(
+                    "UnknownQueueMessage",
+                    new Dictionary<string, string>()
+                    {
+                        ["QueueName"] = _queueName,
+                        ["Message"] = message,
+                    });
+            }
         }
 
-        protected virtual Task OnExceptionAsync(ExceptionReceivedEventArgs e)
+        private void OnConnectionFailure(object sender, ConnectionFailedEventArgs e)
         {
             _logger.LogException(
                 e.Exception,
                 new Dictionary<string, string>()
                 {
-                    ["Action"] = e.ExceptionReceivedContext.Action,
-                    ["ClientId"] = e.ExceptionReceivedContext.ClientId,
-                    ["Endpoint"] = e.ExceptionReceivedContext.Endpoint,
-                    ["EntityPath"] = e.ExceptionReceivedContext.EntityPath,
+                    ["QueueName"] = _queueName,
+                    ["ConnectionType"] = e.ConnectionType.ToString(),
+                    ["Endpoint"] = e.EndPoint.ToString(),
+                    ["FailureType"] = e.FailureType.ToString(),
                 });
-            return Task.CompletedTask;
+            _logger.LogEvent(
+                "QueueConnectionFailure",
+                new Dictionary<string, string>()
+                {
+                    ["QueueName"] = _queueName,
+                });
         }
 
-        /// <summary>
-        /// Deletes the specified message from the queue
-        /// </summary>
-        public virtual Task DeleteMessageAsync(QueueMessage msg)
+        private void OnConnectionRestored(object sender, ConnectionFailedEventArgs e)
         {
-            return _queue.CompleteAsync(msg.LockToken);
+            _logger.LogEvent(
+                "QueueConnectionRestored",
+                new Dictionary<string, string>()
+                {
+                    ["QueueName"] = _queueName,
+                });
+        }
+
+        private void OnError(object sender, RedisErrorEventArgs e)
+        {
+            _logger.LogException(
+                new Exception(e.Message),
+                new Dictionary<string, string>()
+                {
+                    ["QueueName"] = _queueName,
+                    ["Endpoint"] = e.EndPoint.ToString(),
+                });
+        }
+
+        private void OnRedisInternalError(object sender, InternalErrorEventArgs e)
+        {
+            _logger.LogException(
+                e.Exception,
+                new Dictionary<string, string>()
+                {
+                    ["QueueName"] = _queueName,
+                    ["ConnectionType"] = e.ConnectionType.ToString(),
+                    ["Endpoint"] = e.EndPoint.ToString(),
+                    ["Origin"] = e.Origin,
+                });
         }
 
         /// <inheritdoc />
-        public async Task PushObjectAsMessageAsync(object data)
+        public Task PushObjectAsMessageAsync(object data)
         {
-            try
-            {
-                await InternalPushObjectAsMessageAsync(data).ConfigureAwait(false);
-            }
-            catch (System.Net.Sockets.SocketException soc)
-            {
-                await ResetQueueAsync().ConfigureAwait(false);
-                _logger.LogEvent(
-                    "QueueReset",
-                    new Dictionary<string, string>()
-                    {
-                        ["ExceptionMessage"] = soc.Message,
-                        ["Stack"] = soc.StackTrace,
-                    });
-            }
-            catch (System.InvalidOperationException ioex)
-            {
-                await ResetQueueAsync().ConfigureAwait(false);
-                _logger.LogEvent(
-                    "QueueReset",
-                    new Dictionary<string, string>()
-                    {
-                        ["ExceptionMessage"] = ioex.Message,
-                        ["Stack"] = ioex.StackTrace,
-                    });
-            }
-        }
-
-        /// <inheritdoc />
-        public async Task PushObjectAsMessageAsync(object data, TimeSpan initialDelay)
-        {
-            try
-            {
-                await InternalPushObjectAsMessageAsync(data, initialDelay).ConfigureAwait(false);
-            }
-            catch (System.Net.Sockets.SocketException soc)
-            {
-                await ResetQueueAsync().ConfigureAwait(false);
-                _logger.LogEvent(
-                    "QueueReset",
-                    new Dictionary<string, string>()
-                    {
-                        ["ExceptionMessage"] = soc.Message,
-                        ["Stack"] = soc.StackTrace,
-                    });
-            }
-            catch (System.InvalidOperationException ioex)
-            {
-                await ResetQueueAsync().ConfigureAwait(false);
-                _logger.LogEvent(
-                    "QueueReset",
-                    new Dictionary<string, string>()
-                    {
-                        ["ExceptionMessage"] = ioex.Message,
-                        ["Stack"] = ioex.StackTrace,
-                    });
-            }
+            return InternalPushObjectAsMessageAsync(data);
         }
 
         protected virtual Task InternalPushObjectAsMessageAsync(object data)
         {
             string serialized = JsonConvert.SerializeObject(data);
-            byte[] raw = Encoding.UTF8.GetBytes(serialized);
-            Message m = new Message(raw);
-            return _queue.SendAsync(m);
-        }
-
-        protected virtual Task InternalPushObjectAsMessageAsync(object data, TimeSpan initialDelay)
-        {
-            string serialized = JsonConvert.SerializeObject(data);
-            byte[] raw = Encoding.UTF8.GetBytes(serialized);
-            Message m = new Message(raw);
-            return _queue.ScheduleMessageAsync(m, DateTimeOffset.UtcNow + initialDelay);
-        }
-
-        private async Task ResetQueueAsync()
-        {
-            try
-            {
-                await _queue.CloseAsync().ConfigureAwait(false);
-            }
-            catch
-            {
-                // No-op
-            }
-
-            _queue = new QueueClient(_connectionString, _queueName, ReceiveMode.PeekLock, new RetryExponential(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(60), 5));
-            await SetupAsync(_onMessageReceived, _numberOfReaders);
+            QueueMessage msg = new QueueMessage(serialized);
+            string msgString = JsonConvert.SerializeObject(msg);
+            return _queue.PublishAsync(_queueName, msgString);
         }
     }
 }
