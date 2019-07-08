@@ -14,22 +14,25 @@ namespace BaseCap.CloudAbstractions.Implementations
     public class AzureRedisCache : ICache, IDisposable
     {
         private readonly ConfigurationOptions _options;
+        private readonly ILogger _logger;
         private ConnectionMultiplexer _cacheConnection;
         private IDatabaseAsync _database;
 
         /// <summary>
         /// Creates a new AzureRedisCache
         /// </summary>
-        public AzureRedisCache(string endpoint, string password, bool useSsl)
+        public AzureRedisCache(string endpoint, string password, bool useSsl, ILogger logger)
         {
             _options = new ConfigurationOptions()
             {
                 AbortOnConnectFail = false,
                 ConnectRetry = 3,
+                ConnectTimeout = TimeSpan.FromSeconds(30).Milliseconds,
                 Password = password,
                 Ssl = useSsl,
             };
             _options.EndPoints.Add(endpoint);
+            _logger = logger;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -51,10 +54,89 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <inheritdoc />
-        public async Task SetupAsync()
+        public Task SetupAsync()
         {
-            _cacheConnection = await ConnectionMultiplexer.ConnectAsync(_options);
+            CreateConnection();
+            return Task.CompletedTask;
+        }
+
+        private void ResetConnection()
+        {
+            try
+            {
+                _cacheConnection.Close();
+                _cacheConnection.Dispose();
+            }
+            finally
+            {
+                CreateConnection();
+            }
+        }
+
+        private void CreateConnection()
+        {
+            _cacheConnection = ConnectionMultiplexer.Connect(_options);
+            _cacheConnection.ConnectionFailed += OnConnectionFailure;
+            _cacheConnection.ConnectionRestored += OnConnectionRestored;
+            _cacheConnection.ErrorMessage += OnError;
+            _cacheConnection.InternalError += OnRedisInternalError;
+            _cacheConnection.IncludeDetailInExceptions = true;
+            _cacheConnection.IncludePerformanceCountersInExceptions = true;
             _database = _cacheConnection.GetDatabase();
+        }
+
+        private void OnConnectionFailure(object sender, ConnectionFailedEventArgs e)
+        {
+            _logger.LogException(
+                e.Exception,
+                new Dictionary<string, string>()
+                {
+                    ["ConnectionType"] = e.ConnectionType.ToString(),
+                    ["Endpoint"] = e.EndPoint.ToString(),
+                    ["FailureType"] = e.FailureType.ToString(),
+                });
+            _logger.LogEvent(
+                "CacheConnectionFailure",
+                new Dictionary<string, string>()
+                {
+                });
+
+            ResetConnection();
+        }
+
+        private void OnConnectionRestored(object sender, ConnectionFailedEventArgs e)
+        {
+            _logger.LogEvent(
+                "CacheConnectionRestored",
+                new Dictionary<string, string>()
+                {
+                });
+        }
+
+        private void OnError(object sender, RedisErrorEventArgs e)
+        {
+            _logger.LogException(
+                new Exception(e.Message),
+                new Dictionary<string, string>()
+                {
+                    ["Endpoint"] = e.EndPoint.ToString(),
+                });
+
+            ResetConnection();
+        }
+
+        private void OnRedisInternalError(object sender, InternalErrorEventArgs e)
+        {
+            _logger.LogException(
+                e.Exception,
+                new Dictionary<string, string>()
+                {
+                    ["ConnectionType"] = e.ConnectionType.ToString(),
+                    ["Endpoint"] = e.EndPoint.ToString(),
+                    ["Origin"] = e.Origin,
+                });
+
+            ResetConnection();
         }
 
         protected virtual Task<string> SerializeObject(object o)
