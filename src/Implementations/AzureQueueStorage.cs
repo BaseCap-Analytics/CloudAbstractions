@@ -14,8 +14,9 @@ namespace BaseCap.CloudAbstractions.Implementations
     {
         private const string DEADLETTER_QUEUE = "DEADLETTER";
         protected readonly string _queueName;
-        private readonly string _processingQueueName;
         protected readonly ILogger _logger;
+        protected readonly ConfigurationOptions _options;
+        private readonly string _processingQueueName;
         private ConnectionMultiplexer _cacheConnection;
         protected ISubscriber _queue;
         private IDatabase _database;
@@ -29,15 +30,21 @@ namespace BaseCap.CloudAbstractions.Implementations
             _queueName = queueName;
             _processingQueueName = $"{queueName}_processing";
             _logger = logger;
-            ConfigurationOptions options = new ConfigurationOptions()
+            _options = new ConfigurationOptions()
             {
                 AbortOnConnectFail = false,
                 ConnectRetry = 3,
+                ConnectTimeout = TimeSpan.FromSeconds(30).Milliseconds,
                 Password = password,
                 Ssl = useSsl,
             };
-            options.EndPoints.Add(endpoint);
-            _cacheConnection = ConnectionMultiplexer.Connect(options);
+            _options.EndPoints.Add(endpoint);
+            CreateConnection();
+        }
+
+        private void CreateConnection()
+        {
+            _cacheConnection = ConnectionMultiplexer.Connect(_options);
             _cacheConnection.ConnectionFailed += OnConnectionFailure;
             _cacheConnection.ConnectionRestored += OnConnectionRestored;
             _cacheConnection.ErrorMessage += OnError;
@@ -46,6 +53,20 @@ namespace BaseCap.CloudAbstractions.Implementations
             _cacheConnection.IncludePerformanceCountersInExceptions = true;
             _queue = _cacheConnection.GetSubscriber();
             _database = _cacheConnection.GetDatabase();
+        }
+
+        private void ResetConnection()
+        {
+            try
+            {
+                _queue.UnsubscribeAll();
+                _cacheConnection.Close(false);
+                _cacheConnection.Dispose();
+            }
+            finally
+            {
+                CreateConnection();
+            }
         }
 
         protected virtual void Dispose(bool disposing)
@@ -147,6 +168,8 @@ namespace BaseCap.CloudAbstractions.Implementations
                 {
                     ["QueueName"] = _queueName,
                 });
+
+            ResetConnection();
         }
 
         private void OnConnectionRestored(object sender, ConnectionFailedEventArgs e)
@@ -168,6 +191,8 @@ namespace BaseCap.CloudAbstractions.Implementations
                     ["QueueName"] = _queueName,
                     ["Endpoint"] = e.EndPoint.ToString(),
                 });
+
+            ResetConnection();
         }
 
         private void OnRedisInternalError(object sender, InternalErrorEventArgs e)
@@ -181,6 +206,8 @@ namespace BaseCap.CloudAbstractions.Implementations
                     ["Endpoint"] = e.EndPoint.ToString(),
                     ["Origin"] = e.Origin,
                 });
+
+            ResetConnection();
         }
 
         /// <inheritdoc />

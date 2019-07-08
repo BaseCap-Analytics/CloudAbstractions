@@ -1,3 +1,4 @@
+using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
 using Newtonsoft.Json;
 using System;
@@ -13,7 +14,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
     {
         private byte[] _encryptionKey;
 
-        public AzureEncryptedRedisCache(string endpoint, string password, bool useSsl, byte[] encryptionKey) : base(endpoint, password, useSsl)
+        public AzureEncryptedRedisCache(string endpoint, string password, bool useSsl, byte[] encryptionKey, ILogger logger)
+            : base(endpoint, password, useSsl, logger)
         {
             _encryptionKey = encryptionKey;
         }
