@@ -27,9 +27,10 @@ namespace BaseCap.CloudAbstractions.Implementations
             {
                 AbortOnConnectFail = false,
                 ConnectRetry = 3,
-                ConnectTimeout = TimeSpan.FromSeconds(30).Milliseconds,
+                ConnectTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds),
                 Password = password,
                 Ssl = useSsl,
+                SyncTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds),
             };
             _options.EndPoints.Add(endpoint);
             _logger = logger;
