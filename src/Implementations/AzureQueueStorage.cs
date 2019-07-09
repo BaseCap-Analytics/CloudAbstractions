@@ -13,13 +13,16 @@ namespace BaseCap.CloudAbstractions.Implementations
     public class AzureQueueStorage : IQueue, IDisposable
     {
         private const string DEADLETTER_QUEUE = "DEADLETTER";
+        private readonly TimeSpan PROCESSING_CHECK_TIMEOUT = TimeSpan.FromMinutes(1);
+        private readonly TimeSpan READ_DELAY = TimeSpan.FromSeconds(3);
         protected readonly string _queueName;
         protected readonly ILogger _logger;
         protected readonly ConfigurationOptions _options;
         private readonly string _processingQueueName;
         private ConnectionMultiplexer _cacheConnection;
-        protected ISubscriber _queue;
-        private IDatabase _database;
+        protected IDatabase _database;
+        private Task _runner;
+        private bool _keepReading;
         protected Func<QueueMessage, Task<bool>> _onMessageReceived;
 
         /// <summary>
@@ -34,9 +37,10 @@ namespace BaseCap.CloudAbstractions.Implementations
             {
                 AbortOnConnectFail = false,
                 ConnectRetry = 3,
-                ConnectTimeout = TimeSpan.FromSeconds(30).Milliseconds,
+                ConnectTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds),
                 Password = password,
                 Ssl = useSsl,
+                SyncTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds),
             };
             _options.EndPoints.Add(endpoint);
             CreateConnection();
@@ -51,7 +55,6 @@ namespace BaseCap.CloudAbstractions.Implementations
             _cacheConnection.InternalError += OnRedisInternalError;
             _cacheConnection.IncludeDetailInExceptions = true;
             _cacheConnection.IncludePerformanceCountersInExceptions = true;
-            _queue = _cacheConnection.GetSubscriber();
             _database = _cacheConnection.GetDatabase();
         }
 
@@ -59,7 +62,6 @@ namespace BaseCap.CloudAbstractions.Implementations
         {
             try
             {
-                _queue.UnsubscribeAll();
                 _cacheConnection.Close(false);
                 _cacheConnection.Dispose();
             }
@@ -91,16 +93,48 @@ namespace BaseCap.CloudAbstractions.Implementations
         public Task SetupAsync(Func<QueueMessage, Task<bool>> onMessageReceived)
         {
             _onMessageReceived = onMessageReceived;
-            return _queue.SubscribeAsync(_queueName, OnMessageReceived);
+            _keepReading = true;
+            _runner = Task.Run(ReadFromQueueAsync);
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task StopAsync()
+        public async Task StopAsync()
         {
-            return _queue.UnsubscribeAllAsync();
+            _keepReading = false;
+            await Task.WhenAny(new [] { _runner, Task.Delay(TimeSpan.FromSeconds(5)) });
         }
 
-        protected virtual void OnMessageReceived(RedisChannel queueName, RedisValue message)
+        private async Task ReadFromQueueAsync()
+        {
+            DateTimeOffset lastProcessingRead = DateTimeOffset.MinValue;
+            while (_keepReading)
+            {
+                RedisValue value = await _database.ListRightPopLeftPushAsync(_queueName, _processingQueueName).ConfigureAwait(false);
+                await ProcessMessageAsync(value, _queueName);
+
+                if ((DateTimeOffset.Now - lastProcessingRead) > PROCESSING_CHECK_TIMEOUT)
+                {
+                    value = await _database.ListRightPopAsync(_queueName).ConfigureAwait(false);
+                    await ProcessMessageAsync(value, _queueName);
+                    lastProcessingRead = DateTimeOffset.Now;
+                }
+
+                await Task.Delay(READ_DELAY);
+            }
+        }
+
+        private Task ProcessMessageAsync(RedisValue message, string queueName)
+        {
+            if (message.IsNullOrEmpty == false)
+            {
+                return OnMessageReceivedAsync(queueName, message);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        protected virtual async Task OnMessageReceivedAsync(RedisChannel queueName, RedisValue message)
         {
             try
             {
@@ -113,7 +147,7 @@ namespace BaseCap.CloudAbstractions.Implementations
                 // If we need to deadletter this message, do it and don't send to a listener
                 if (msg.DequeueCount > 5)
                 {
-                    _database.ListLeftPush(DEADLETTER_QUEUE, processingMsg);
+                    await _database.ListLeftPushAsync(DEADLETTER_QUEUE, processingMsg).ConfigureAwait(false);
                     _logger.LogEvent(
                         "QueueDeadletter",
                         new Dictionary<string, string>()
@@ -123,21 +157,17 @@ namespace BaseCap.CloudAbstractions.Implementations
                         });
                     return;
                 }
-                else
-                {
-                    _database.ListLeftPush(_processingQueueName, processingMsg);
-                }
 
                 // Send to the received and see if they are successful
-                bool result = _onMessageReceived(msg).ConfigureAwait(false).GetAwaiter().GetResult();
+                bool result = await _onMessageReceived(msg).ConfigureAwait(false);
                 if (result == false)
                 {
                     // They weren't successful so re-queue the new message
-                    _queue.Publish(_queueName, processingMsg);
+                    await _database.ListLeftPushAsync(_queueName, processingMsg).ConfigureAwait(false);
                 }
 
                 // We got a response so delete the message from the processing list
-                _database.ListRemove(_processingQueueName, processingMsg);
+                await _database.ListRemoveAsync(_processingQueueName, processingMsg).ConfigureAwait(false);
             }
             catch
             {
@@ -211,17 +241,17 @@ namespace BaseCap.CloudAbstractions.Implementations
         }
 
         /// <inheritdoc />
-        public Task PushObjectAsMessageAsync(object data)
-        {
-            return InternalPushObjectAsMessageAsync(data);
-        }
-
-        protected virtual Task InternalPushObjectAsMessageAsync(object data)
+        public async Task PushObjectAsMessageAsync(object data)
         {
             string serialized = JsonConvert.SerializeObject(data);
-            QueueMessage msg = new QueueMessage(serialized);
+            QueueMessage msg = await CreateQueueMessageAsync(serialized).ConfigureAwait(false);
             string msgString = JsonConvert.SerializeObject(msg);
-            return _queue.PublishAsync(_queueName, msgString);
+            await _database.ListLeftPushAsync(_queueName, msgString).ConfigureAwait(false);
+        }
+
+        protected virtual Task<QueueMessage> CreateQueueMessageAsync(string content)
+        {
+            return Task.FromResult(new QueueMessage(content));
         }
     }
 }

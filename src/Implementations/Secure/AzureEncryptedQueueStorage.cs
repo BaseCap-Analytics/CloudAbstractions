@@ -25,19 +25,15 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
             _encryptionKey = encryptionKey;
         }
 
-        /// <inheritdoc />
-        protected override async Task InternalPushObjectAsMessageAsync(object data)
+        protected override async Task<QueueMessage> CreateQueueMessageAsync(string content)
         {
-            string serialized = JsonConvert.SerializeObject(data);
-            byte[] raw = Encoding.UTF8.GetBytes(serialized);
-            byte[] rawEncrypted = await EncryptionHelpers.EncryptDataAsync(raw, _encryptionKey);
+            byte[] raw = Encoding.UTF8.GetBytes(content);
+            byte[] rawEncrypted = await EncryptionHelpers.EncryptDataAsync(raw, _encryptionKey).ConfigureAwait(false);
             string encrypted = Convert.ToBase64String(rawEncrypted);
-            QueueMessage msg = new QueueMessage(encrypted);
-            string msgString = JsonConvert.SerializeObject(msg);
-            await _queue.PublishAsync(_queueName, msgString);
+            return new QueueMessage(encrypted);
         }
 
-        protected override void OnMessageReceived(RedisChannel queueName, RedisValue message)
+        protected override async Task OnMessageReceivedAsync(RedisChannel queueName, RedisValue message)
         {
             try
             {
@@ -45,11 +41,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Secure
                 string decryptedMsg;
                 QueueMessage msg = JsonConvert.DeserializeObject<QueueMessage>(message);
                 byte[] encryptedBytes = Convert.FromBase64String(msg.Content);
-                byte[] decryptedBytes = EncryptionHelpers.DecryptDataAsync(encryptedBytes, _encryptionKey).GetAwaiter().GetResult();
+                byte[] decryptedBytes = await EncryptionHelpers.DecryptDataAsync(encryptedBytes, _encryptionKey).ConfigureAwait(false);
                 string decrypted = Encoding.UTF8.GetString(decryptedBytes);
                 msg.Content = decrypted;
                 decryptedMsg = JsonConvert.SerializeObject(msg);
-                base.OnMessageReceived(queueName, decryptedMsg);
+                await base.OnMessageReceivedAsync(queueName, decryptedMsg);
             }
             catch
             {
