@@ -4,7 +4,7 @@ using Microsoft.ApplicationInsights.Extensibility;
 using System;
 using System.Collections.Generic;
 
-namespace BaseCap.CloudAbstractions.Implementations
+namespace BaseCap.CloudAbstractions.Implementations.Azure
 {
     /// <summary>
     /// Adds logging functionality targeting Azure App Insights

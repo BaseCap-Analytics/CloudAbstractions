@@ -7,7 +7,7 @@ using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 
-namespace BaseCap.CloudAbstractions.Implementations
+namespace BaseCap.CloudAbstractions.Implementations.Azure
 {
     /// <summary>
     /// Provides a connection for manipulating Azure Storage Tables

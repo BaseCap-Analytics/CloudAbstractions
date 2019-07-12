@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace BaseCap.CloudAbstractions.Implementations
+namespace BaseCap.CloudAbstractions.Implementations.Generic
 {
     /// <summary>
     /// Adds logging functionality targeting stdout

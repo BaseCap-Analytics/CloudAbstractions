@@ -2,7 +2,7 @@ using BaseCap.CloudAbstractions.Abstractions;
 using System;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Secure
+namespace BaseCap.CloudAbstractions.Implementations.Azure.Secure
 {
     /// <summary>
     /// Class to communicate with Azure Storage Accounts with seamless encryption

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations
+namespace BaseCap.CloudAbstractions.Implementations.Azure
 {
     /// <summary>
     /// Class to communicate with Azure Storage Accounts

@@ -5,16 +5,16 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Secure
+namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
 {
     /// <summary>
     /// An encrypted connection to a redis cache cluster
     /// </summary>
-    public class AzureEncryptedRedisCache : AzureRedisCache
+    public class EncryptedRedisCache : RedisCache
     {
         private byte[] _encryptionKey;
 
-        public AzureEncryptedRedisCache(string endpoint, string password, bool useSsl, byte[] encryptionKey, ILogger logger)
+        public EncryptedRedisCache(string endpoint, string password, bool useSsl, byte[] encryptionKey, ILogger logger)
             : base(endpoint, password, useSsl, logger)
         {
             _encryptionKey = encryptionKey;
