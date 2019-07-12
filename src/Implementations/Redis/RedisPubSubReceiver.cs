@@ -11,7 +11,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     public class RedisPubSubReceiver : RedisBase, INotificationReceiver
     {
         private string _channel;
-        private Action<string> _handler;
+        private Func<string, Task> _handler;
 
         public RedisPubSubReceiver(string endpoint, string password, bool useSsl, ILogger logger)
             : base(endpoint, password, useSsl, logger)
@@ -19,7 +19,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public async Task SetupAsync(string channel, Action<string> handler)
+        public async Task SetupAsync(string channel, Func<string, Task> handler)
         {
             _channel = channel;
             _handler = handler;
@@ -41,7 +41,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         private void ReceiveHandler(RedisChannel channel, RedisValue value)
         {
-            _handler(value);
+            _handler(value).GetAwaiter().GetResult();
         }
     }
 }
