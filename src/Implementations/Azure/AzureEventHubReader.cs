@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations
+namespace BaseCap.CloudAbstractions.Implementations.Azure
 {
     /// <summary>
     /// Provides a connection for data coming out of an Event Hub partition

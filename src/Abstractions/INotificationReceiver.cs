@@ -1,0 +1,21 @@
+using System;
+using System.Threading.Tasks;
+
+namespace BaseCap.CloudAbstractions.Abstractions
+{
+    /// <summary>
+    /// The contract for receiving notifications
+    /// </summary>
+    public interface INotificationReceiver
+    {
+        /// <summary>
+        /// Starts receiving messages on the given channel
+        /// </summary>
+        Task SetupAsync(string channel, Action<string> handler);
+
+        /// <summary>
+        /// Stops receiving messages and cleans up
+        /// </summary>
+        Task ShutdownAsync();
+    }
+}

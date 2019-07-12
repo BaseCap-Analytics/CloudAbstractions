@@ -3,7 +3,7 @@ using Microsoft.WindowsAzure.Storage;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Secure
+namespace BaseCap.CloudAbstractions.Implementations.Azure.Secure
 {
     /// <summary>
     /// Provides seamless encryption and decryption for data be passed to and from Azure Blob Storage

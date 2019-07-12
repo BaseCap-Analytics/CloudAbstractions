@@ -2,28 +2,26 @@ using BaseCap.CloudAbstractions.Abstractions;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 
-namespace BaseCap.CloudAbstractions.Implementations
+namespace BaseCap.CloudAbstractions.Implementations.Generic
 {
     /// <summary>
     /// Provides a system to save and load the last read location from an event stream
     /// </summary>
-    public class AzureCheckpointer : ICheckpointer
+    public class EventCheckpointer : ICheckpointer
     {
-        protected IBlobStorage _storage;
-        protected TelemetryClient _logger;
-        protected string _applicationName;
+        protected readonly IBlobStorage _storage;
+        protected readonly string _applicationName;
+        protected readonly ILogger _logger;
 
         /// <summary>
         /// Creates a connection to an application's checkpoint list
         /// </summary>
-        public AzureCheckpointer(IBlobStorage storage, string applicationName)
+        public EventCheckpointer(IBlobStorage storage, string applicationName, ILogger logger)
         {
             _storage = storage;
             _applicationName = applicationName;
-            _logger = new TelemetryClient(TelemetryConfiguration.Active);
+            _logger = logger;
         }
 
         private string GetBlobName(string id)
@@ -46,10 +44,12 @@ namespace BaseCap.CloudAbstractions.Implementations
                 using (StreamReader sr = new StreamReader(blobStream))
                 {
                     value = sr.ReadToEnd()?.Trim();
-                    _logger.TrackEvent("NoCheckpointFound", new Dictionary<string, string>()
-                    {
-                        ["Partition"] = id,
-                    });
+                    _logger.LogEvent(
+                        "NoCheckpointFound",
+                        new Dictionary<string, string>()
+                        {
+                            ["Partition"] = id,
+                        });
                 }
             }
             catch

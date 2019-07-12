@@ -1,11 +1,11 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
 using Microsoft.Azure.EventHubs;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Secure
+namespace BaseCap.CloudAbstractions.Implementations.Azure.Secure
 {
     /// <summary>
     /// Provides seamless encryption for data going into an Event Hub
