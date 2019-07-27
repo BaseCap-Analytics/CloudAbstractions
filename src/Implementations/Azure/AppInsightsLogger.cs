@@ -14,9 +14,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         private readonly TelemetryClient _logger;
 
         /// <inheritdoc />
-        public AppInsightsLogger()
+        public AppInsightsLogger(TelemetryConfiguration configuration)
         {
-            _logger = new TelemetryClient(TelemetryConfiguration.Active);
+            _logger = new TelemetryClient(configuration);
         }
 
         /// <inheritdoc />
