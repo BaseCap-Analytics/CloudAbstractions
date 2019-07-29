@@ -9,9 +9,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     /// </summary>
     public class RedisPubSubSender : RedisBase, INotificationSender
     {
-        public RedisPubSubSender(string endpoint, string password, bool useSsl, ILogger logger)
-            : base(endpoint, password, useSsl, logger)
+        private readonly string _channel;
+
+        public RedisPubSubSender(string endpoint, string password, string channel, bool useSsl, ILogger logger)
+            : base(endpoint, password, useSsl, "Channel", channel, logger)
         {
+            _channel = channel;
         }
 
         /// <inheritdoc />
@@ -21,10 +24,10 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task SendNotificationAsync(object notification, string channel)
+        public Task SendNotificationAsync(object notification)
         {
             string value = JsonConvert.SerializeObject(notification);
-            return _subscription.PublishAsync(channel, value);
+            return _subscription.PublishAsync(_channel, value);
         }
     }
 }

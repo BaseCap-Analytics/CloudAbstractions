@@ -14,10 +14,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         protected ConnectionMultiplexer _cacheConnection;
         protected IDatabaseAsync _database;
         protected ISubscriber _subscription;
+        protected readonly string _errorContextName;
+        protected readonly string _errorContextValue;
         protected readonly ILogger _logger;
         private readonly ConfigurationOptions _options;
 
-        internal RedisBase(string endpoint, string password, bool useSsl, ILogger logger)
+        internal RedisBase(string endpoint, string password, bool useSsl, string errorContextName, string errorContextValue, ILogger logger)
         {
             _options = new ConfigurationOptions()
             {
@@ -29,6 +31,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 SyncTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds),
             };
             _options.EndPoints.Add(endpoint);
+            _errorContextName = errorContextName;
+            _errorContextValue = errorContextValue;
             _logger = logger;
         }
 
@@ -83,12 +87,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             _subscription = _cacheConnection.GetSubscriber();
         }
 
-        protected virtual void OnConnectionFailure(object sender, ConnectionFailedEventArgs e)
+        private void OnConnectionFailure(object sender, ConnectionFailedEventArgs e)
         {
             _logger.LogException(
                 e.Exception,
                 new Dictionary<string, string>()
                 {
+                    [_errorContextName] = _errorContextValue,
                     ["ConnectionType"] = e.ConnectionType.ToString(),
                     ["Endpoint"] = e.EndPoint.ToString(),
                     ["FailureType"] = e.FailureType.ToString(),
@@ -97,38 +102,42 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 "RedisConnectionFailure",
                 new Dictionary<string, string>()
                 {
+                    [_errorContextName] = _errorContextValue,
                 });
 
             ResetConnection();
         }
 
-        protected virtual void OnConnectionRestored(object sender, ConnectionFailedEventArgs e)
+        private void OnConnectionRestored(object sender, ConnectionFailedEventArgs e)
         {
             _logger.LogEvent(
                 "RedisConnectionRestored",
                 new Dictionary<string, string>()
                 {
+                    [_errorContextName] = _errorContextValue,
                 });
         }
 
-        protected virtual void OnError(object sender, RedisErrorEventArgs e)
+        private void OnError(object sender, RedisErrorEventArgs e)
         {
             _logger.LogException(
                 new Exception(e.Message),
                 new Dictionary<string, string>()
                 {
+                    [_errorContextName] = _errorContextValue,
                     ["Endpoint"] = e.EndPoint.ToString(),
                 });
 
             ResetConnection();
         }
 
-        protected virtual void OnRedisInternalError(object sender, InternalErrorEventArgs e)
+        private void OnRedisInternalError(object sender, InternalErrorEventArgs e)
         {
             _logger.LogException(
                 e.Exception,
                 new Dictionary<string, string>()
                 {
+                    [_errorContextName] = _errorContextValue,
                     ["ConnectionType"] = e.ConnectionType.ToString(),
                     ["Endpoint"] = e.EndPoint.ToString(),
                     ["Origin"] = e.Origin,

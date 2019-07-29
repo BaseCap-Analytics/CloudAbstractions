@@ -10,21 +10,21 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     /// </summary>
     public class RedisPubSubReceiver : RedisBase, INotificationReceiver
     {
-        private string _channel;
+        private readonly string _channel;
         private Func<string, Task> _handler;
 
-        public RedisPubSubReceiver(string endpoint, string password, bool useSsl, ILogger logger)
-            : base(endpoint, password, useSsl, logger)
+        public RedisPubSubReceiver(string endpoint, string password, string channel, bool useSsl, ILogger logger)
+            : base(endpoint, password, useSsl, "Channel", channel, logger)
         {
+            _channel = channel;
         }
 
         /// <inheritdoc />
-        public async Task SetupAsync(string channel, Func<string, Task> handler)
+        public async Task SetupAsync(Func<string, Task> handler)
         {
-            _channel = channel;
             _handler = handler;
             await base.SetupAsync().ConfigureAwait(false);
-            base.Subscribe(channel, ReceiveHandler);
+            base.Subscribe(_channel, ReceiveHandler);
         }
 
         /// <inheritdoc />

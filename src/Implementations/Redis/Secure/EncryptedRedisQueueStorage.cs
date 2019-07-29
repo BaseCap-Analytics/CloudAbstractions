@@ -33,7 +33,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             return new QueueMessage(encrypted);
         }
 
-        protected override async Task OnMessageReceivedAsync(RedisChannel queueName, RedisValue message)
+        protected override async Task OnMessageReceivedAsync(RedisValue message)
         {
             try
             {
@@ -45,7 +45,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                 string decrypted = Encoding.UTF8.GetString(decryptedBytes);
                 msg.Content = decrypted;
                 decryptedMsg = JsonConvert.SerializeObject(msg);
-                await base.OnMessageReceivedAsync(queueName, decryptedMsg);
+                await base.OnMessageReceivedAsync(decryptedMsg);
             }
             catch
             {
