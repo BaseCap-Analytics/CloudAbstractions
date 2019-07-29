@@ -15,6 +15,6 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Sends the notification to any receivers on the given channel
         /// </summary>
-        Task SendNotificationAsync(object notification, string channel);
+        Task SendNotificationAsync(object notification);
     }
 }

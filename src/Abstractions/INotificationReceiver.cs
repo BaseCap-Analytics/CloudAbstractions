@@ -11,7 +11,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Starts receiving messages on the given channel
         /// </summary>
-        Task SetupAsync(string channel, Func<string, Task> handler);
+        Task SetupAsync(Func<string, Task> handler);
 
         /// <summary>
         /// Stops receiving messages and cleans up
