@@ -57,5 +57,21 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="key">The key of the value to delete</param>
         /// <returns>Returns true if the entry was deleted; otherwise, returns false</returns>
         Task<bool> DeleteCacheObjectAsync(string key);
+
+        /// <summary>
+        /// Increments the hashset field by 1
+        /// </summary>
+        /// <param name="hashKey">The key to the hashset</param>
+        /// <param name="fieldKey">The field name in the hashset</param>
+        /// <returns>Returns the value in the field after the operation completes</returns>
+        Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey);
+
+        /// <summary>
+        /// Retrieves specific field values from the hashset
+        /// </summary>
+        /// <param name="hashKey">The key to the hashset</param>
+        /// <param name="fields">The fields to retrieve the values of</param>
+        /// <returns>Returns the value for each field; if the field does not exist, null is returned for it's value</returns>
+        Task<IEnumerable<long?>> GetHashKeyFieldValuesAsync(string hashKey, params string[] fields);
     }
 }

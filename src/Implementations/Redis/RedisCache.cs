@@ -115,5 +115,37 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         {
             return _database.ListLengthAsync(key);
         }
+
+        /// <inheritdoc />
+        public Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey)
+        {
+            return _database.HashIncrementAsync(hashKey, fieldKey);
+        }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<long?>> GetHashKeyFieldValuesAsync(string hashKey, params string[] fields)
+        {
+            RedisValue[] values = new RedisValue[fields.Length];
+            for (int i = 0; i < fields.Length; i++)
+            {
+                values[i] = fields[i];
+            }
+
+            RedisValue[] fieldValues = await _database.HashGetAsync(hashKey, values).ConfigureAwait(false);
+            long?[] returnValues = new long?[fieldValues.Length];
+            for (int i = 0; i < fieldValues.Length; i++)
+            {
+                if (fieldValues[i].IsInteger)
+                {
+                    returnValues[i] = (long)fieldValues[i];
+                }
+                else
+                {
+                    returnValues[i] = null;
+                }
+            }
+
+            return returnValues;
+        }
     }
 }
