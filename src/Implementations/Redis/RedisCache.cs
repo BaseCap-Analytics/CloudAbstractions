@@ -13,17 +13,30 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     /// </summary>
     public class RedisCache : RedisBase, ICache
     {
+        private readonly string _endpoint;
+        private readonly string _password;
+        private readonly bool _useSsl;
+
         /// <summary>
         /// Creates a new RedisCache
         /// </summary>
         public RedisCache(string endpoint, string password, bool useSsl, ILogger logger)
             : base(endpoint, password, useSsl, "Cache", "[default]", logger)
         {
+            _endpoint = endpoint;
+            _password = password;
+            _useSsl = useSsl;
         }
 
         Task ICache.SetupAsync()
         {
             return base.SetupAsync();
+        }
+
+        /// <inheritdoc />
+        public IHyperLogLog CreateHyperLogLog(string logName)
+        {
+            return (IHyperLogLog)new RedisHyperLogLog(_endpoint, _password, logName, _useSsl, _logger);
         }
 
         protected virtual Task<string> SerializeObject(object o)
