@@ -15,6 +15,13 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task SetupAsync();
 
         /// <summary>
+        /// Creates a HyperLogLog from this cache
+        /// </summary>
+        /// <param name="logName">The name of the HyperLogLog to create</param>
+        /// <returns>Returns an IHyperLogLog to use</returns>
+        IHyperLogLog CreateHyperLogLog(string logName);
+
+        /// <summary>
         /// Adds a value to a list
         /// </summary>
         /// <param name="key">The key to store the value as</param>
