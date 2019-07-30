@@ -8,6 +8,11 @@ namespace BaseCap.CloudAbstractions.Abstractions
     public interface IHyperLogLog
     {
         /// <summary>
+        /// Initializes the connection
+        /// </summary>
+        Task SetupAsync();
+
+        /// <summary>
         /// Checks if the provided key is unique in the set
         /// </summary>
         /// <param name="key">The entry to check for uniqueness</param>

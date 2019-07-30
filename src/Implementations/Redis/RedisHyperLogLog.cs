@@ -6,7 +6,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     /// <summary>
     /// A connection to a redis hyperloglog
     /// </summary>
-    public class RedisHyperLogLog : RedisBase
+    public class RedisHyperLogLog : RedisBase, IHyperLogLog
     {
         private readonly string _logName;
 
@@ -17,6 +17,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             : base(endpoint, password, useSsl, "HyperLogLog", "[default]", logger)
         {
             _logName = logName;
+        }
+
+        /// <inheritdoc />
+        Task IHyperLogLog.SetupAsync()
+        {
+            return base.SetupAsync();
         }
 
         /// <inheritdoc />
