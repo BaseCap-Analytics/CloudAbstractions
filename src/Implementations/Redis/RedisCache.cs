@@ -136,6 +136,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
+        public Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, int increment)
+        {
+            return _database.HashIncrementAsync(hashKey, fieldKey, increment);
+        }
+
+        /// <inheritdoc />
         public async Task<IEnumerable<long?>> GetHashKeyFieldValuesAsync(string hashKey, params string[] fields)
         {
             RedisValue[] values = new RedisValue[fields.Length];

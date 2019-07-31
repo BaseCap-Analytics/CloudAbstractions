@@ -38,7 +38,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task DeleteLog()
+        public Task DeleteLogAsync()
         {
             return _database.KeyDeleteAsync(_logName);
         }
