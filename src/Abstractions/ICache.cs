@@ -74,6 +74,15 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey);
 
         /// <summary>
+        /// Increments the hashset field by a specified amount
+        /// </summary>
+        /// <param name="hashKey">The key to the hashset</param>
+        /// <param name="fieldKey">The field name in the hashset</param>
+        /// <param name="increment">The amount to increment the field by</param>
+        /// <returns>Returns the value in the field after the operation completes</returns>
+        Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, int increment);
+
+        /// <summary>
         /// Retrieves specific field values from the hashset
         /// </summary>
         /// <param name="hashKey">The key to the hashset</param>

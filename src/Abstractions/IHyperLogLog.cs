@@ -28,6 +28,6 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Deletes the set
         /// </summary>
-        Task DeleteLog();
+        Task DeleteLogAsync();
     }
 }
