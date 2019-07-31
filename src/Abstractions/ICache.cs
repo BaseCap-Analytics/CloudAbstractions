@@ -83,6 +83,14 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, int increment);
 
         /// <summary>
+        /// Checks if the given field exists in the specified hash set
+        /// </summary>
+        /// <param name="hashKey">The key to the hashset</param>
+        /// <param name="fieldKey">The field name in the hashset</param>
+        /// <returns>Returns true if the field exists; otherwise, returns false</returns>
+        Task<bool> DoesHashFieldExistAsync(string hashKey, string fieldKey);
+
+        /// <summary>
         /// Retrieves specific field values from the hashset
         /// </summary>
         /// <param name="hashKey">The key to the hashset</param>
