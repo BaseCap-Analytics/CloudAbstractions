@@ -142,6 +142,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
+        public Task<bool> DoesHashFieldExistAsync(string hashKey, string fieldKey)
+        {
+            return _database.HashExistsAsync(hashKey, fieldKey);
+        }
+
+        /// <inheritdoc />
         public async Task<IEnumerable<long?>> GetHashKeyFieldValuesAsync(string hashKey, params string[] fields)
         {
             RedisValue[] values = new RedisValue[fields.Length];
