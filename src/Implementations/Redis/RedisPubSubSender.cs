@@ -1,5 +1,6 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis
@@ -11,8 +12,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     {
         private readonly string _channel;
 
-        public RedisPubSubSender(string endpoint, string password, string channel, bool useSsl, ILogger logger)
-            : base(endpoint, password, useSsl, "Channel", channel, logger)
+        public RedisPubSubSender(IEnumerable<string> endpoints, string password, string channel, bool useSsl, ILogger logger)
+            : base(endpoints, password, useSsl, "Channel", channel, logger)
         {
             _channel = channel;
         }
