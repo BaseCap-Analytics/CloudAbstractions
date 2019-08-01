@@ -2,6 +2,7 @@ using BaseCap.CloudAbstractions.Abstractions;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis
@@ -11,16 +12,21 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     /// </summary>
     public abstract class RedisBase : IDisposable
     {
+        protected readonly ConfigurationOptions _options;
         protected ConnectionMultiplexer _cacheConnection;
         protected IDatabaseAsync _database;
         protected ISubscriber _subscription;
         protected readonly string _errorContextName;
         protected readonly string _errorContextValue;
         protected readonly ILogger _logger;
-        private readonly ConfigurationOptions _options;
 
-        internal RedisBase(string endpoint, string password, bool useSsl, string errorContextName, string errorContextValue, ILogger logger)
+        internal RedisBase(IEnumerable<string> endpoints, string password, bool useSsl, string errorContextName, string errorContextValue, ILogger logger)
         {
+            if (endpoints?.Any() == false)
+            {
+                throw new ArgumentNullException(nameof(endpoints));
+            }
+
             _options = new ConfigurationOptions()
             {
                 AbortOnConnectFail = false,
@@ -30,7 +36,18 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 Ssl = useSsl,
                 SyncTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds),
             };
-            _options.EndPoints.Add(endpoint);
+            foreach (string endpoint in endpoints)
+            {
+                _options.EndPoints.Add(endpoint);
+            }
+            _errorContextName = errorContextName;
+            _errorContextValue = errorContextValue;
+            _logger = logger;
+        }
+
+        internal RedisBase(ConfigurationOptions options, string errorContextName, string errorContextValue, ILogger logger)
+        {
+            _options = options;
             _errorContextName = errorContextName;
             _errorContextValue = errorContextValue;
             _logger = logger;

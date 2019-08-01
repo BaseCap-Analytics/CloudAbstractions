@@ -22,8 +22,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <summary>
         /// Creates a new connection to an Azure Queue Storage
         /// </summary>
-        public RedisQueueStorage(string endpoint, string password, string queueName, bool useSsl, ILogger logger)
-            : base(endpoint, password, useSsl, "QueueName", queueName, logger)
+        public RedisQueueStorage(IEnumerable<string> endpoints, string password, string queueName, bool useSsl, ILogger logger)
+            : base(endpoints, password, useSsl, "QueueName", queueName, logger)
         {
             _queueName = queueName;
             _channelName = $"{_queueName}{CHANNEL_SUFFIX}";

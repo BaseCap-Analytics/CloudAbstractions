@@ -2,6 +2,7 @@ using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,8 +15,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
     {
         private byte[] _encryptionKey;
 
-        public EncryptedRedisCache(string endpoint, string password, bool useSsl, byte[] encryptionKey, ILogger logger)
-            : base(endpoint, password, useSsl, logger)
+        public EncryptedRedisCache(IEnumerable<string> endpoints, string password, bool useSsl, byte[] encryptionKey, ILogger logger)
+            : base(endpoints, password, useSsl, logger)
         {
             _encryptionKey = encryptionKey;
         }
