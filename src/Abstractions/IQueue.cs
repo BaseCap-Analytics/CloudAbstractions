@@ -9,7 +9,12 @@ namespace BaseCap.CloudAbstractions.Abstractions
     public interface IQueue
     {
         /// <summary>
-        /// Constructs the underlying stream connection
+        /// Constructs the underlying stream connection for write connections
+        /// </summary>
+        Task SetupAsync();
+
+        /// <summary>
+        /// Constructs the underlying stream connection for read connections
         /// </summary>
         Task SetupAsync(Func<QueueMessage, Task<bool>> onMessageReceived);
 

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations
+namespace BaseCap.CloudAbstractions.Implementations.Azure
 {
     /// <summary>
     /// Provides a connection for data be passed to and from Azure Blob Queue Storage
@@ -95,6 +95,12 @@ namespace BaseCap.CloudAbstractions.Implementations
             _onMessageReceived = onMessageReceived;
             _keepReading = true;
             _runner = Task.Run(ReadFromQueueAsync);
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task SetupAsync()
+        {
             return Task.CompletedTask;
         }
 

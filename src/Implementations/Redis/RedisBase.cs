@@ -184,13 +184,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             ResetConnection();
         }
 
-        protected Task SetupAsync()
+        protected Task InitializeAsync()
         {
             CreateConnection();
             return Task.CompletedTask;
         }
 
-        protected async Task ShutdownAsync()
+        protected async Task CleanupAsync()
         {
             _database = null;
             await _subscription.UnsubscribeAllAsync().ConfigureAwait(false);

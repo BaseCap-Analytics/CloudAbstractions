@@ -19,9 +19,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        Task INotificationSender.SetupAsync()
+        public Task SetupAsync()
         {
-            return base.SetupAsync();
+            return base.InitializeAsync();
         }
 
         /// <inheritdoc />

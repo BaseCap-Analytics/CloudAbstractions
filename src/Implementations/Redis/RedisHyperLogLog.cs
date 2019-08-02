@@ -28,9 +28,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        Task IHyperLogLog.SetupAsync()
+        public Task SetupAsync()
         {
-            return base.SetupAsync();
+            return base.InitializeAsync();
         }
 
         /// <inheritdoc />
