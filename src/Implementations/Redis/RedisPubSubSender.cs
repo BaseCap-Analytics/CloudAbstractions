@@ -25,10 +25,15 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task SendNotificationAsync(object notification)
+        public async Task SendNotificationAsync(object notification)
         {
-            string value = JsonConvert.SerializeObject(notification);
-            return _subscription.PublishAsync(_channel, value);
+            string value = await GetNotificationValueAsync(notification).ConfigureAwait(false);
+            await _subscription.PublishAsync(_channel, value).ConfigureAwait(false);
+        }
+
+        internal virtual Task<string> GetNotificationValueAsync(object notification)
+        {
+            return Task.FromResult(JsonConvert.SerializeObject(notification));
         }
     }
 }

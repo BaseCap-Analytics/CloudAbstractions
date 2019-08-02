@@ -57,7 +57,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// <summary>
         /// Reads up to a specified number of events from the stream
         /// </summary>
-        internal virtual async Task ReadEventsAsync(CancellationToken token)
+        internal async Task ReadEventsAsync(CancellationToken token)
         {
             while (token.IsCancellationRequested == false)
             {
@@ -77,7 +77,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
                             if (_eventIdCache.TryGetValue(messageId, out _) == false)
                             {
                                 _eventIdCache.Set(messageId, messageId, TimeSpan.FromMinutes(1));
-                                messages.Add(new EventMessage(ed));
+                                messages.Add(await GetEventMessageAsync(ed).ConfigureAwait(false));
                             }
                         }
 
@@ -97,6 +97,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
                         });
                 }
             }
+        }
+
+        internal virtual Task<EventMessage> GetEventMessageAsync(EventData eventData)
+        {
+            return Task.FromResult(new EventMessage(eventData));
         }
     }
 }

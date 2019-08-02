@@ -40,7 +40,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             base.Subscribe(_channel, ReceiveHandler);
         }
 
-        private void ReceiveHandler(RedisChannel channel, RedisValue value)
+        internal virtual void ReceiveHandler(RedisChannel channel, RedisValue value)
         {
             _handler(value).GetAwaiter().GetResult();
         }
