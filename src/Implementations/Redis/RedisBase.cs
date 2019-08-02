@@ -12,6 +12,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     /// </summary>
     public abstract class RedisBase : IDisposable
     {
+        private const int MAX_STREAM_LENGTH = 100000; // 100k records in stream before removing old ones
         protected readonly ConfigurationOptions _options;
         protected ConnectionMultiplexer _cacheConnection;
         protected IDatabaseAsync _database;
@@ -110,7 +111,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             // To ensure we don't mess up readers, we then delete the value, leaving an empty stream.
             if (await _database.KeyExistsAsync(streamName) == false)
             {
-                RedisValue msgId = await _database.StreamAddAsync(streamName, "create", "create").ConfigureAwait(false);
+                RedisValue msgId = await _database.StreamAddAsync(
+                    streamName,
+                    "create",
+                    "create",
+                    maxLength: MAX_STREAM_LENGTH,
+                    useApproximateMaxLength: true)
+                    .ConfigureAwait(false);
                 await _database.StreamDeleteAsync(streamName, new[] { msgId }).ConfigureAwait(false);
             }
         }
