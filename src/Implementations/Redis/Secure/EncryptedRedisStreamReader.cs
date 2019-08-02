@@ -44,7 +44,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                 decryptedEntries.Add(entries[id].Name, new NameValueEntry(entries[id].Name, plaintext));
             }
 
-            await base.ProcessMessagesAsync(entries, onMessagesReceived).ConfigureAwait(false);
+            await base.ProcessMessagesAsync(decryptedEntries, onMessagesReceived).ConfigureAwait(false);
         }
     }
 }
