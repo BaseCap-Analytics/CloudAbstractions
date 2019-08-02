@@ -41,7 +41,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                 byte[] encrypted = Convert.FromBase64String(entries[id].Value);
                 byte[] plaintextBytes = await EncryptionHelpers.DecryptDataAsync(encrypted, _encryptionKey).ConfigureAwait(false);
                 string plaintext = Encoding.UTF8.GetString(plaintextBytes);
-                decryptedEntries.Add(entries[id].Name, new NameValueEntry(entries[id].Name, plaintext));
+                decryptedEntries.Add(id, new NameValueEntry(entries[id].Name, plaintext));
             }
 
             await base.ProcessMessagesAsync(decryptedEntries, onMessagesReceived).ConfigureAwait(false);
