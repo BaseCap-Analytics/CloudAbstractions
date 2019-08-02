@@ -15,9 +15,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         private const string DEADLETTER_QUEUE = "DEADLETTER";
         private const string DEADLETTER_CHANNEL = DEADLETTER_QUEUE + CHANNEL_SUFFIX;
         private const string CHANNEL_SUFFIX = "_notifications";
+        private readonly TimeSpan POLLING_FALLBACK_DELAY = TimeSpan.FromMinutes(5);
         protected readonly string _queueName;
         protected readonly string _channelName;
         protected Func<QueueMessage, Task<bool>> _onMessageReceived;
+        private Task _pollingFallback;
+        private bool _keepPolling;
 
         /// <summary>
         /// Creates a new connection to an Azure Queue Storage
@@ -35,12 +38,16 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             _onMessageReceived = onMessageReceived;
             await base.SetupAsync();
             base.Subscribe(_channelName, InternalOnMessageReceived);
+            _keepPolling = true;
+            _pollingFallback = Task.Run(PollingFallbackAsync);
         }
 
         /// <inheritdoc />
-        public Task StopAsync()
+        public async Task StopAsync()
         {
-            return base.ShutdownAsync();
+            _keepPolling = false;
+            await Task.WhenAny(new [] { _pollingFallback, Task.Delay(TimeSpan.FromSeconds(3)) }).ConfigureAwait(false);
+            await base.ShutdownAsync().ConfigureAwait(false);
         }
 
         protected override void ResetConnection()
@@ -49,7 +56,24 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             base.Subscribe(_channelName, InternalOnMessageReceived);
         }
 
-        private void InternalOnMessageReceived(RedisChannel channel, RedisValue message)
+        private async Task PollingFallbackAsync()
+        {
+            // Have a polling fallback just in case the pub/sub fails
+            while (_keepPolling)
+            {
+                try
+                {
+                    HandleMessage();
+                    await Task.Delay(POLLING_FALLBACK_DELAY).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                }
+            }
+        }
+
+        private void HandleMessage()
         {
             // This is a notification that there is work to do, check for the actual work and see if we got it
             string work = _database.ListRightPopAsync(_queueName).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -64,6 +88,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 // support blocking operations on Redis.
                 OnMessageReceivedAsync(work).ConfigureAwait(false).GetAwaiter().GetResult();
             }
+        }
+
+        private void InternalOnMessageReceived(RedisChannel channel, RedisValue message)
+        {
+            HandleMessage();
         }
 
         protected virtual async Task OnMessageReceivedAsync(RedisValue message)

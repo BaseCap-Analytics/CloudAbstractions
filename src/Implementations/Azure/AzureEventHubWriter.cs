@@ -1,8 +1,10 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.Azure.EventHubs;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Azure
@@ -52,31 +54,30 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             return _client.CloseAsync();
         }
 
-        /// <summary>
-        /// Sends the event into the specified partition
-        /// </summary>
-        public virtual async Task SendEventDataAsync(EventMessage msg, string partition)
+        internal virtual Task<EventData> GetEventDataAsync(object message)
         {
-            using (EventData data = msg.ToEventData())
+            string serialized = JsonConvert.SerializeObject(message);
+            byte[] data = Encoding.UTF8.GetBytes(serialized);
+            return Task.FromResult(new EventData(data));
+        }
+
+        /// <summary>
+        /// Sends the specified object as an event into the specified partition
+        /// </summary>
+        public async Task SendEventDataAsync(object obj, string partition)
+        {
+            using (EventData data = await GetEventDataAsync(obj).ConfigureAwait(false))
             {
                 await _client.SendAsync(data, partition).ConfigureAwait(false);
             }
         }
 
         /// <summary>
-        /// Sends the specified object as an event into the specified partition
+        /// Sends the batch of objects as separate events into the specified partition
         /// </summary>
-        public virtual Task SendEventDataAsync(object obj, string partition)
+        public async Task SendEventDataAsync(IEnumerable<object> msgs, string partition)
         {
-            return SendEventDataAsync(new EventMessage(obj), partition);
-        }
-
-        /// <summary>
-        /// Sends a batch of events into the specified partition
-        /// </summary>
-        public virtual async Task SendEventDataAsync(IEnumerable<EventMessage> msgs, string partition)
-        {
-            Queue<EventData> data = new Queue<EventData>(msgs.Select(m => m.ToEventData()));
+            Queue<EventData> data = new Queue<EventData>(msgs.Select(m => GetEventDataAsync(m).ConfigureAwait(false).GetAwaiter().GetResult()));
 
             do
             {
@@ -89,12 +90,27 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             while (data.Count > 0);
         }
 
-        /// <summary>
-        /// Sends the batch of objects as separate events into the specified partition
-        /// </summary>
-        public virtual Task SendEventDataAsync(IEnumerable<object> msgs, string partition)
+        public async Task SendEventDataAsync(object obj)
         {
-            return SendEventDataAsync(msgs.Select(o => new EventMessage(o)), partition);
+            using (EventData data = await GetEventDataAsync(obj).ConfigureAwait(false))
+            {
+                await _client.SendAsync(data).ConfigureAwait(false);
+            }
+        }
+
+        public async Task SendEventDataAsync(IEnumerable<object> msgs)
+        {
+            Queue<EventData> data = new Queue<EventData>(msgs.Select(m => GetEventDataAsync(m).ConfigureAwait(false).GetAwaiter().GetResult()));
+
+            do
+            {
+                List<EventData> messages = new List<EventData>();
+                while ((data.Count > 0) && (messages.Count < MAX_BATCH_SIZE))
+                    messages.Add(data.Dequeue());
+
+                await _client.SendAsync(messages);
+            }
+            while (data.Count > 0);
         }
     }
 }
