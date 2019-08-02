@@ -76,7 +76,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
             long enqueuedUnixMs = long.Parse(idParts[0]);
             long sequenceNumber = long.Parse(idParts[1]);
             DateTimeOffset enqueuedTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(enqueuedUnixMs);
-            Content = value.Value;
+            Content = value.Value.ToString();
 
             // Use the same name as EventHub, to keep consistency
             SystemProperties = new Dictionary<string, object>()
