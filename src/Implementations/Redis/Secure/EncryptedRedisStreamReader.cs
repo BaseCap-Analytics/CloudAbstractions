@@ -35,12 +35,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             Dictionary<string, NameValueEntry> entries,
             Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived)
         {
+            Dictionary<string, NameValueEntry> decryptedEntries = new Dictionary<string, NameValueEntry>();
             foreach (string id in entries.Keys)
             {
                 byte[] encrypted = Convert.FromBase64String(entries[id].Value);
                 byte[] plaintextBytes = await EncryptionHelpers.DecryptDataAsync(encrypted, _encryptionKey).ConfigureAwait(false);
                 string plaintext = Encoding.UTF8.GetString(plaintextBytes);
-                entries[id] = new NameValueEntry(entries[id].Name, plaintext);
+                decryptedEntries.Add(entries[id].Name, new NameValueEntry(entries[id].Name, plaintext));
             }
 
             await base.ProcessMessagesAsync(entries, onMessagesReceived).ConfigureAwait(false);
