@@ -27,9 +27,10 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        Task IEventStreamWriter.SetupAsync()
+        async Task IEventStreamWriter.SetupAsync()
         {
-            return base.SetupAsync();
+            await base.SetupAsync().ConfigureAwait(false);
+            await base.CreateStreamIfNecessaryAsync(_streamName).ConfigureAwait(false);
         }
 
         /// <inheritdoc />

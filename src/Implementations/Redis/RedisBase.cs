@@ -104,6 +104,27 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             _subscription = _cacheConnection.GetSubscriber();
         }
 
+        protected async Task CreateStreamIfNecessaryAsync(string streamName)
+        {
+            // If the stream doesn't exist, create it the only way possible; adding a value.
+            // To ensure we don't mess up readers, we then delete the value, leaving an empty stream.
+            if (await _database.KeyExistsAsync(streamName) == false)
+            {
+                RedisValue msgId = await _database.StreamAddAsync(streamName, "create", "create").ConfigureAwait(false);
+                await _database.StreamDeleteAsync(streamName, new[] { msgId }).ConfigureAwait(false);
+            }
+        }
+
+        protected async Task CreateStreamConsumerGroupIfNecessaryAsync(string streamName, string consumerGroup)
+        {
+            // Check if the consumer group exists; if it doesn't create it
+            StreamGroupInfo[] groups = await _database.StreamGroupInfoAsync(streamName).ConfigureAwait(false);
+            if (groups.Any(g => string.Equals(g.Name, consumerGroup, StringComparison.OrdinalIgnoreCase)) == false)
+            {
+                await _database.StreamCreateConsumerGroupAsync(streamName, consumerGroup).ConfigureAwait(false);
+            }
+        }
+
         private void OnConnectionFailure(object sender, ConnectionFailedEventArgs e)
         {
             _logger.LogException(
