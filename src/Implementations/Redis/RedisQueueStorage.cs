@@ -36,7 +36,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         public async Task SetupAsync(Func<QueueMessage, Task<bool>> onMessageReceived)
         {
             _onMessageReceived = onMessageReceived;
-            await base.SetupAsync();
+            await base.SetupAsync().ConfigureAwait(false);
             base.Subscribe(_channelName, InternalOnMessageReceived);
             _keepPolling = true;
             _pollingFallback = Task.Run(PollingFallbackAsync);
@@ -75,23 +75,20 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         private void HandleMessage()
         {
-            // This is a notification that there is work to do, check for the actual work and see if we got it
             string work = _database.ListRightPopAsync(_queueName).ConfigureAwait(false).GetAwaiter().GetResult();
-            if (string.IsNullOrWhiteSpace(work))
-            {
-                return;
-            }
-            else
+            while (string.IsNullOrWhiteSpace(work) == false)
             {
                 // The Pub/Sub is used as a shoulder tap to tell us that there is work to do.
                 // We use this instead of Blocking Queues because StackExchange.Redis does not
                 // support blocking operations on Redis.
                 OnMessageReceivedAsync(work).ConfigureAwait(false).GetAwaiter().GetResult();
+                work = _database.ListRightPopAsync(_queueName).ConfigureAwait(false).GetAwaiter().GetResult();
             }
         }
 
         private void InternalOnMessageReceived(RedisChannel channel, RedisValue message)
         {
+            // This is a notification that there is work to do, check for the actual work and see if we got it
             HandleMessage();
         }
 
