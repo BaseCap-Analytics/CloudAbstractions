@@ -40,7 +40,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             return base.SetupAsync();
         }
 
-        public async Task ReadAsync(Func<EventMessage, string, Task> onMessageReceived, CancellationToken token)
+        public async Task ReadAsync(Func<IEnumerable<EventMessage>, string, Task> onMessageReceived, CancellationToken token)
         {
             try
             {
@@ -54,12 +54,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                         MAX_MESSAGES_PER_BATCH).ConfigureAwait(false);
                     if (messages.Any())
                     {
-                        foreach (StreamEntry entry in messages)
-                        {
-                            await ProcessMessageAsync(entry.Id, entry.Values.First(), onMessageReceived).ConfigureAwait(false);
-                        }
-
-                        // Acknowledge that we received these messages
+                        // Process and acknowledge that we received these messages
+                        await ProcessMessagesAsync(messages.ToDictionary(k => (string)k.Id, v => v.Values.First()), onMessageReceived).ConfigureAwait(false);
                         await _database.StreamAcknowledgeAsync(_streamName, _consumerGroup, messages.Select(m => m.Id).ToArray()).ConfigureAwait(false);
                     }
 
@@ -90,12 +86,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
         }
 
-        internal virtual async Task ProcessMessageAsync(string entryId, NameValueEntry value, Func<EventMessage, string, Task> onMessageReceived)
+        internal virtual async Task ProcessMessagesAsync(Dictionary<string, NameValueEntry> entries, Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived)
         {
             try
             {
-                EventMessage msg = new EventMessage(entryId, value);
-                await onMessageReceived(msg, _streamName).ConfigureAwait(false);
+                await onMessagesReceived(
+                    entries.Select(e => new EventMessage(e.Key, e.Value)),
+                    _streamName).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -106,7 +103,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                         ["StreamName"] = _streamName,
                         ["ConsumerGroup"] = _consumerGroup,
                         ["ConsumerName"] = _consumerName,
-                        ["MessageId"] = entryId,
+                        ["EntryCount"] = entries.Count.ToString(),
                     });
             }
         }
