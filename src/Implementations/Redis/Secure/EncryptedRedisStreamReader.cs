@@ -31,13 +31,19 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
         }
 
         /// <inheritdoc />
-        internal override async Task ProcessMessageAsync(string entryId, NameValueEntry value, Func<EventMessage, string, Task> onMessageReceived)
+        internal override async Task ProcessMessagesAsync(
+            Dictionary<string, NameValueEntry> entries,
+            Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived)
         {
-            byte[] encrypted = Convert.FromBase64String(value.Value);
-            byte[] plaintextBytes = await EncryptionHelpers.DecryptDataAsync(encrypted, _encryptionKey).ConfigureAwait(false);
-            string plaintext = Encoding.UTF8.GetString(plaintextBytes);
-            NameValueEntry decryptedValue = new NameValueEntry(value.Name, plaintext);
-            await base.ProcessMessageAsync(entryId, decryptedValue, onMessageReceived).ConfigureAwait(false);
+            foreach (string id in entries.Keys)
+            {
+                byte[] encrypted = Convert.FromBase64String(entries[id].Value);
+                byte[] plaintextBytes = await EncryptionHelpers.DecryptDataAsync(encrypted, _encryptionKey).ConfigureAwait(false);
+                string plaintext = Encoding.UTF8.GetString(plaintextBytes);
+                entries[id] = new NameValueEntry(entries[id].Name, plaintext);
+            }
+
+            await base.ProcessMessagesAsync(entries, onMessagesReceived).ConfigureAwait(false);
         }
     }
 }
