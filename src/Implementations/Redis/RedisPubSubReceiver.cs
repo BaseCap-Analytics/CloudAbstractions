@@ -24,14 +24,14 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         public async Task SetupAsync(Func<string, Task> handler)
         {
             _handler = handler;
-            await base.SetupAsync().ConfigureAwait(false);
+            await base.InitializeAsync().ConfigureAwait(false);
             base.Subscribe(_channel, ReceiveHandler);
         }
 
         /// <inheritdoc />
-        Task INotificationReceiver.ShutdownAsync()
+        public Task ShutdownAsync()
         {
-            return base.ShutdownAsync();
+            return base.CleanupAsync();
         }
 
         protected override void ResetConnection()

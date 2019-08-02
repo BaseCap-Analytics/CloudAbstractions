@@ -21,9 +21,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         {
         }
 
-        Task ICache.SetupAsync()
+        public Task SetupAsync()
         {
-            return base.SetupAsync();
+            return base.InitializeAsync();
         }
 
         /// <inheritdoc />

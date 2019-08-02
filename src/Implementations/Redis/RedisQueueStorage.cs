@@ -36,10 +36,16 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         public async Task SetupAsync(Func<QueueMessage, Task<bool>> onMessageReceived)
         {
             _onMessageReceived = onMessageReceived;
-            await base.SetupAsync().ConfigureAwait(false);
+            await base.InitializeAsync().ConfigureAwait(false);
             base.Subscribe(_channelName, InternalOnMessageReceived);
             _keepPolling = true;
             _pollingFallback = Task.Run(PollingFallbackAsync);
+        }
+
+        /// <inheritdoc />
+        public Task SetupAsync()
+        {
+            return base.InitializeAsync();
         }
 
         /// <inheritdoc />
@@ -47,7 +53,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         {
             _keepPolling = false;
             await Task.WhenAny(new [] { _pollingFallback, Task.Delay(TimeSpan.FromSeconds(3)) }).ConfigureAwait(false);
-            await base.ShutdownAsync().ConfigureAwait(false);
+            await base.CleanupAsync().ConfigureAwait(false);
         }
 
         protected override void ResetConnection()

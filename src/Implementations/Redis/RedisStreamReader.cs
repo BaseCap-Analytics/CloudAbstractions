@@ -35,9 +35,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             _consumerName = consumerName;
         }
 
-        async Task IEventStreamReader.SetupAsync()
+        public async Task SetupAsync()
         {
-            await base.SetupAsync().ConfigureAwait(false);
+            await base.InitializeAsync().ConfigureAwait(false);
             await base.CreateStreamIfNecessaryAsync(_streamName).ConfigureAwait(false);
             await base.CreateStreamConsumerGroupIfNecessaryAsync(_streamName, _consumerGroup).ConfigureAwait(false);
         }
