@@ -12,7 +12,7 @@ stages:
     displayName: Build Package
     cancelTimeoutInMinutes: 2
     timeoutInMinutes: 15
-    pool: Default
+    pool: Hosted Windows 2019 with VS2019
     steps:
       - template: build-and-save.yml
 - stage: Publish
@@ -24,6 +24,6 @@ stages:
       displayName: Publish Package
       cancelTimeoutInMinutes: 2
       timeoutInMinutes: 5
-      pool: Default
+      pool: Hosted Windows 2019 with VS2019
       steps:
         - template: publish-nuget.yml
