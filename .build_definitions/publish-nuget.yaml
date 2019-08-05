@@ -1,0 +1,17 @@
+steps:
+  - task: DotNetCoreInstaller@0
+    displayName: 'Use .NET Core SDK Version'
+    inputs:
+      version: 3.0.100-preview7-012821
+      packageType: sdk
+  - task: DownloadBuildArtifacts@0
+    displayName: 'Download Build Artifacts'
+    inputs:
+      artifactName: NuGetPackage
+  - task: NuGetCommand@2
+    displayName: 'Push Packages to MyGet'
+    inputs:
+      command: push
+      packagesToPush: '$(System.ArtifactsDirectory)/NuGetPackage/*.nupkg'
+      nuGetFeedType: external
+      publishFeedCredentials: Myget

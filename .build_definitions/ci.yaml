@@ -1,0 +1,29 @@
+name: 3.$(Date:yy)$(DayOfYear)$(Rev:.r)
+pr: none
+trigger:
+    branches:
+        include:
+            - master
+stages:
+- stage: Build
+  displayName: Build Package
+  jobs:
+  - job: Compile
+    displayName: Build Package
+    cancelTimeoutInMinutes: 2
+    timeoutInMinutes: 15
+    pool: Default
+    steps:
+      - template: build-and-save.yml
+- stage: Publish
+  displayName: Publish Package
+  dependsOn: Build
+  condition: succeeded('Build')
+  jobs:
+    - job: Publish
+      displayName: Publish Package
+      cancelTimeoutInMinutes: 2
+      timeoutInMinutes: 5
+      pool: Default
+      steps:
+        - template: publish-nuget.yml
