@@ -1,4 +1,6 @@
 steps:
+  - task: NuGetToolInstaller@1
+    displayName: 'Use NuGet '
   - task: DotNetCoreInstaller@0
     displayName: 'Use .NET Core SDK Version'
     inputs:
@@ -8,8 +10,8 @@ steps:
     displayName: 'Download Build Artifacts'
     inputs:
       artifactName: NuGetPackage
-  - task: DotNetCoreCLI@2
-    displayName: 'dotnet push'
+  - task: NuGetCommand@2
+    displayName: 'Publish Package'
     inputs:
       command: push
       packagesToPush: '$(System.ArtifactsDirectory)/NuGetPackage/*.nupkg'
