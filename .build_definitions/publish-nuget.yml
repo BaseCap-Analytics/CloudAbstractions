@@ -8,8 +8,8 @@ steps:
     displayName: 'Download Build Artifacts'
     inputs:
       artifactName: NuGetPackage
-  - task: NuGetCommand@2
-    displayName: 'Push Packages to MyGet'
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet push'
     inputs:
       command: push
       packagesToPush: '$(System.ArtifactsDirectory)/NuGetPackage/*.nupkg'
