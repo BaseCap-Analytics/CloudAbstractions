@@ -39,12 +39,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             {
                 // Decrypt the message then push to the base function for processing
                 string decryptedMsg;
-                QueueMessage msg = JsonConvert.DeserializeObject<QueueMessage>(message);
+                QueueMessage msg = JsonConvert.DeserializeObject<QueueMessage>(message, _settings);
                 byte[] encryptedBytes = Convert.FromBase64String(msg.Content);
                 byte[] decryptedBytes = await EncryptionHelpers.DecryptDataAsync(encryptedBytes, _encryptionKey).ConfigureAwait(false);
                 string decrypted = Encoding.UTF8.GetString(decryptedBytes);
                 msg.Content = decrypted;
-                decryptedMsg = JsonConvert.SerializeObject(msg);
+                decryptedMsg = JsonConvert.SerializeObject(msg, Formatting.None, _settings);
                 await base.OnMessageReceivedAsync(decryptedMsg);
             }
             catch

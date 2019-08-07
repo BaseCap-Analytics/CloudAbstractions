@@ -29,7 +29,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
 
         internal override async Task<string> GetNotificationValueAsync(object notification)
         {
-            string serialized = JsonConvert.SerializeObject(notification);
+            string serialized = JsonConvert.SerializeObject(notification, Formatting.None, _settings);
             byte[] plaintext = Encoding.UTF8.GetBytes(serialized);
             byte[] encrypted = await EncryptionHelpers.EncryptDataAsync(plaintext, _encryptionKey).ConfigureAwait(false);
             return Convert.ToBase64String(encrypted);

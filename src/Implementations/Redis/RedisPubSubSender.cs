@@ -33,7 +33,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         internal virtual Task<string> GetNotificationValueAsync(object notification)
         {
-            return Task.FromResult(JsonConvert.SerializeObject(notification));
+            return Task.FromResult(JsonConvert.SerializeObject(notification, Formatting.None, _settings));
         }
     }
 }

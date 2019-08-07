@@ -29,7 +29,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
 
         internal override async Task<string> SerializeDataAsync(object obj)
         {
-            string serialized = JsonConvert.SerializeObject(obj);
+            string serialized = JsonConvert.SerializeObject(obj, Formatting.None, _settings);
             byte[] plaintextBytes = Encoding.UTF8.GetBytes(serialized);
             byte[] encryptedBytes = await EncryptionHelpers.EncryptDataAsync(plaintextBytes, _encryptionKey);
             return Convert.ToBase64String(encryptedBytes);
