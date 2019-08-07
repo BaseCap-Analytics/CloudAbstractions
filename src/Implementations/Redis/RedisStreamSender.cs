@@ -68,7 +68,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         internal virtual Task<string> SerializeDataAsync(object obj)
         {
-            return Task.FromResult(JsonConvert.SerializeObject(obj));
+            return Task.FromResult(JsonConvert.SerializeObject(obj, Formatting.None, _settings));
         }
     }
 }

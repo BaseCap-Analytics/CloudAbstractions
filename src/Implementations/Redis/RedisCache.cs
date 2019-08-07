@@ -34,12 +34,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         protected virtual Task<string> SerializeObject(object o)
         {
-            return Task.FromResult(JsonConvert.SerializeObject(o));
+            return Task.FromResult(JsonConvert.SerializeObject(o, Formatting.None, _settings));
         }
 
         protected virtual Task<T> DeserializeObject<T>(string value)
         {
-            return Task.FromResult(JsonConvert.DeserializeObject<T>(value));
+            return Task.FromResult(JsonConvert.DeserializeObject<T>(value, _settings));
         }
 
         /// <inheritdoc />

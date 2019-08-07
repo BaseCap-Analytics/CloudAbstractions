@@ -104,9 +104,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             {
                 // Dequeue our message and push to the processing list
                 string processingMsg;
-                QueueMessage msg = JsonConvert.DeserializeObject<QueueMessage>(message);
+                QueueMessage msg = JsonConvert.DeserializeObject<QueueMessage>(message, _settings);
                 msg.DequeueCount++;
-                processingMsg = JsonConvert.SerializeObject(msg);
+                processingMsg = JsonConvert.SerializeObject(msg, Formatting.None, _settings);
 
                 // If we need to deadletter this message, do it and don't send to a listener
                 if (msg.DequeueCount > 25)
@@ -149,14 +149,14 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public async Task PushObjectAsMessageAsync(object data)
         {
-            string serialized = JsonConvert.SerializeObject(data);
+            string serialized = JsonConvert.SerializeObject(data, Formatting.None, _settings);
             QueueMessage msg = await CreateQueueMessageAsync(serialized).ConfigureAwait(false);
             await PushObjectToQueueAsync(msg);
         }
 
         private async Task PushObjectToQueueAsync(QueueMessage msg)
         {
-            string msgString = JsonConvert.SerializeObject(msg);
+            string msgString = JsonConvert.SerializeObject(msg, Formatting.None, _settings);
             await _database.ListLeftPushAsync(_queueName, msgString, flags: CommandFlags.FireAndForget).ConfigureAwait(false);
             await _subscription.PublishAsync(_channelName, "").ConfigureAwait(false);
         }
