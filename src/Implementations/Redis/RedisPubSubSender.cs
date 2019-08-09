@@ -1,4 +1,5 @@
 using BaseCap.CloudAbstractions.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -26,8 +27,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public async Task SendNotificationAsync(object notification)
         {
-            string value = GetNotificationValue(notification);
-            await _subscription.PublishAsync(_channel, value).ConfigureAwait(false);
+            string serialized = GetNotificationValue(notification);
+            if (string.IsNullOrWhiteSpace(serialized))
+            {
+                throw new InvalidOperationException("Cannot send empty message");
+            }
+
+            await _subscription.PublishAsync(_channel, serialized).ConfigureAwait(false);
         }
 
         internal virtual string GetNotificationValue(object notification)

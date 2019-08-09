@@ -1,5 +1,6 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using StackExchange.Redis;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -48,6 +49,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         public async Task SendEventDataAsync(object obj, string partition)
         {
             string data = SerializeObject(obj);
+            if (string.IsNullOrWhiteSpace(data))
+            {
+                throw new InvalidOperationException("Cannot send empty message");
+            }
+
             await _database.StreamAddAsync(_streamName, DATA_FIELD, data).ConfigureAwait(false);
         }
 
@@ -62,6 +68,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         {
             NameValueEntry[] entries = msgs.Select(m => new NameValueEntry(DATA_FIELD, SerializeObject(m)))
                                             .ToArray();
+            if (entries.Any() == false)
+            {
+                throw new InvalidOperationException("Cannot send empty message");
+            }
+
             return _database.StreamAddAsync(_streamName, entries);
         }
     }
