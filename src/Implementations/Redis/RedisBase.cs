@@ -1,9 +1,9 @@
 using BaseCap.CloudAbstractions.Abstractions;
+using Newtonsoft.Json;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis
@@ -15,7 +15,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     {
         private const int MAX_STREAM_LENGTH = 100000; // 100k records in stream before removing old ones
         protected readonly ConfigurationOptions _options;
-        private JsonSerializerOptions _jsonOptions;
+        private readonly JsonSerializerSettings _jsonOptions;
         protected ConnectionMultiplexer _cacheConnection;
         protected IDatabaseAsync _database;
         protected ISubscriber _subscription;
@@ -43,10 +43,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             {
                 _options.EndPoints.Add(endpoint);
             }
-            _jsonOptions = new JsonSerializerOptions()
+            _jsonOptions = new JsonSerializerSettings()
             {
-                IgnoreNullValues = false,
+                Formatting = Formatting.None,
                 MaxDepth = 15, // Arbitrary value,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             };
             _errorContextName = errorContextName;
             _errorContextValue = errorContextValue;
@@ -213,7 +214,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             _cacheConnection = null;
         }
 
-        protected virtual string SerializeObject(object o) => JsonSerializer.Serialize(o, _jsonOptions);
-        protected virtual T DeserializeObject<T>(string str) => JsonSerializer.Deserialize<T>(str, _jsonOptions);
+        protected virtual string SerializeObject(object o) => JsonConvert.SerializeObject(o, _jsonOptions);
+        protected virtual T DeserializeObject<T>(string str) => JsonConvert.DeserializeObject<T>(str, _jsonOptions);
     }
 }
