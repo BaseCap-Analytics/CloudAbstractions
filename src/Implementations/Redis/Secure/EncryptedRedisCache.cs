@@ -29,10 +29,24 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
 
         protected override T DeserializeObject<T>(string value)
         {
-            byte[] encrypted = Convert.FromBase64String(value);
-            byte[] decrypted = EncryptionHelpers.DecryptDataAsync(encrypted, _encryptionKey).ConfigureAwait(false).GetAwaiter().GetResult();
-            string strdata = Encoding.UTF8.GetString(decrypted);
-            return base.DeserializeObject<T>(strdata);
+            try
+            {
+                byte[] encrypted = Convert.FromBase64String(value);
+                byte[] decrypted = EncryptionHelpers.DecryptDataAsync(encrypted, _encryptionKey).ConfigureAwait(false).GetAwaiter().GetResult();
+                string strdata = Encoding.UTF8.GetString(decrypted);
+                return base.DeserializeObject<T>(strdata);
+            }
+            catch
+            {
+                _logger.LogEvent(
+                    "UnknownCacheEntryFormat",
+                    new Dictionary<string, string>()
+                    {
+                        ["Value"] = value,
+                    });
+
+                return default(T);
+            }
         }
     }
 }

@@ -28,11 +28,24 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
 
         internal override void ReceiveHandler(RedisChannel channel, RedisValue value)
         {
-            string encoded = (string)value;
-            byte[] decoded = Convert.FromBase64String(encoded);
-            byte[] decrypted = EncryptionHelpers.DecryptDataAsync(decoded, _encryptionKey).ConfigureAwait(false).GetAwaiter().GetResult();
-            string data = Encoding.UTF8.GetString(decrypted);
-            base.ReceiveHandler(channel, data);
+            try
+            {
+                string encoded = (string)value;
+                byte[] decoded = Convert.FromBase64String(encoded);
+                byte[] decrypted = EncryptionHelpers.DecryptDataAsync(decoded, _encryptionKey).ConfigureAwait(false).GetAwaiter().GetResult();
+                string data = Encoding.UTF8.GetString(decrypted);
+                base.ReceiveHandler(channel, data);
+            }
+            catch
+            {
+                _logger.LogEvent(
+                    "UnknownPubSubMessage",
+                    new Dictionary<string, string>()
+                    {
+                        ["Channel"] = _channel,
+                        ["Message"] = value,
+                    });
+            }
         }
     }
 }

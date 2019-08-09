@@ -16,9 +16,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         private const string CONSUMER_GROUP_LATEST_UNREAD_MESSAGES = ">";
         private readonly TimeSpan POLL_TIMEOUT = TimeSpan.FromSeconds(3);
         private const int MAX_MESSAGES_PER_BATCH = 50;
-        private readonly string _streamName;
-        private readonly string _consumerGroup;
-        private readonly string _consumerName;
+        protected readonly string _streamName;
+        protected readonly string _consumerGroup;
+        protected readonly string _consumerName;
 
         public RedisStreamReader(
             IEnumerable<string> endpoints,

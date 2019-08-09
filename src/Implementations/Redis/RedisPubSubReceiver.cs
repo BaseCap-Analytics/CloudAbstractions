@@ -11,7 +11,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     /// </summary>
     public class RedisPubSubReceiver : RedisBase, INotificationReceiver
     {
-        private readonly string _channel;
+        protected readonly string _channel;
         private Func<string, Task> _handler;
 
         public RedisPubSubReceiver(IEnumerable<string> endpoints, string password, string channel, bool useSsl, ILogger logger)
