@@ -47,7 +47,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public async Task SendEventDataAsync(object obj, string partition)
         {
-            string data = base.SerializeObject(obj);
+            string data = SerializeObject(obj);
             await _database.StreamAddAsync(_streamName, DATA_FIELD, data).ConfigureAwait(false);
         }
 
