@@ -1,5 +1,4 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Newtonsoft.Json;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -32,16 +31,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             return (IHyperLogLog)new RedisHyperLogLog(logName, _options, _logger);
         }
 
-        protected virtual Task<string> SerializeObject(object o)
-        {
-            return Task.FromResult(JsonConvert.SerializeObject(o, Formatting.None, _settings));
-        }
-
-        protected virtual Task<T> DeserializeObject<T>(string value)
-        {
-            return Task.FromResult(JsonConvert.DeserializeObject<T>(value, _settings));
-        }
-
         /// <inheritdoc />
         public async Task<T> GetCacheObjectAsync<T>(string key) where T : class
         {
@@ -57,7 +46,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
             else
             {
-                return await DeserializeObject<T>(value);
+                return DeserializeObject<T>(value);
             }
         }
 
@@ -78,7 +67,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 throw new ArgumentNullException(nameof(obj));
             }
 
-            string str = await SerializeObject(obj);
+            string str = SerializeObject(obj);
             if (await _database.StringSetAsync(key, RedisValue.Unbox(str), expiry) == false)
             {
                 throw new InvalidOperationException($"Failed to set cache entry for '{key}'");

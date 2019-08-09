@@ -1,6 +1,5 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
-using Newtonsoft.Json;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -39,12 +38,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             {
                 // Decrypt the message then push to the base function for processing
                 string decryptedMsg;
-                QueueMessage msg = JsonConvert.DeserializeObject<QueueMessage>(message, _settings);
+                QueueMessage msg = base.DeserializeObject<QueueMessage>(message);
                 byte[] encryptedBytes = Convert.FromBase64String(msg.Content);
                 byte[] decryptedBytes = await EncryptionHelpers.DecryptDataAsync(encryptedBytes, _encryptionKey).ConfigureAwait(false);
                 string decrypted = Encoding.UTF8.GetString(decryptedBytes);
                 msg.Content = decrypted;
-                decryptedMsg = JsonConvert.SerializeObject(msg, Formatting.None, _settings);
+                decryptedMsg = base.SerializeObject(msg);
                 await base.OnMessageReceivedAsync(decryptedMsg);
             }
             catch

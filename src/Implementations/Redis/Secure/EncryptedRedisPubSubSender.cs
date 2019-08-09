@@ -1,10 +1,8 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
 {
@@ -27,11 +25,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             _encryptionKey = encryptionKey;
         }
 
-        internal override async Task<string> GetNotificationValueAsync(object notification)
+        internal override string GetNotificationValue(object notification)
         {
-            string serialized = JsonConvert.SerializeObject(notification, Formatting.None, _settings);
+            string serialized = base.SerializeObject(notification);
             byte[] plaintext = Encoding.UTF8.GetBytes(serialized);
-            byte[] encrypted = await EncryptionHelpers.EncryptDataAsync(plaintext, _encryptionKey).ConfigureAwait(false);
+            byte[] encrypted = EncryptionHelpers.EncryptDataAsync(plaintext, _encryptionKey).ConfigureAwait(false).GetAwaiter().GetResult();
             return Convert.ToBase64String(encrypted);
         }
     }
