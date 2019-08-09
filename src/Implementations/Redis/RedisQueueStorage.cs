@@ -149,14 +149,24 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         public async Task PushObjectAsMessageAsync(object data)
         {
             string serialized = SerializeObject(data);
+            if (string.IsNullOrWhiteSpace(serialized))
+            {
+                throw new InvalidOperationException("Cannot send empty message");
+            }
+
             QueueMessage msg = await CreateQueueMessageAsync(serialized).ConfigureAwait(false);
             await PushObjectToQueueAsync(msg);
         }
 
         private async Task PushObjectToQueueAsync(QueueMessage msg)
         {
-            string msgString = SerializeObject(msg);
-            await _database.ListLeftPushAsync(_queueName, msgString, flags: CommandFlags.FireAndForget).ConfigureAwait(false);
+            string serialized = SerializeObject(msg);
+            if (string.IsNullOrWhiteSpace(serialized))
+            {
+                throw new InvalidOperationException("Cannot send empty message");
+            }
+
+            await _database.ListLeftPushAsync(_queueName, serialized, flags: CommandFlags.FireAndForget).ConfigureAwait(false);
             await _subscription.PublishAsync(_channelName, "").ConfigureAwait(false);
         }
 
