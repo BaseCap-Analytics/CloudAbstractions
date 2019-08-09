@@ -1,5 +1,4 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Newtonsoft.Json;
 using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,7 +47,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public async Task SendEventDataAsync(object obj, string partition)
         {
-            string data = await SerializeDataAsync(obj);
+            string data = base.SerializeObject(obj);
             await _database.StreamAddAsync(_streamName, DATA_FIELD, data).ConfigureAwait(false);
         }
 
@@ -61,14 +60,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public Task SendEventDataAsync(IEnumerable<object> msgs, string partition)
         {
-            NameValueEntry[] entries = msgs.Select(m => new NameValueEntry(DATA_FIELD, SerializeDataAsync(m).ConfigureAwait(false).GetAwaiter().GetResult()))
+            NameValueEntry[] entries = msgs.Select(m => new NameValueEntry(DATA_FIELD, SerializeObject(m)))
                                             .ToArray();
             return _database.StreamAddAsync(_streamName, entries);
-        }
-
-        internal virtual Task<string> SerializeDataAsync(object obj)
-        {
-            return Task.FromResult(JsonConvert.SerializeObject(obj, Formatting.None, _settings));
         }
     }
 }

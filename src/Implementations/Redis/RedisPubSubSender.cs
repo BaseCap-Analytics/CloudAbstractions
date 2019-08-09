@@ -1,5 +1,4 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -27,13 +26,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public async Task SendNotificationAsync(object notification)
         {
-            string value = await GetNotificationValueAsync(notification).ConfigureAwait(false);
+            string value = GetNotificationValue(notification);
             await _subscription.PublishAsync(_channel, value).ConfigureAwait(false);
         }
 
-        internal virtual Task<string> GetNotificationValueAsync(object notification)
+        internal virtual string GetNotificationValue(object notification)
         {
-            return Task.FromResult(JsonConvert.SerializeObject(notification, Formatting.None, _settings));
+            return SerializeObject(notification);
         }
     }
 }
