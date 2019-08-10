@@ -48,6 +48,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 Formatting = Formatting.None,
                 MaxDepth = 15, // Arbitrary value,
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                PreserveReferencesHandling = PreserveReferencesHandling.Objects,
             };
             _errorContextName = errorContextName;
             _errorContextValue = errorContextValue;
