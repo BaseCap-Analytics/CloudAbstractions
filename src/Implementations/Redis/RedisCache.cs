@@ -142,9 +142,16 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             long?[] returnValues = new long?[fieldValues.Length];
             for (int i = 0; i < fieldValues.Length; i++)
             {
-                if (fieldValues[i].IsInteger)
+                if (fieldValues[i].HasValue)
                 {
-                    returnValues[i] = (long)fieldValues[i];
+                    try
+                    {
+                        returnValues[i] = (long)fieldValues[i];
+                    }
+                    catch
+                    {
+                        returnValues[i] = null;
+                    }
                 }
                 else
                 {
