@@ -42,10 +42,14 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             await base.CreateStreamConsumerGroupIfNecessaryAsync(_streamName, _consumerGroup).ConfigureAwait(false);
         }
 
-        public async Task ReadAsync(Func<IEnumerable<EventMessage>, string, Task> onMessageReceived, CancellationToken token)
+        public async Task ReadAsync(
+            Func<IEnumerable<EventMessage>, string, Task> onMessageReceived,
+            int? maxMessagesToRead,
+            CancellationToken token)
         {
             try
             {
+                int maxMessages = maxMessagesToRead ?? MAX_MESSAGES_PER_BATCH;
                 while (token.IsCancellationRequested == false)
                 {
                     StreamEntry[] messages = await _database.StreamReadGroupAsync(
@@ -53,7 +57,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                         _consumerGroup,
                         _consumerName,
                         CONSUMER_GROUP_LATEST_UNREAD_MESSAGES,
-                        MAX_MESSAGES_PER_BATCH).ConfigureAwait(false);
+                        maxMessages).ConfigureAwait(false);
                     if (messages.Any())
                     {
                         // Process and acknowledge that we received these messages
