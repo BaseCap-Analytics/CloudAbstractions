@@ -62,17 +62,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         }
 
         /// <summary>
-        /// Sends the specified object as an event into the specified partition
-        /// </summary>
-        public async Task SendEventDataAsync(object obj, string partition)
-        {
-            using (EventData data = await GetEventDataAsync(obj).ConfigureAwait(false))
-            {
-                await _client.SendAsync(data, partition).ConfigureAwait(false);
-            }
-        }
-
-        /// <summary>
         /// Sends the batch of objects as separate events into the specified partition
         /// </summary>
         public async Task SendEventDataAsync(IList<object> msgs, string partition)
@@ -88,14 +77,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
                 await _client.SendAsync(messages, partition);
             }
             while (data.Count > 0);
-        }
-
-        public async Task SendEventDataAsync(object obj)
-        {
-            using (EventData data = await GetEventDataAsync(obj).ConfigureAwait(false))
-            {
-                await _client.SendAsync(data).ConfigureAwait(false);
-            }
         }
 
         public async Task SendEventDataAsync(IList<object> msgs)
