@@ -40,24 +40,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task SendEventDataAsync(object obj)
-        {
-            return SendEventDataAsync(obj, string.Empty);
-        }
-
-        /// <inheritdoc />
-        public async Task SendEventDataAsync(object obj, string partition)
-        {
-            string data = SerializeObject(obj);
-            if (string.IsNullOrWhiteSpace(data))
-            {
-                throw new InvalidOperationException("Cannot send empty message");
-            }
-
-            await _database.StreamAddAsync(_streamName, DATA_FIELD, data).ConfigureAwait(false);
-        }
-
-        /// <inheritdoc />
         public Task SendEventDataAsync(IList<object> msgs)
         {
             return SendEventDataAsync(msgs, string.Empty);
