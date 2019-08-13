@@ -19,7 +19,11 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// Begins reading from Event Streams
         /// </summary>
         /// <param name="onMessagesReceived">Callback to fire when a message is received</param>
+        /// <param name="maxMessagesToRead">The maximum number of messages to read</param>
         /// <param name="token">The CancellationToken for graceful shutdown</param>
-        Task ReadAsync(Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived, CancellationToken token);
+        Task ReadAsync(
+            Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived,
+            int? maxMessagesToRead,
+            CancellationToken token);
     }
 }
