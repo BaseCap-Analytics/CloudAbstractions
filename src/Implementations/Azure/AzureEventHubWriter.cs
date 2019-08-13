@@ -75,7 +75,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// <summary>
         /// Sends the batch of objects as separate events into the specified partition
         /// </summary>
-        public async Task SendEventDataAsync(IEnumerable<object> msgs, string partition)
+        public async Task SendEventDataAsync(IList<object> msgs, string partition)
         {
             Queue<EventData> data = new Queue<EventData>(msgs.Select(m => GetEventDataAsync(m).ConfigureAwait(false).GetAwaiter().GetResult()));
 
@@ -98,7 +98,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             }
         }
 
-        public async Task SendEventDataAsync(IEnumerable<object> msgs)
+        public async Task SendEventDataAsync(IList<object> msgs)
         {
             Queue<EventData> data = new Queue<EventData>(msgs.Select(m => GetEventDataAsync(m).ConfigureAwait(false).GetAwaiter().GetResult()));
 

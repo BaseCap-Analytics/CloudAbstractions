@@ -19,14 +19,29 @@ namespace BaseCap.CloudAbstractions.Abstractions
         public object Content { get; internal set; }
 
         /// <summary>
+        /// When this message was enqueued
+        /// </summary>
+        public DateTimeOffset EnqueuedTimeUtc { get; private set; }
+
+        /// <summary>
+        /// The location of this message in the stream
+        /// </summary>
+        public string Offset { get; private set; }
+
+        /// <summary>
+        /// Which partition, if applicable, this message is on
+        /// </summary>
+        public string PartitionKey { get; private set; }
+
+        /// <summary>
+        /// A sequence number, combined with the Offset, give a unique ID of the message
+        /// </summary>
+        public long SequenceNumber { get; private set; }
+
+        /// <summary>
         /// Any user properties of this message
         /// </summary>
         public IDictionary<string, object> Properties { get; private set; }
-
-        /// <summary>
-        /// System set properties of this message
-        /// </summary>
-        public Dictionary<string, object> SystemProperties { get; private set; }
 
         /// <summary>
         /// Creates a new EventMessage with the specified data
@@ -57,14 +72,11 @@ namespace BaseCap.CloudAbstractions.Abstractions
             string decoded = Encoding.UTF8.GetString(e.Body.Array);
             IEnumerable<KeyValuePair<string, string>> value = JsonConvert.DeserializeObject<IEnumerable<KeyValuePair<string, string>>>(decoded);
             Content = value.FirstOrDefault().Value;
+            EnqueuedTimeUtc = e.SystemProperties.EnqueuedTimeUtc;
+            Offset = e.SystemProperties.Offset;
+            PartitionKey = e.SystemProperties.PartitionKey;
+            SequenceNumber = e.SystemProperties.SequenceNumber;
             Properties = e.Properties;
-            SystemProperties = new Dictionary<string, object>()
-            {
-                [nameof(e.SystemProperties.EnqueuedTimeUtc)] = e.SystemProperties.EnqueuedTimeUtc,
-                [nameof(e.SystemProperties.Offset)] = e.SystemProperties.Offset,
-                [nameof(e.SystemProperties.PartitionKey)] = e.SystemProperties.PartitionKey,
-                [nameof(e.SystemProperties.SequenceNumber)] = e.SystemProperties.SequenceNumber,
-            };
         }
 
         /// <summary>
@@ -77,14 +89,13 @@ namespace BaseCap.CloudAbstractions.Abstractions
             long sequenceNumber = long.Parse(idParts[1]);
             DateTimeOffset enqueuedTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(enqueuedUnixMs);
             Content = value.Value.ToString();
-
-            // Use the same name as EventHub, to keep consistency
-            SystemProperties = new Dictionary<string, object>()
+            EnqueuedTimeUtc = enqueuedTimeUtc;
+            Offset = id;
+            PartitionKey = id;
+            SequenceNumber = sequenceNumber;
+            Properties = new Dictionary<string, object>()
             {
-                [nameof(EventData.SystemProperties.EnqueuedTimeUtc)] = enqueuedTimeUtc,
-                [nameof(EventData.SystemProperties.Offset)] = id,
-                [nameof(EventData.SystemProperties.PartitionKey)] = id,
-                [nameof(EventData.SystemProperties.SequenceNumber)] = sequenceNumber,
+                ["Name"] = value.Name,
             };
         }
     }

@@ -31,19 +31,18 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
         }
 
         /// <inheritdoc />
-        internal override async Task ProcessMessagesAsync(
-            Dictionary<string, NameValueEntry> entries,
-            Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived)
+        internal override async Task<List<EventMessage>> ProcessMessagesAsync(StreamEntry[] entries)
         {
-            Dictionary<string, NameValueEntry> decryptedEntries = new Dictionary<string, NameValueEntry>();
-            foreach (string id in entries.Keys)
+            List<EventMessage> messages = await base.ProcessMessagesAsync(entries);
+            foreach (EventMessage msg in messages)
             {
                 try
                 {
-                    byte[] encrypted = Convert.FromBase64String(entries[id].Value);
+                    string content = msg.Content as string;
+                    byte[] encrypted = Convert.FromBase64String(content);
                     byte[] plaintextBytes = await EncryptionHelpers.DecryptDataAsync(encrypted, _encryptionKey).ConfigureAwait(false);
                     string plaintext = Encoding.UTF8.GetString(plaintextBytes);
-                    decryptedEntries.Add(id, new NameValueEntry(entries[id].Name, plaintext));
+                    msg.Content = plaintext;
                 }
                 catch
                 {
@@ -54,13 +53,14 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                             ["StreamName"] = _streamName,
                             ["ConsumerGroup"] = _consumerGroup,
                             ["ConsumerName"] = _consumerName,
-                            ["MessageId"] = id,
-                            ["MessageValue"] = entries[id].Value,
+                            ["MessageOffset"] = msg.Offset,
+                            ["MessageSequence"] = msg.SequenceNumber.ToString(),
+                            ["MessageValue"] = msg.Content?.ToString() ?? string.Empty,
                         });
                 }
             }
 
-            await base.ProcessMessagesAsync(decryptedEntries, onMessagesReceived).ConfigureAwait(false);
+            return messages;
         }
     }
 }
