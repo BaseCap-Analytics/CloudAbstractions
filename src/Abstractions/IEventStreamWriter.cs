@@ -36,12 +36,12 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <param name="objs">The object batch to send to the system</param>
         /// <param name="partition">The event partition to send on</param>
-        Task SendEventDataAsync(IEnumerable<object> msgs, string partition);
+        Task SendEventDataAsync(IList<object> msgs, string partition);
 
         /// <summary>
         /// Sends a batch of objects to the eventing system
         /// </summary>
         /// <param name="objs">The object batch to send to the system</param>
-        Task SendEventDataAsync(IEnumerable<object> msgs);
+        Task SendEventDataAsync(IList<object> msgs);
     }
 }

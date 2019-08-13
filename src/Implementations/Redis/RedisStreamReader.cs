@@ -62,7 +62,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                     if (messages.Any())
                     {
                         // Process and acknowledge that we received these messages
-                        await ProcessMessagesAsync(messages.ToDictionary(k => (string)k.Id, v => v.Values.First()), onMessageReceived).ConfigureAwait(false);
+                        await ProcessMessagesAsync(messages, onMessageReceived).ConfigureAwait(false);
                         await _database.StreamAcknowledgeAsync(_streamName, _consumerGroup, messages.Select(m => m.Id).ToArray()).ConfigureAwait(false);
                         gotMessages = true;
                     }
@@ -101,13 +101,27 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
         }
 
-        internal virtual async Task ProcessMessagesAsync(Dictionary<string, NameValueEntry> entries, Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived)
+        internal virtual Task<List<EventMessage>> ProcessMessagesAsync(StreamEntry[] entries)
+        {
+            List<EventMessage> messages = new List<EventMessage>();
+
+            foreach (StreamEntry e in entries)
+            {
+                foreach (NameValueEntry nv in e.Values)
+                {
+                    messages.Add(new EventMessage(e.Id, nv));
+                }
+            }
+
+            return Task.FromResult(messages);
+        }
+
+        private async Task ProcessMessagesAsync(StreamEntry[] entries, Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived)
         {
             try
             {
-                await onMessagesReceived(
-                    entries.Select(e => new EventMessage(e.Key, e.Value)),
-                    _streamName).ConfigureAwait(false);
+                List<EventMessage> messages = await ProcessMessagesAsync(entries).ConfigureAwait(false);
+                await onMessagesReceived(messages, _streamName).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -118,7 +132,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                         ["StreamName"] = _streamName,
                         ["ConsumerGroup"] = _consumerGroup,
                         ["ConsumerName"] = _consumerName,
-                        ["EntryCount"] = entries.Count.ToString(),
+                        ["EntryCount"] = entries.Length.ToString(),
                     });
             }
         }

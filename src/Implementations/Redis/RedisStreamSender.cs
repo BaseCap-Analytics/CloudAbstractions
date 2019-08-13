@@ -58,19 +58,23 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task SendEventDataAsync(IEnumerable<object> msgs)
+        public Task SendEventDataAsync(IList<object> msgs)
         {
             return SendEventDataAsync(msgs, string.Empty);
         }
 
         /// <inheritdoc />
-        public Task SendEventDataAsync(IEnumerable<object> msgs, string partition)
+        public Task SendEventDataAsync(IList<object> msgs, string partition)
         {
-            NameValueEntry[] entries = msgs.Select(m => new NameValueEntry(DATA_FIELD, SerializeObject(m)))
-                                            .ToArray();
-            if (entries.Any() == false)
+            if (msgs.Any() == false)
             {
                 throw new InvalidOperationException("Cannot send empty message");
+            }
+
+            NameValueEntry[] entries = new NameValueEntry[msgs.Count()];
+            for (int i = 0; i < msgs.Count(); i++)
+            {
+                entries[i] = new NameValueEntry($"{DATA_FIELD}_{i}", SerializeObject(msgs[i]));
             }
 
             return _database.StreamAddAsync(_streamName, entries);
