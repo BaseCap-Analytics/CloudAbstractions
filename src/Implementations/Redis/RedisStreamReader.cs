@@ -49,6 +49,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         {
             try
             {
+                bool gotMessages = false;
                 int maxMessages = maxMessagesToRead ?? MAX_MESSAGES_PER_BATCH;
                 while (token.IsCancellationRequested == false)
                 {
@@ -63,10 +64,18 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                         // Process and acknowledge that we received these messages
                         await ProcessMessagesAsync(messages.ToDictionary(k => (string)k.Id, v => v.Values.First()), onMessageReceived).ConfigureAwait(false);
                         await _database.StreamAcknowledgeAsync(_streamName, _consumerGroup, messages.Select(m => m.Id).ToArray()).ConfigureAwait(false);
+                        gotMessages = true;
+                    }
+                    else
+                    {
+                        gotMessages = false;
                     }
 
                     // Until the StackExchange library supports blocking operations, we need to poll
-                    await Task.Delay(POLL_TIMEOUT, token).ConfigureAwait(false);
+                    if (gotMessages == false)
+                    {
+                        await Task.Delay(POLL_TIMEOUT, token).ConfigureAwait(false);
+                    }
                 }
             }
             catch (Exception ex)
