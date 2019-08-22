@@ -31,6 +31,20 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
         }
 
         /// <inheritdoc />
+        public EncryptedRedisStreamReader(
+            byte[] encryptionKey,
+            IEnumerable<string> endpoints,
+            string password,
+            bool useSsl,
+            string streamName,
+            string consumerName,
+            ILogger logger)
+            : base(endpoints, password, useSsl, streamName, consumerName, logger)
+        {
+            _encryptionKey = encryptionKey;
+        }
+
+        /// <inheritdoc />
         internal override async Task<List<EventMessage>> ProcessMessagesAsync(StreamEntry[] entries)
         {
             List<EventMessage> messages = await base.ProcessMessagesAsync(entries);
