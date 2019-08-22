@@ -69,10 +69,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             {
                 throw new ArgumentNullException(nameof(endpoints));
             }
-            if (string.IsNullOrWhiteSpace(password))
-            {
-                throw new ArgumentNullException(nameof(password));
-            }
             if (string.IsNullOrWhiteSpace(streamName))
             {
                 throw new ArgumentNullException(nameof(streamName));
