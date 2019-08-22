@@ -131,6 +131,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
         }
 
+        protected Task TrimStreamAsync(string streamName)
+        {
+            return _database.StreamTrimAsync(streamName, MAX_STREAM_LENGTH, true);
+        }
+
         protected async Task CreateStreamConsumerGroupIfNecessaryAsync(string streamName, string consumerGroup)
         {
             // Check if the consumer group exists; if it doesn't create it
