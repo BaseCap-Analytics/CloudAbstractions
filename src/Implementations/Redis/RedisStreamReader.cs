@@ -113,7 +113,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             if (string.IsNullOrWhiteSpace(_consumerGroup))
             {
                 StreamInfo info = await _database.StreamInfoAsync(_streamName).ConfigureAwait(false);
-                streamPosition = info.LastEntry.Id;
+                streamPosition = info.LastGeneratedId;
             }
             else
             {
@@ -126,6 +126,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 int maxMessages = maxMessagesToRead ?? MAX_MESSAGES_PER_BATCH;
                 while (token.IsCancellationRequested == false)
                 {
+                    if (string.IsNullOrWhiteSpace(streamPosition))
+                    {
+                        throw new InvalidOperationException($"Failed to get StreamPosition for {_streamName} with group {_consumerGroup} on {_consumerName}");
+                    }
+
                     StreamEntry[] messages = await readFunction(maxMessages, streamPosition).ConfigureAwait(false);
                     if ((messages != null) && (messages.Any()))
                     {
@@ -176,7 +181,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         private Task<StreamEntry[]> ReadUsingConsumerGroupAsync(int maxMessages, RedisValue streamPosition)
         {
-            return  _database.StreamReadGroupAsync(
+            return _database.StreamReadGroupAsync(
                         _streamName,
                         _consumerGroup,
                         _consumerName,
