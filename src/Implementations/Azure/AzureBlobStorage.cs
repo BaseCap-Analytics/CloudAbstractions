@@ -60,7 +60,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// </summary>
         public async virtual Task<bool> DoesBlobExistAsync(string path)
         {
-            Stream s = await GetBlobReadStreamAsync(path);
+            Stream? s = await GetBlobReadStreamAsync(path);
             if (s == null)
             {
                 return false;
@@ -75,7 +75,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// <summary>
         /// Opens a read-only stream to the specified blob
         /// </summary>
-        public async virtual Task<Stream> GetBlobReadStreamAsync(string path)
+        public async virtual Task<Stream?> GetBlobReadStreamAsync(string path)
         {
             CloudBlockBlob blob = _blobStorage.GetBlockBlobReference(path);
             if (await blob.ExistsAsync())
@@ -91,7 +91,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// <summary>
         /// Opens a write-only stream to the specified blob
         /// </summary>
-        public async virtual Task<Stream> GetBlobWriteStreamAsync(string path, bool createNewBlob = false)
+        public async virtual Task<Stream?> GetBlobWriteStreamAsync(string path, bool createNewBlob = false)
         {
             CloudBlockBlob blob = _blobStorage.GetBlockBlobReference(path);
             if (createNewBlob && await blob.ExistsAsync())
@@ -138,7 +138,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         public async Task<IEnumerable<BlobItem>> GetAllBlobMetadatasAsync(string path)
         {
             List<BlobItem> blobs = new List<BlobItem>();
-            BlobContinuationToken continuationToken = null;
+            BlobContinuationToken? continuationToken = null;
 
             do
             {
@@ -176,7 +176,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         public async Task<IEnumerable<BlobItem>> GetAllDirectoriesInPathAsync(string path)
         {
             List<BlobItem> blobs = new List<BlobItem>();
-            BlobContinuationToken continuationToken = null;
+            BlobContinuationToken? continuationToken = null;
 
             do
             {
@@ -206,7 +206,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// <inheritdoc />
         public async Task DeleteOldBlobsAsync(string parentPath, TimeSpan age, CancellationToken token)
         {
-            BlobContinuationToken continuationToken = null;
+            BlobContinuationToken? continuationToken = null;
 
             do
             {

@@ -14,7 +14,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
     {
         protected CloudStorageAccount _account;
         protected Dictionary<string, AzureBlobStorage> _storageContainers;
-        private ITableStorage _tableStorage;
+        private ITableStorage? _tableStorage;
 
         /// <summary>
         /// Creates a connection to Azure Storage from a connection string

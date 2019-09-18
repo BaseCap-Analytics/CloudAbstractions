@@ -16,16 +16,16 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         private const int MAX_STREAM_LENGTH = 100000; // 100k records in stream before removing old ones
         protected readonly ConfigurationOptions _options;
         private readonly JsonSerializerSettings _jsonOptions;
-        protected ConnectionMultiplexer _cacheConnection;
-        protected IDatabaseAsync _database;
-        protected ISubscriber _subscription;
+        protected ConnectionMultiplexer? _cacheConnection;
+        protected IDatabaseAsync? _database;
+        protected ISubscriber? _subscription;
         protected readonly string _errorContextName;
         protected readonly string _errorContextValue;
         protected readonly ILogger _logger;
 
         internal RedisBase(IEnumerable<string> endpoints, string password, bool useSsl, string errorContextName, string errorContextValue, ILogger logger)
         {
-            if (endpoints?.Any() == false)
+            if ((endpoints == null) || (endpoints.Any() == false))
             {
                 throw new ArgumentNullException(nameof(endpoints));
             }
@@ -57,6 +57,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         internal RedisBase(ConfigurationOptions options, string errorContextName, string errorContextValue, ILogger logger)
         {
+            _jsonOptions = new JsonSerializerSettings()
+            {
+                Formatting = Formatting.None,
+                MaxDepth = 15, // Arbitrary value,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                PreserveReferencesHandling = PreserveReferencesHandling.Objects,
+            };
             _options = options;
             _errorContextName = errorContextName;
             _errorContextValue = errorContextValue;
@@ -84,11 +91,21 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         protected void Subscribe(string channel, Action<RedisChannel, RedisValue> handler)
         {
+            if (_subscription == null)
+            {
+                throw new InvalidOperationException("Must setup the cache before subscribing");
+            }
+
             _subscription.Subscribe(channel, handler);
         }
 
         protected virtual void ResetConnection()
         {
+            if ((_subscription == null) || (_cacheConnection == null))
+            {
+                throw new InvalidOperationException("Subscription is null when it shouldn't be");
+            }
+
             try
             {
                 _subscription.UnsubscribeAll();
@@ -116,6 +133,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         protected async Task CreateStreamIfNecessaryAsync(string streamName)
         {
+            if (_database == null)
+            {
+                throw new InvalidOperationException("Must setup the cache before creating a stream");
+            }
+
             // If the stream doesn't exist, create it the only way possible; adding a value.
             // To ensure we don't mess up readers, we then delete the value, leaving an empty stream.
             if (await _database.KeyExistsAsync(streamName) == false)
@@ -133,11 +155,21 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         protected Task TrimStreamAsync(string streamName)
         {
+            if (_database == null)
+            {
+                throw new InvalidOperationException("Must setup the cache before trimming stream");
+            }
+
             return _database.StreamTrimAsync(streamName, MAX_STREAM_LENGTH, true);
         }
 
         protected async Task CreateStreamConsumerGroupIfNecessaryAsync(string streamName, string consumerGroup)
         {
+            if (_database == null)
+            {
+                throw new InvalidOperationException("Must setup the cache before creating a stream consumer group");
+            }
+
             // Check if the consumer group exists; if it doesn't create it
             StreamGroupInfo[] groups = await _database.StreamGroupInfoAsync(streamName).ConfigureAwait(false);
             if (groups.Any(g => string.Equals(g.Name, consumerGroup, StringComparison.OrdinalIgnoreCase)) == false)
@@ -213,6 +245,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         protected async Task CleanupAsync()
         {
+            if ((_subscription == null) || (_cacheConnection == null))
+            {
+                throw new InvalidOperationException("Subscription is null when it shouldn't be");
+            }
+
             _database = null;
             await _subscription.UnsubscribeAllAsync().ConfigureAwait(false);
             await _cacheConnection.CloseAsync().ConfigureAwait(false);

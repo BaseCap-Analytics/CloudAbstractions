@@ -51,6 +51,9 @@ namespace BaseCap.CloudAbstractions.Abstractions
         {
             string encoded = Encoding.UTF8.GetString(data);
             Content = encoded;
+            Offset = string.Empty;
+            PartitionKey = string.Empty;
+            Properties = new Dictionary<string, object>();
         }
 
         /// <summary>
@@ -61,6 +64,9 @@ namespace BaseCap.CloudAbstractions.Abstractions
         {
             string serialized = JsonConvert.SerializeObject(obj);
             Content = serialized;
+            Offset = string.Empty;
+            PartitionKey = string.Empty;
+            Properties = new Dictionary<string, object>();
         }
 
         /// <summary>

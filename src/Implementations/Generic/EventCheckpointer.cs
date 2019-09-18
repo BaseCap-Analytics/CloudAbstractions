@@ -33,14 +33,14 @@ namespace BaseCap.CloudAbstractions.Implementations.Generic
         /// Retrieves the last read location in an event stream for the given partition ID
         /// </summary>
         /// <param name="id">The ID of the partition to retrieve the checkpoint for</param>
-        public async Task<string> GetCheckpointAsync(string id)
+        public async Task<string?> GetCheckpointAsync(string id)
         {
-            string value;
+            string? value;
             string path = GetBlobName(id);
 
             try
             {
-                using (Stream blobStream = await _storage.GetBlobReadStreamAsync(path))
+                using (Stream? blobStream = await _storage.GetBlobReadStreamAsync(path))
                 using (StreamReader sr = new StreamReader(blobStream))
                 {
                     value = sr.ReadToEnd()?.Trim();
@@ -69,7 +69,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Generic
         {
             string path = GetBlobName(id);
 
-            using (Stream blobStream = await _storage.GetBlobWriteStreamAsync(path))
+            using (Stream? blobStream = await _storage.GetBlobWriteStreamAsync(path))
             using (StreamWriter sw = new StreamWriter(blobStream))
             {
                 await sw.WriteLineAsync(value);

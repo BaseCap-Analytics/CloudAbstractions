@@ -27,6 +27,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public async Task SendNotificationAsync(object notification)
         {
+            if (_subscription == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SendNotificationAsync)}");
+            }
+
             string serialized = GetNotificationValue(notification);
             if (string.IsNullOrWhiteSpace(serialized))
             {

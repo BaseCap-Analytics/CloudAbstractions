@@ -17,8 +17,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         private readonly TimeSpan POLLING_FALLBACK_DELAY = TimeSpan.FromMinutes(5);
         protected readonly string _queueName;
         protected readonly string _channelName;
-        protected Func<QueueMessage, Task<bool>> _onMessageReceived;
-        private Task _pollingFallback;
+        protected Func<QueueMessage, Task<bool>>? _onMessageReceived;
+        private Task? _pollingFallback;
         private bool _keepPolling;
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         private void HandleMessage()
         {
-            string work = _database.ListRightPopAsync(_queueName).ConfigureAwait(false).GetAwaiter().GetResult();
+            string work = _database!.ListRightPopAsync(_queueName).ConfigureAwait(false).GetAwaiter().GetResult();
             while (string.IsNullOrWhiteSpace(work) == false)
             {
                 // The Pub/Sub is used as a shoulder tap to tell us that there is work to do.
@@ -110,8 +110,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 // If we need to deadletter this message, do it and don't send to a listener
                 if (msg.DequeueCount > 25)
                 {
-                    await _database.ListLeftPushAsync(DEADLETTER_QUEUE, processingMsg).ConfigureAwait(false);
-                    await _subscription.PublishAsync(DEADLETTER_CHANNEL, "").ConfigureAwait(false);
+                    await _database!.ListLeftPushAsync(DEADLETTER_QUEUE, processingMsg).ConfigureAwait(false);
+                    await _subscription!.PublishAsync(DEADLETTER_CHANNEL, "").ConfigureAwait(false);
                     _logger.LogEvent(
                         "QueueDeadletter",
                         new Dictionary<string, string>()
@@ -123,7 +123,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 }
 
                 // Send to the received and see if they are successful
-                bool result = await _onMessageReceived(msg).ConfigureAwait(false);
+                bool result = await _onMessageReceived!(msg).ConfigureAwait(false);
                 if (result == false)
                 {
                     // They weren't successful so re-queue the new message. We call the CreateMessage function
@@ -160,6 +160,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         private async Task PushObjectToQueueAsync(QueueMessage msg)
         {
+            if ((_database == null) || (_subscription == null))
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(PushObjectAsMessageAsync)}");
+            }
+
             string serialized = SerializeObject(msg);
             if (string.IsNullOrWhiteSpace(serialized))
             {

@@ -19,7 +19,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         private const int MAX_RETRIES = 3;
         private const int MAX_MESSAGES = 100;
         protected PartitionReceiver _reader;
-        protected Task _readerTask;
+        protected Task? _readerTask;
         protected readonly Func<IEnumerable<EventMessage>, string, Task> _onMessagesReceived;
         protected readonly Func<PartitionReceiver, Task<PartitionReceiver>> _receiverRefreshAsync;
         protected readonly ILogger _logger;

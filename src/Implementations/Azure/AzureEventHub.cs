@@ -13,7 +13,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
     public class AzureEventHub : IEventStreamHub
     {
         private readonly List<AzureEventHubReader> _readers;
-        private Func<IEnumerable<EventMessage>, string, Task> _onMessagesReceived;
+        private Func<IEnumerable<EventMessage>, string, Task>? _onMessagesReceived;
         private readonly EventHubClient _client;
         private readonly ICheckpointer _checkpointer;
         private readonly ILogger _logger;
@@ -69,7 +69,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
 
         private async Task<PartitionReceiver> SetupWithCheckpointAsync(string consumerGroup, string partitionId)
         {
-            string offset = await _checkpointer.GetCheckpointAsync(partitionId);
+            string? offset = await _checkpointer.GetCheckpointAsync(partitionId);
             EventPosition position;
             if (string.IsNullOrEmpty(offset))
             {

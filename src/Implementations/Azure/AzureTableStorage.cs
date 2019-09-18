@@ -73,7 +73,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         public async Task DeleteEntity(string id, string table, string etag = "*")
         {
             CloudTable tableRef = await GetTableReferenceAsync(table);
-            TableEntity entity = await FindEntityByIdAsync<TableEntity>(id, table);
+            TableEntity? entity = await FindEntityByIdAsync<TableEntity>(id, table);
+            if (entity == null)
+            {
+                throw new InvalidOperationException("No entity found with the specified ID");
+            }
+
             await DeleteEntity<TableEntity>(entity, table);
         }
 
@@ -87,7 +92,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
                 FilterString = TableQuery.GenerateFilterConditionForDate(columnName, QueryComparisons.LessThan, ageCutoff),
                 SelectColumns = new string[] { "PartitionKey", "RowKey" },
             };
-            TableContinuationToken continuationToken = null;
+            TableContinuationToken? continuationToken = null;
             do
             {
                 TableQuerySegment<DynamicTableEntity> segment = await tableRef.ExecuteQuerySegmentedAsync(selectPartitionKeyQuery, continuationToken, _options, null);
@@ -136,7 +141,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// <summary>
         /// Queries the table for the single entry with the specified ID in the RowKey column
         /// </summary>
-        public async Task<T> FindEntityByIdAsync<T>(string id, string table) where T : TableEntity, new()
+        public async Task<T?> FindEntityByIdAsync<T>(string id, string table) where T : TableEntity, new()
         {
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableQuery<T> query = new TableQuery<T>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, id));
@@ -157,7 +162,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableQuery<T> query = new TableQuery<T>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, id));
             List<T> entities = new List<T>();
-            TableContinuationToken token = null;
+            TableContinuationToken? token = null;
 
             do
             {
@@ -178,7 +183,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableQuery<T> query = new TableQuery<T>().Where(TableQuery.GenerateFilterCondition(columnName, QueryComparisons.Equal, value));
             List<T> entities = new List<T>();
-            TableContinuationToken token = null;
+            TableContinuationToken? token = null;
 
             do
             {
@@ -199,7 +204,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableQuery<T> query = new TableQuery<T>().Where(TableQuery.GenerateFilterConditionForGuid(columnName, QueryComparisons.Equal, value));
             List<T> entities = new List<T>();
-            TableContinuationToken token = null;
+            TableContinuationToken? token = null;
 
             do
             {
@@ -216,7 +221,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         public async Task<IEnumerable<string>> GetAllTableNamesAsync(CancellationToken token)
         {
             List<string> tableNames = new List<string>();
-            TableContinuationToken continuationToken = null;
+            TableContinuationToken? continuationToken = null;
 
             do
             {
@@ -237,7 +242,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             CloudTable tableRef = await GetTableReferenceAsync(table);
             TableQuery<T> query = new TableQuery<T>();
             List<T> entities = new List<T>();
-            TableContinuationToken token = null;
+            TableContinuationToken? token = null;
 
             do
             {
@@ -281,9 +286,15 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// </summary>
         public async Task UpdateEntityAsync<T>(string id, T newEntity, string table, string etag = "*") where T : TableEntity, new()
         {
-            T oldEntity = await FindEntityByIdAsync<T>(id, table);
-            if ((etag != "*") && (oldEntity.ETag != etag))
+            T? oldEntity = await FindEntityByIdAsync<T>(id, table);
+            if (oldEntity == null)
+            {
+                throw new InvalidOperationException($"Could not find entity with the specified ID");
+            }
+            else if ((etag != "*") && (oldEntity.ETag != etag))
+            {
                 throw new ArgumentOutOfRangeException($"The new Entity ETag must be the most current or '*'; got '{newEntity.ETag}'");
+            }
 
             newEntity.ETag = etag;
             CloudTable tableRef = await GetTableReferenceAsync(table);
@@ -312,8 +323,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             TableQuery<DynamicTableEntity> query = new TableQuery<DynamicTableEntity>()
                 .Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.NotEqual, string.Empty))
                 .Select(new string[] { "PartitionKey" });
-            EntityResolver<string> resolver = (pk, rk, ts, props, etag) => props.ContainsKey("PartitionKey") ? props["PartitionKey"].StringValue : null;
-            TableContinuationToken token = null;
+            EntityResolver<string?> resolver = (pk, rk, ts, props, etag) => props.ContainsKey("PartitionKey") ? props["PartitionKey"].StringValue : null;
+            TableContinuationToken? token = null;
 
             do
             {
@@ -331,7 +342,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         {
             CloudTable tableRef = await GetTableReferenceAsync(tableName);
             TableQuery<T> query = new TableQuery<T>();
-            TableContinuationToken token = null;
+            TableContinuationToken? token = null;
 
             do
             {

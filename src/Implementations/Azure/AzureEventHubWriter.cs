@@ -20,7 +20,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         protected const int MAX_BATCH_SIZE = 150;
 
         protected string _connectionString;
-        protected EventHubClient _client;
+        protected EventHubClient? _client;
 
         /// <summary>
         /// Creates a connection to an Azure Event Hub
@@ -51,6 +51,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// </summary>
         public Task CloseAsync()
         {
+            if (_client == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(CloseAsync)}");
+            }
+
             return _client.CloseAsync();
         }
 
@@ -66,6 +71,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// </summary>
         public async Task SendEventDataAsync(IList<object> msgs, string partition)
         {
+            if (_client == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SendEventDataAsync)}");
+            }
+
             Queue<EventData> data = new Queue<EventData>(msgs.Select(m => GetEventDataAsync(m).ConfigureAwait(false).GetAwaiter().GetResult()));
 
             do
@@ -81,6 +91,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
 
         public async Task SendEventDataAsync(IList<object> msgs)
         {
+            if (_client == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SendEventDataAsync)}");
+            }
+
             Queue<EventData> data = new Queue<EventData>(msgs.Select(m => GetEventDataAsync(m).ConfigureAwait(false).GetAwaiter().GetResult()));
 
             do

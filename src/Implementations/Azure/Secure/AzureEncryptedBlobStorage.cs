@@ -33,9 +33,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure.Secure
         /// <summary>
         /// Opens a read-only stream to the given blob path.
         /// </summary>
-        public override async Task<Stream> GetBlobReadStreamAsync(string path)
+        public override async Task<Stream?> GetBlobReadStreamAsync(string path)
         {
-            Stream underlying = await base.GetBlobReadStreamAsync(path);
+            Stream? underlying = await base.GetBlobReadStreamAsync(path);
             if (underlying == null)
                 return null;
             else
@@ -53,9 +53,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure.Secure
         /// <summary>
         /// Opens a write-only stream to the given blob path.
         /// </summary>
-        public override async Task<Stream> GetBlobWriteStreamAsync(string path, bool createNewBlob = false)
+        public override async Task<Stream?> GetBlobWriteStreamAsync(string path, bool createNewBlob = false)
         {
-            Stream underlying = await base.GetBlobWriteStreamAsync(path, createNewBlob);
+            Stream? underlying = await base.GetBlobWriteStreamAsync(path, createNewBlob);
             if (underlying == null)
                 return null;
             else

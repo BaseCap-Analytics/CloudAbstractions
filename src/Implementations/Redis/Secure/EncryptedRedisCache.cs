@@ -44,8 +44,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                     {
                         ["Value"] = value,
                     });
-
+#nullable disable // Nullable doesn't work with generics and default
                 return default(T);
+#nullable enable
             }
         }
     }

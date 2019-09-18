@@ -48,7 +48,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public Task SendEventDataAsync(IList<object> msgs, string partition)
         {
-            if (msgs.Any() == false)
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SendEventDataAsync)}");
+            }
+            else if (msgs.Any() == false)
             {
                 throw new InvalidOperationException("Cannot send empty message");
             }
