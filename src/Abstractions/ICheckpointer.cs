@@ -12,7 +12,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <param name="id">The ID to retrieve the checkpoint for</param>
         /// <returns>Returns the value stored in the checkpoint, if exists; returns null if the checkpoint does not exist</returns>
-        Task<string> GetCheckpointAsync(string id);
+        Task<string?> GetCheckpointAsync(string id);
 
         /// <summary>
         /// Sets the checkpoint data for a given ID

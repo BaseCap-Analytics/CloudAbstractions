@@ -56,7 +56,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <param name="key">The cache key</param>
         /// <returns>Returns the cached value; returns null if the value does not exist</returns>
-        Task<T> GetCacheObjectAsync<T>(string key) where T : class;
+        Task<T?> GetCacheObjectAsync<T>(string key) where T : class;
 
         /// <summary>
         /// Deletes a value from the cache
@@ -89,6 +89,23 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="fieldKey">The field name in the hashset</param>
         /// <returns>Returns true if the field exists; otherwise, returns false</returns>
         Task<bool> DoesHashFieldExistAsync(string hashKey, string fieldKey);
+
+        /// <summary>
+        /// Sets the specified field of a hashset if it does not already exist
+        /// </summary>
+        /// <param name="hashKey">The key to the hashset</param>
+        /// <param name="fieldKey">The field name in the hashset</param>
+        /// <param name="value">The value to put into the field</param>
+        /// <returns>Returns true if the value was set; otherwise, returns false</returns>
+        Task<bool> SetHashFieldNxAsync(string hashKey, string fieldKey, string value);
+
+        /// <summary>
+        /// Retrieves the specified field value of a hashset
+        /// </summary>
+        /// <param name="hashKey">The key to the hashset</param>
+        /// <param name="fieldKey">The field name in the hashset</param>
+        /// <returns>Returns the value in the field, if it exists; otherwise, returns null</returns>
+        Task<object?> GetHashFieldAsync(string hashKey, string fieldKey);
 
         /// <summary>
         /// Retrieves specific field values from the hashset

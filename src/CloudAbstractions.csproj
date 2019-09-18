@@ -13,6 +13,8 @@
     <Copyright>Copyright 2018 (c) BaseCap Analytics. All rights reserved.</Copyright>
     <IncludeSymbols>True</IncludeSymbols>
     <IncludeSource>True</IncludeSource>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

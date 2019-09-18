@@ -1,5 +1,6 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using StackExchange.Redis;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -36,18 +37,33 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public Task<bool> CheckIfUniqueAsync(string key)
         {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(CheckIfUniqueAsync)}");
+            }
+
             return _database.HyperLogLogAddAsync(_logName, key);
         }
 
         /// <inheritdoc />
         public Task<long> GetUniqueCountAsync()
         {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(GetUniqueCountAsync)}");
+            }
+
             return _database.HyperLogLogLengthAsync(_logName);
         }
 
         /// <inheritdoc />
         public Task DeleteLogAsync()
         {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(DeleteLogAsync)}");
+            }
+
             return _database.KeyDeleteAsync(_logName);
         }
     }

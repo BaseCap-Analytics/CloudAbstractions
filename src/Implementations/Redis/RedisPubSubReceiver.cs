@@ -12,7 +12,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     public class RedisPubSubReceiver : RedisBase, INotificationReceiver
     {
         protected readonly string _channel;
-        private Func<string, Task> _handler;
+        private Func<string, Task>? _handler;
 
         public RedisPubSubReceiver(IEnumerable<string> endpoints, string password, string channel, bool useSsl, ILogger logger)
             : base(endpoints, password, useSsl, "Channel", channel, logger)
@@ -42,6 +42,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         internal virtual void ReceiveHandler(RedisChannel channel, RedisValue value)
         {
+            if (_handler == null)
+            {
+                throw new InvalidOperationException("Handler is null when it shouldn't be");
+            }
+
             _handler(value).GetAwaiter().GetResult();
         }
     }

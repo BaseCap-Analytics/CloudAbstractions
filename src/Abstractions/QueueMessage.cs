@@ -37,6 +37,9 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         public QueueMessage()
         {
+            Content = string.Empty;
+            InsertionTime = DateTimeOffset.UtcNow;
+            DequeueCount = 0;
         }
     }
 }

@@ -31,7 +31,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="id">The unique identifier of the entity to find</param>
         /// <param name="table">The name of the table to search</param>
         /// <returns>Returns the entity, if it was found; returns null if the entity was not found</returns>
-        Task<T> FindEntityByIdAsync<T>(string id, string table) where T: TableEntity, new();
+        Task<T?> FindEntityByIdAsync<T>(string id, string table) where T: TableEntity, new();
 
         /// <summary>
         /// Retrieves all entities in the specified table with the specified string filter

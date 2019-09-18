@@ -28,7 +28,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <param name="path">The path of the blob on the storage medium</param>
         /// <returns>Returns a <see cref="System.IO.Stream"/> to the blob on success; otherwise, returns null</returns>
-        Task<Stream> GetBlobReadStreamAsync(string path);
+        Task<Stream?> GetBlobReadStreamAsync(string path);
 
         /// <summary>
         /// Retrieves a write-only stream to the blob specified
@@ -36,7 +36,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="path">The path of the blob on the storage medium</param>
         /// <param name="createNewBlob">Flag designating if the blob should be new and not exist or not</param>
         /// <returns>Returns a <see cref="System.IO.StreamWriter"/> to the blob</returns>
-        Task<Stream> GetBlobWriteStreamAsync(string path, bool createNewBlob = false);
+        Task<Stream?> GetBlobWriteStreamAsync(string path, bool createNewBlob = false);
 
         /// <summary>
         /// Retrieves a URL to the specified Blob for external access within the given time range and with the given permissions
