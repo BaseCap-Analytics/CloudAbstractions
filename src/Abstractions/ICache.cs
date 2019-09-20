@@ -26,8 +26,9 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <param name="key">The key to store the value as</param>
         /// <param name="value">The value to add to the list in the cache</param>
+        /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
         /// <returns>Returns the length of the list after the push operation</returns>
-        Task<long> AddToListAsync(string key, string value);
+        Task<long> AddToListAsync(string key, string value, bool waitForResponse = false);
 
         /// <summary>
         /// Retrieves all values in a List
@@ -62,16 +63,18 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// Deletes a value from the cache
         /// </summary>
         /// <param name="key">The key of the value to delete</param>
+        /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
         /// <returns>Returns true if the entry was deleted; otherwise, returns false</returns>
-        Task<bool> DeleteCacheObjectAsync(string key);
+        Task<bool> DeleteCacheObjectAsync(string key, bool waitForResponse = false);
 
         /// <summary>
         /// Increments the hashset field by 1
         /// </summary>
         /// <param name="hashKey">The key to the hashset</param>
         /// <param name="fieldKey">The field name in the hashset</param>
+        /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
         /// <returns>Returns the value in the field after the operation completes</returns>
-        Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey);
+        Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, bool waitForResponse = false);
 
         /// <summary>
         /// Increments the hashset field by a specified amount
@@ -79,8 +82,9 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="hashKey">The key to the hashset</param>
         /// <param name="fieldKey">The field name in the hashset</param>
         /// <param name="increment">The amount to increment the field by</param>
+        /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
         /// <returns>Returns the value in the field after the operation completes</returns>
-        Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, int increment);
+        Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, int increment, bool waitForResponse = false);
 
         /// <summary>
         /// Checks if the given field exists in the specified hash set
@@ -96,8 +100,9 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="hashKey">The key to the hashset</param>
         /// <param name="fieldKey">The field name in the hashset</param>
         /// <param name="value">The value to put into the field</param>
+        /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
         /// <returns>Returns true if the value was set; otherwise, returns false</returns>
-        Task<bool> SetHashFieldNxAsync(string hashKey, string fieldKey, string value);
+        Task<bool> SetHashFieldNxAsync(string hashKey, string fieldKey, string value, bool waitForResponse = false);
 
         /// <summary>
         /// Retrieves the specified field value of a hashset
@@ -116,13 +121,30 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<IEnumerable<long?>> GetHashKeyFieldValuesAsync(string hashKey, params string[] fields);
 
         /// <summary>
+        /// Adds a value to a set
+        /// </summary>
+        /// <param name="setName">The set name</param>
+        /// <param name="member">The name of the member in the set</param>
+        /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
+        /// <returns>Returns an awaitable Task</returns>
+        Task<bool> AddToSetAsync(string setName, string member, bool waitForResponse = false);
+
+        /// <summary>
+        /// Retrieves all values in a set
+        /// </summary>
+        /// <param name="setName">The set name</param>
+        /// <returns>Returns an enumeration of the members</param>
+        Task<IEnumerable<string>> GetSetMembersAsync(string setName);
+
+        /// <summary>
         /// Increments the score of a sorted set member by the increment value
         /// </summary>
         /// <param name="setName">The sorted set name</param>
         /// <param name="member">The name of the member in the sorted set</param>
         /// <param name="increment">The amount to increment the score by</param>
+        /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
         /// <returns>Returns the new score of the member</returns>
-        Task<double> SortedSetIncrementAsync(string setName, string member, double increment = 1);
+        Task<double> SortedSetIncrementAsync(string setName, string member, double increment = 1, bool waitForResponse = false);
 
         /// <summary>
         /// Retrieves a specified number of top members from a sorted set
