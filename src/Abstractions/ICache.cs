@@ -114,5 +114,23 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="fields">The fields to retrieve the values of</param>
         /// <returns>Returns the value for each field; if the field does not exist, null is returned for it's value</returns>
         Task<IEnumerable<long?>> GetHashKeyFieldValuesAsync(string hashKey, params string[] fields);
+
+        /// <summary>
+        /// Increments the score of a sorted set member by the increment value
+        /// </summary>
+        /// <param name="setName">The sorted set name</param>
+        /// <param name="member">The name of the member in the sorted set</param>
+        /// <param name="increment">The amount to increment the score by</param>
+        /// <returns>Returns the new score of the member</returns>
+        Task<double> SortedSetIncrementAsync(string setName, string member, double increment = 1);
+
+        /// <summary>
+        /// Retrieves a specified number of top members from a sorted set
+        /// </summary>
+        /// <param name="setName">The sorted set name</param>
+        /// <param name="count">The maximum number of entries to retrieve</param>
+        /// <param name="sortDesc">Flag indicating if the retrieval should be for the highest score (true) or lowest score (false)</param>
+        /// <returns>Returns a sorted enumeration of the members</param>
+        Task<IEnumerable<string>> GetSortedSetMembersAsync(string setName, int count, bool sortDesc);
     }
 }
