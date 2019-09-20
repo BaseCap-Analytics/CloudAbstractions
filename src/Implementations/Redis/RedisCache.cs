@@ -249,5 +249,38 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
             return returnValues;
         }
+
+        /// <inheritdoc />
+        public Task<double> SortedSetIncrementAsync(string setName, string member, double increment = 1)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SortedSetIncrementAsync)}");
+            }
+
+            return _database.SortedSetIncrementAsync(setName, member, increment);
+        }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<string>>  GetSortedSetMembersAsync(string setName, int count, bool sortDesc)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(GetSortedSetMembersAsync)}");
+            }
+
+            List<string> output = new List<string>();
+            Order sortOrder = sortDesc ? Order.Descending : Order.Ascending;
+            RedisValue[] values = await _database.SortedSetRangeByRankAsync(setName, 0, count, sortOrder).ConfigureAwait(false);
+            if (values.Any())
+            {
+                foreach (RedisValue v in values)
+                {
+                    output.Add(v.ToString());
+                }
+            }
+
+            return output;
+        }
     }
 }
