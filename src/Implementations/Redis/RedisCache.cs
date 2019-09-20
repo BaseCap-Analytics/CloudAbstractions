@@ -83,7 +83,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task<bool> DeleteCacheObjectAsync(string key)
+        public Task<bool> DeleteCacheObjectAsync(string key, bool waitForResponse = false)
         {
             if (_database == null)
             {
@@ -94,18 +94,20 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 throw new ArgumentNullException(nameof(key));
             }
 
-            return _database.KeyDeleteAsync(key);
+            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
+            return _database.KeyDeleteAsync(key, flags);
         }
 
         /// <inheritdoc />
-        public Task<long> AddToListAsync(string key, string value)
+        public Task<long> AddToListAsync(string key, string value, bool waitForResponse = false)
         {
             if (_database == null)
             {
                 throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(AddToListAsync)}");
             }
 
-            return _database.ListRightPushAsync(key, value);
+            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
+            return _database.ListRightPushAsync(key, value, flags: flags);
         }
 
         /// <inheritdoc />
@@ -139,25 +141,27 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey)
+        public Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, bool waitForResponse = false)
         {
             if (_database == null)
             {
                 throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(IncrementHashKeyAsync)}");
             }
 
-            return _database.HashIncrementAsync(hashKey, fieldKey);
+            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
+            return _database.HashIncrementAsync(hashKey, fieldKey, flags: flags);
         }
 
         /// <inheritdoc />
-        public Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, int increment)
+        public Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, int increment, bool waitForResponse = false)
         {
             if (_database == null)
             {
                 throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(IncrementHashKeyAsync)}");
             }
 
-            return _database.HashIncrementAsync(hashKey, fieldKey, increment);
+            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
+            return _database.HashIncrementAsync(hashKey, fieldKey, increment, flags: flags);
         }
 
         /// <inheritdoc />
@@ -172,14 +176,15 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task<bool> SetHashFieldNxAsync(string hashKey, string fieldKey, string value)
+        public Task<bool> SetHashFieldNxAsync(string hashKey, string fieldKey, string value, bool waitForResponse = false)
         {
             if (_database == null)
             {
                 throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SetHashFieldNxAsync)}");
             }
 
-            return _database.HashSetAsync(hashKey, fieldKey, value, When.NotExists);
+            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
+            return _database.HashSetAsync(hashKey, fieldKey, value, When.NotExists, flags);
         }
 
         /// <inheritdoc />
@@ -251,13 +256,47 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task<double> SortedSetIncrementAsync(string setName, string member, double increment = 1)
+        public Task<bool> AddToSetAsync(string setName, string member, bool waitForResponse = false)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(AddToSetAsync)}");
+            }
+
+            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
+            return _database.SetAddAsync(setName, member, flags);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>> GetSetMembersAsync(string setName)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(GetSetMembersAsync)}");
+            }
+
+            List<string> output = new List<string>();
+            RedisValue[] values = await _database.SetMembersAsync(setName);
+            if (values.Any())
+            {
+                foreach (RedisValue v in values)
+                {
+                    output.Add(v.ToString());
+                }
+            }
+
+            return output;
+        }
+
+        /// <inheritdoc />
+        public Task<double> SortedSetIncrementAsync(string setName, string member, double increment = 1, bool waitForResponse = false)
         {
             if (_database == null)
             {
                 throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SortedSetIncrementAsync)}");
             }
 
+            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
             return _database.SortedSetIncrementAsync(setName, member, increment);
         }
 
