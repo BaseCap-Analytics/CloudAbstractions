@@ -15,6 +15,14 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task SetupAsync();
 
         /// <summary>
+        /// Sets the expiry on a cache key
+        /// </summary>
+        /// <param name="key">The key to expire</param>
+        /// <param name="expire">When the key should expire</param>
+        /// <returns>Returns an awaitable Task</returns>
+        Task SetKeyExpiryAsync(string key, DateTimeOffset expire);
+
+        /// <summary>
         /// Creates a HyperLogLog from this cache
         /// </summary>
         /// <param name="logName">The name of the HyperLogLog to create</param>
