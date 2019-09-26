@@ -26,6 +26,21 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
+        public Task SetKeyExpiryAsync(string key, DateTimeOffset expire)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SetKeyExpiryAsync)}");
+            }
+            else if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            return _database.KeyExpireAsync(key, expire.DateTime, CommandFlags.FireAndForget);
+        }
+
+        /// <inheritdoc />
         public IHyperLogLog CreateHyperLogLog(string logName)
         {
             return (IHyperLogLog)new RedisHyperLogLog(logName, _options, _logger);
