@@ -160,7 +160,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="setName">The sorted set name</param>
         /// <param name="count">The maximum number of entries to retrieve</param>
         /// <param name="sortDesc">Flag indicating if the retrieval should be for the highest score (true) or lowest score (false)</param>
-        /// <returns>Returns a sorted enumeration of the members</param>
-        Task<IEnumerable<string>> GetSortedSetMembersAsync(string setName, int count, bool sortDesc);
+        /// <returns>Returns a sorted enumeration of the members with their scores</param>
+        Task<IEnumerable<KeyValuePair<string, double>>> GetSortedSetMembersAsync(string setName, int count, bool sortDesc);
     }
 }
