@@ -316,21 +316,21 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<string>>  GetSortedSetMembersAsync(string setName, int count, bool sortDesc)
+        public async Task<IEnumerable<KeyValuePair<string, double>>>  GetSortedSetMembersAsync(string setName, int count, bool sortDesc)
         {
             if (_database == null)
             {
                 throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(GetSortedSetMembersAsync)}");
             }
 
-            List<string> output = new List<string>();
+            List<KeyValuePair<string, double>> output = new List<KeyValuePair<string, double>>();
             Order sortOrder = sortDesc ? Order.Descending : Order.Ascending;
-            RedisValue[] values = await _database.SortedSetRangeByRankAsync(setName, 0, count, sortOrder).ConfigureAwait(false);
+            SortedSetEntry[] values = await _database.SortedSetRangeByRankWithScoresAsync(setName, 0, count, sortOrder).ConfigureAwait(false);
             if (values.Any())
             {
-                foreach (RedisValue v in values)
+                foreach (SortedSetEntry v in values)
                 {
-                    output.Add(v.ToString());
+                    output.Add(new KeyValuePair<string, double>(v.Element.ToString(), v.Score));
                 }
             }
 
