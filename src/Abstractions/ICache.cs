@@ -121,6 +121,13 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<object?> GetHashFieldAsync(string hashKey, string fieldKey);
 
         /// <summary>
+        /// Retrieves all Keys and Values in a HashField
+        /// </summary>
+        /// <param name="hashKey">The key to the hashset</param>
+        /// <returns>Returns the Dictionary of keys-to-values, if the hash key exists; otherwise, returns null</returns>
+        Task<Dictionary<string, string?>?> GetAllHashFieldsAsync(string hashKey);
+
+        /// <summary>
         /// Retrieves specific field values from the hashset
         /// </summary>
         /// <param name="hashKey">The key to the hashset</param>
