@@ -233,6 +233,37 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
+        public async Task<Dictionary<string, string?>?> GetAllHashFieldsAsync(string hashKey)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(GetAllHashFieldsAsync)}");
+            }
+
+            HashEntry[] entries = await _database.HashGetAllAsync(hashKey).ConfigureAwait(false);
+            Dictionary<string, string?>? lookup = new Dictionary<string, string?>();
+            if (entries.Any())
+            {
+                foreach (HashEntry e in entries)
+                {
+                    string? val = e.Value.ToString();
+                    if (string.IsNullOrWhiteSpace(val))
+                    {
+                        val = null;
+                    }
+
+                    lookup.Add(e.Name, val);
+                }
+            }
+           else
+           {
+               lookup = null;
+           }
+
+            return lookup;
+        }
+
+        /// <inheritdoc />
         public async Task<IEnumerable<long?>> GetHashKeyFieldValuesAsync(string hashKey, params string[] fields)
         {
             if (_database == null)
