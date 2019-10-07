@@ -37,7 +37,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 throw new ArgumentNullException(nameof(key));
             }
 
-            return _database.KeyExpireAsync(key, expire.DateTime, CommandFlags.FireAndForget);
+            return _database.KeyExpireAsync(key, expire.ToUniversalTime().UtcDateTime, CommandFlags.FireAndForget);
         }
 
         /// <inheritdoc />
