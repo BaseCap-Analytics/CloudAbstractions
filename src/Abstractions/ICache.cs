@@ -95,6 +95,14 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, int increment, bool waitForResponse = false);
 
         /// <summary>
+        /// Sets a flag in a hash set to 1
+        /// </summary>
+        /// <param name="hashKey">The key to the hashset</param>
+        /// <param name="fieldKey">The field name in the hashset</param>
+        /// <returns>Returns True if the flag was set; otherwise returns false</returns>
+        Task<bool> SetHashFieldFlagAsync(string hashKey, string fieldKey);
+
+        /// <summary>
         /// Checks if the given field exists in the specified hash set
         /// </summary>
         /// <param name="hashKey">The key to the hashset</param>

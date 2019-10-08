@@ -17,7 +17,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         protected readonly ConfigurationOptions _options;
         private readonly JsonSerializerSettings _jsonOptions;
         protected ConnectionMultiplexer? _cacheConnection;
-        protected IDatabaseAsync? _database;
+        protected IDatabase? _database;
         protected ISubscriber? _subscription;
         protected readonly string _errorContextName;
         protected readonly string _errorContextValue;
