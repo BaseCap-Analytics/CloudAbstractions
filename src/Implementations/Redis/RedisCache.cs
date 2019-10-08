@@ -188,7 +188,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
 
             ITransaction txn = _database.CreateTransaction();
-            txn.AddCondition(Condition.HashNotEqual(hashKey, fieldKey, 1));
+            txn.AddCondition(Condition.HashEqual(hashKey, fieldKey, 0));
             txn.HashIncrementAsync(hashKey, fieldKey);
             return txn.ExecuteAsync();
         }
