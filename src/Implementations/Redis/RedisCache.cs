@@ -180,6 +180,20 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
+        public Task<bool> SetHashFieldFlagAsync(string hashKey, string fieldKey)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SetHashFieldFlagAsync)}");
+            }
+
+            ITransaction txn = _database.CreateTransaction();
+            txn.AddCondition(Condition.HashNotEqual(hashKey, fieldKey, 1));
+            txn.HashIncrementAsync(hashKey, fieldKey);
+            return txn.ExecuteAsync();
+        }
+
+        /// <inheritdoc />
         public Task<bool> DoesHashFieldExistAsync(string hashKey, string fieldKey)
         {
             if (_database == null)
