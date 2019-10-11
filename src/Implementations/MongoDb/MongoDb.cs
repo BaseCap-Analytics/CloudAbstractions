@@ -1,9 +1,9 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -45,8 +45,8 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
         /// <inheritdoc />
         public async Task CreateCollectionAsync(
             string name,
-            IEnumerable<string>? ascendingIndexes,
-            IEnumerable<string>? descendingIndexes,
+            IEnumerable<Expression<Func<T, object>>>? ascendingIndexes,
+            IEnumerable<Expression<Func<T, object>>>? descendingIndexes,
             string expireyIndex,
             TimeSpan ttl)
         {
@@ -62,7 +62,7 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
             // Set the ascending indexes
             if ((ascendingIndexes != null) && ascendingIndexes.Any())
             {
-                foreach (string index in ascendingIndexes)
+                foreach (Expression<Func<T, object>> index in ascendingIndexes)
                 {
                     await _collection.Indexes.CreateOneAsync(new CreateIndexModel<T>(new IndexKeysDefinitionBuilder<T>().Ascending(index))).ConfigureAwait(false);
                 }
@@ -71,7 +71,7 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
             // Set the descending indexes
             if ((descendingIndexes != null) && descendingIndexes.Any())
             {
-                foreach (string index in descendingIndexes)
+                foreach (Expression<Func<T, object>> index in descendingIndexes)
                 {
                     await _collection.Indexes.CreateOneAsync(new CreateIndexModel<T>(new IndexKeysDefinitionBuilder<T>().Descending(index))).ConfigureAwait(false);
                 }
@@ -99,27 +99,65 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
         }
 
         /// <inheritdoc />
-        public Task<IDocumentDbCursor<T>> FindEntityAsync(Dictionary<string, string> searchCriteria, int? maxCount, CancellationToken token)
+        public async Task<IDocumentDbCursor<T>> FindEntitiesAsync(Expression<Func<T, bool>> whereClause, CancellationToken token)
         {
             if (_collection == null)
             {
                 throw new InvalidOperationException($"Must call {nameof(UseExistingCollection)} or {nameof(CreateCollectionAsync)} before calling {nameof(FindEntityAsync)}");
             }
 
-            BsonDocument filter = new BsonDocument(searchCriteria);
-            return Task.FromResult((IDocumentDbCursor<T>)new MongoCursor<T>(_collection.Find(filter).Limit(maxCount).ToCursor(token), token));
+            IFindFluent<T, T> query = _collection.Find(whereClause);
+            IAsyncCursor<T> nativeCursor = await query.ToCursorAsync(token).ConfigureAwait(false);
+            return new MongoCursor<T>(nativeCursor, token);
         }
 
         /// <inheritdoc />
-        public Task<T> FindEntityAsync(Dictionary<string, string> searchCriteria, CancellationToken token)
+        public async Task<IDocumentDbCursor<T>> FindEntitiesAscendingAsync(
+            Expression<Func<T, bool>> whereClause,
+            Expression<Func<T, object>> orderByClause,
+            int maxCount,
+            CancellationToken token)
         {
             if (_collection == null)
             {
                 throw new InvalidOperationException($"Must call {nameof(UseExistingCollection)} or {nameof(CreateCollectionAsync)} before calling {nameof(FindEntityAsync)}");
             }
 
-            BsonDocument filter = new BsonDocument(searchCriteria);
-            return _collection.Find(filter).SingleOrDefaultAsync(token);
+            IFindFluent<T, T> query = _collection.Find(whereClause)
+                                                 .SortBy(orderByClause)
+                                                 .Limit(maxCount);
+            IAsyncCursor<T> nativeCursor = await query.ToCursorAsync(token).ConfigureAwait(false);
+            return new MongoCursor<T>(nativeCursor, token);
+        }
+
+        /// <inheritdoc />
+        public async Task<IDocumentDbCursor<T>> FindEntitiesDescendingAsync(
+            Expression<Func<T, bool>> whereClause,
+            Expression<Func<T, object>> orderByClause,
+            int maxCount,
+            CancellationToken token)
+        {
+            if (_collection == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(UseExistingCollection)} or {nameof(CreateCollectionAsync)} before calling {nameof(FindEntityAsync)}");
+            }
+
+            IFindFluent<T, T> query = _collection.Find(whereClause)
+                                                 .SortByDescending(orderByClause)
+                                                 .Limit(maxCount);
+            IAsyncCursor<T> nativeCursor = await query.ToCursorAsync(token).ConfigureAwait(false);
+            return new MongoCursor<T>(nativeCursor, token);
+        }
+
+        /// <inheritdoc />
+        public Task<T> FindEntityAsync(Expression<Func<T, bool>> whereClause, CancellationToken token)
+        {
+            if (_collection == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(UseExistingCollection)} or {nameof(CreateCollectionAsync)} before calling {nameof(FindEntityAsync)}");
+            }
+
+            return _collection.Find(whereClause).SingleOrDefaultAsync(token);
         }
 
         ///<inheritdoc />
@@ -134,15 +172,14 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
         }
 
         /// <inheritdoc />
-        public Task<long> EntityCountAsync(Dictionary<string, string> searchCriteria, CancellationToken token)
+        public Task<long> EntityCountAsync(Expression<Func<T, bool>> whereClause, CancellationToken token)
         {
             if (_collection == null)
             {
                 throw new InvalidOperationException($"Must call {nameof(UseExistingCollection)} or {nameof(CreateCollectionAsync)} before calling {nameof(EntityCountAsync)}");
             }
 
-            BsonDocument filter = new BsonDocument(searchCriteria);
-            return _collection.CountDocumentsAsync(filter, cancellationToken: token);
+            return _collection.CountDocumentsAsync(whereClause, cancellationToken: token);
         }
     }
 }
