@@ -56,5 +56,13 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="token">The Cancellation Token for cancellation</param>
         /// <returns>Returns an awaitable Task</returns>
         Task InsertEntitiesAsync(IEnumerable<T> entities, CancellationToken token);
+
+        /// <summary>
+        /// Retrieves the Count of documents that fit the given search criteria
+        /// </summary>
+        /// <param name="searchCriteria">The key/value search criteria to filter documents by</param>
+        /// <param name="token">The Cancellation Token for cancellation</param>
+        /// <returns>Returns the number of documents that fit the search criteria</returns>
+        Task<long> EntityCountAsync(Dictionary<string, string> searchCriteria, CancellationToken token);
     }
 }

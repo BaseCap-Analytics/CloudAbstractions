@@ -132,5 +132,17 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
 
             return _collection.InsertManyAsync(entities, cancellationToken: token);
         }
+
+        /// <inheritdoc />
+        public Task<long> EntityCountAsync(Dictionary<string, string> searchCriteria, CancellationToken token)
+        {
+            if (_collection == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(UseExistingCollection)} or {nameof(CreateCollectionAsync)} before calling {nameof(EntityCountAsync)}");
+            }
+
+            BsonDocument filter = new BsonDocument(searchCriteria);
+            return _collection.CountDocumentsAsync(filter, cancellationToken: token);
+        }
     }
 }
