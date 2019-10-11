@@ -99,7 +99,7 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
         }
 
         /// <inheritdoc />
-        public Task<List<T>> FindEntityAsync(Dictionary<string, string> searchCriteria, int? maxCount, CancellationToken token)
+        public Task<IDocumentDbCursor<T>> FindEntityAsync(Dictionary<string, string> searchCriteria, int? maxCount, CancellationToken token)
         {
             if (_collection == null)
             {
@@ -107,7 +107,7 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
             }
 
             BsonDocument filter = new BsonDocument(searchCriteria);
-            return _collection.Find(filter).Limit(maxCount).ToListAsync(token);
+            return Task.FromResult((IDocumentDbCursor<T>)new MongoCursor<T>(_collection.Find(filter).Limit(maxCount).ToCursor(token), token));
         }
 
         /// <inheritdoc />

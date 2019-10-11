@@ -38,8 +38,8 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="searchCriteria">The key/value search criteria to filter documents by</param>
         /// <param name="maxCount">An optional limit to the number of results returned</param>
         /// <param name="token">The Cancellation Token for cancellation</param>
-        /// <returns>Returns a List of the result objects</returns>
-        Task<List<T>> FindEntityAsync(Dictionary<string, string> searchCriteria, int? maxCount, CancellationToken token);
+        /// <returns>Returns a cursor to the result objects</returns>
+        Task<IDocumentDbCursor<T>> FindEntityAsync(Dictionary<string, string> searchCriteria, int? maxCount, CancellationToken token);
 
         /// <summary>
         /// Finds a single entity with the specified key/value search criteria. For example: PropertyA = "Foo"
