@@ -47,7 +47,7 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
             string name,
             IEnumerable<Expression<Func<T, object>>>? ascendingIndexes,
             IEnumerable<Expression<Func<T, object>>>? descendingIndexes,
-            string expireyIndex,
+            Expression<Func<T, object>> expireyIndex,
             TimeSpan ttl)
         {
             if (_collection != null)
