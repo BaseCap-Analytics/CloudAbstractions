@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,8 +22,8 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <returns>Returns an awaitable Task</returns>
         Task CreateCollectionAsync(
             string name,
-            IEnumerable<string>? ascendingIndexes,
-            IEnumerable<string>? descendingIndexes,
+            IEnumerable<Expression<Func<T, object>>>? ascendingIndexes,
+            IEnumerable<Expression<Func<T, object>>>? descendingIndexes,
             string expireyIndex,
             TimeSpan ttl);
 
@@ -33,21 +34,48 @@ namespace BaseCap.CloudAbstractions.Abstractions
         void UseExistingCollection(string name);
 
         /// <summary>
-        /// Finds a group of entities with the specified key/value search criteria. For example: PropertyA = "Foo"
+        /// Finds a group of entities with the specified where clause expression
         /// </summary>
-        /// <param name="searchCriteria">The key/value search criteria to filter documents by</param>
-        /// <param name="maxCount">An optional limit to the number of results returned</param>
+        /// <param name="whereClause">The WHERE clause in a filter expression</param>
         /// <param name="token">The Cancellation Token for cancellation</param>
         /// <returns>Returns a cursor to the result objects</returns>
-        Task<IDocumentDbCursor<T>> FindEntityAsync(Dictionary<string, string> searchCriteria, int? maxCount, CancellationToken token);
+        Task<IDocumentDbCursor<T>> FindEntitiesAsync(Expression<Func<T, bool>> whereClause, CancellationToken token);
 
         /// <summary>
-        /// Finds a single entity with the specified key/value search criteria. For example: PropertyA = "Foo"
+        /// Finds a group of entities, sorted ascending, with the specified where clause expression
         /// </summary>
-        /// <param name="searchCriteria">The key/value search criteria to filter documents by</param>
+        /// <param name="whereClause">The WHERE clause in a filter expression</param>
+        /// <param name="orderByClause">The ORDER BY clause to sort the results</param>
+        /// <param name="maxCount">The maximum number of entries to return in the result set</param>
+        /// <param name="token">The Cancellation Token for cancellation</param>
+        /// <returns>Returns a cursor to the result objects</returns>
+        Task<IDocumentDbCursor<T>> FindEntitiesAscendingAsync(
+            Expression<Func<T, bool>> whereClause,
+            Expression<Func<T, object>> orderByClause,
+            int maxCount,
+            CancellationToken token);
+
+        /// <summary>
+        /// Finds a group of entities, sorted descending, with the specified where clause expression
+        /// </summary>
+        /// <param name="whereClause">The WHERE clause in a filter expression</param>
+        /// <param name="orderByClause">The ORDER BY clause to sort the results</param>
+        /// <param name="maxCount">The maximum number of entries to return in the result set</param>
+        /// <param name="token">The Cancellation Token for cancellation</param>
+        /// <returns>Returns a cursor to the result objects</returns>
+        Task<IDocumentDbCursor<T>> FindEntitiesDescendingAsync(
+            Expression<Func<T, bool>> whereClause,
+            Expression<Func<T, object>> orderByClause,
+            int maxCount,
+            CancellationToken token);
+
+        /// <summary>
+        /// Finds a single entity with the specified where clause expression
+        /// </summary>
+        /// <param name="whereClause">The WHERE clause in a filter expression</param>
         /// <param name="token">The Cancellation Token for cancellation</param>
         /// <returns>Returns the result object, if it exists; otherwise, returns null</returns>
-        Task<T> FindEntityAsync(Dictionary<string, string> searchCriteria, CancellationToken token);
+        Task<T> FindEntityAsync(Expression<Func<T, bool>> whereClause, CancellationToken token);
 
         /// <summary>
         /// Inserts entities into the collection
@@ -60,9 +88,9 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Retrieves the Count of documents that fit the given search criteria
         /// </summary>
-        /// <param name="searchCriteria">The key/value search criteria to filter documents by</param>
+        /// <param name="whereClause">The WHERE clause in a filter expression</param>
         /// <param name="token">The Cancellation Token for cancellation</param>
         /// <returns>Returns the number of documents that fit the search criteria</returns>
-        Task<long> EntityCountAsync(Dictionary<string, string> searchCriteria, CancellationToken token);
+        Task<long> EntityCountAsync(Expression<Func<T, bool>> whereClause, CancellationToken token);
     }
 }
