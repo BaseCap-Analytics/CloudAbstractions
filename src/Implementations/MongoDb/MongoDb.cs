@@ -22,11 +22,10 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
         /// Creates a new MongoDB connection
         /// </summary>
         /// <param name="serverAddress">The URL of the server to connect to</param>
-        /// <param name="serverPort">The port to connect on</param>
         /// <param name="username">The authentication user name</param>
         /// <param name="password">The authentication password</param>
         /// <param name="database">The MongoDB database name to use</param>
-        public MongoDb(string serverAddress, ushort serverPort, string username, string password, string database)
+        public MongoDb(string serverAddress, string username, string password, string database)
         {
             _client = new MongoClient(new MongoClientSettings()
             {
@@ -34,7 +33,7 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
                 Credential = MongoCredential.CreateCredential(database, username, password),
                 RetryReads = true,
                 RetryWrites = true,
-                Server = new MongoServerAddress(serverAddress, serverPort),
+                Server = new MongoServerAddress(serverAddress),
             });
             _db = _client.GetDatabase(database, new MongoDatabaseSettings()
             {
@@ -46,16 +45,15 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
         /// Creates a new MongoDB connection
         /// </summary>
         /// <param name="serverAddress">The URL of the server to connect to</param>
-        /// <param name="serverPort">The port to connect on</param>
         /// <param name="database">The MongoDB database name to use</param>
-        public MongoDb(string serverAddress, ushort serverPort, string database)
+        public MongoDb(string serverAddress, string database)
         {
             _client = new MongoClient(new MongoClientSettings()
             {
                 ConnectTimeout = TimeSpan.FromSeconds(30),
                 RetryReads = true,
                 RetryWrites = true,
-                Server = new MongoServerAddress(serverAddress, serverPort),
+                Server = new MongoServerAddress(serverAddress),
             });
             _db = _client.GetDatabase(database, new MongoDatabaseSettings()
             {
