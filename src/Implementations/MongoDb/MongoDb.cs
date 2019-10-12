@@ -42,6 +42,27 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
             });
         }
 
+        /// <summary>
+        /// Creates a new MongoDB connection
+        /// </summary>
+        /// <param name="serverAddress">The URL of the server to connect to</param>
+        /// <param name="serverPort">The port to connect on</param>
+        /// <param name="database">The MongoDB database name to use</param>
+        public MongoDb(string serverAddress, ushort serverPort, string database)
+        {
+            _client = new MongoClient(new MongoClientSettings()
+            {
+                ConnectTimeout = TimeSpan.FromSeconds(30),
+                RetryReads = true,
+                RetryWrites = true,
+                Server = new MongoServerAddress(serverAddress, serverPort),
+            });
+            _db = _client.GetDatabase(database, new MongoDatabaseSettings()
+            {
+                WriteConcern = WriteConcern.W1,
+            });
+        }
+
         /// <inheritdoc />
         public async Task CreateCollectionAsync(
             string name,
