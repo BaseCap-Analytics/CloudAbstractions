@@ -31,9 +31,9 @@ namespace BaseCap.CloudAbstractions.Implementations.SendGrid
                 ApiKey = apiKey,
                 ReliabilitySettings = new ReliabilitySettings(
                     3,
-                    TimeSpan.FromSeconds(5),
-                    TimeSpan.FromMinutes(3),
-                    TimeSpan.FromSeconds(30)),
+                    TimeSpan.FromSeconds(3),
+                    TimeSpan.FromSeconds(10),
+                    TimeSpan.FromSeconds(1)),
             });
             _fromAddress = new EmailAddress(fromAddress, fromName);
         }
