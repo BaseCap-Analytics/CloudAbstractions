@@ -30,7 +30,7 @@ namespace BaseCap.CloudAbstractions.Implementations.MongoDb
             _client = new MongoClient(new MongoClientSettings()
             {
                 ConnectTimeout = TimeSpan.FromSeconds(30),
-                Credential = MongoCredential.CreateCredential(database, username, password),
+                Credential = MongoCredential.CreateCredential("admin", username, password),
                 RetryReads = true,
                 RetryWrites = true,
                 Server = new MongoServerAddress(serverAddress),
