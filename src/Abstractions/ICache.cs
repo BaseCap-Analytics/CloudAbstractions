@@ -7,7 +7,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
     /// <summary>
     /// A connection to a distributed cache
     /// </summary>
-    public interface ICache
+    public interface ICache : IDisposable
     {
         /// <summary>
         /// Initializes the connection
