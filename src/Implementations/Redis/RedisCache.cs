@@ -205,15 +205,15 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task<bool> SetHashFieldNxAsync(string hashKey, string fieldKey, string value, bool waitForResponse = false)
+        public Task<bool> SetHashFieldAsync(string hashKey, string fieldKey, string value, bool waitForResponse = false)
         {
             if (_database == null)
             {
-                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SetHashFieldNxAsync)}");
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SetHashFieldAsync)}");
             }
 
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return _database.HashSetAsync(hashKey, fieldKey, value, When.NotExists, flags);
+            return _database.HashSetAsync(hashKey, fieldKey, value, When.Always, flags);
         }
 
         /// <inheritdoc />

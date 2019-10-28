@@ -111,14 +111,14 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<bool> DoesHashFieldExistAsync(string hashKey, string fieldKey);
 
         /// <summary>
-        /// Sets the specified field of a hashset if it does not already exist
+        /// Sets the specified field of a hashset
         /// </summary>
         /// <param name="hashKey">The key to the hashset</param>
         /// <param name="fieldKey">The field name in the hashset</param>
         /// <param name="value">The value to put into the field</param>
         /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
         /// <returns>Returns true if the value was set; otherwise, returns false</returns>
-        Task<bool> SetHashFieldNxAsync(string hashKey, string fieldKey, string value, bool waitForResponse = false);
+        Task<bool> SetHashFieldAsync(string hashKey, string fieldKey, string value, bool waitForResponse = false);
 
         /// <summary>
         /// Retrieves the specified field value of a hashset
