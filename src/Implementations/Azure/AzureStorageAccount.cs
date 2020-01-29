@@ -1,8 +1,10 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
+using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Azure
@@ -12,8 +14,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
     /// </summary>
     public class AzureStorageAccount : IStorageAccount
     {
-        protected CloudStorageAccount _account;
-        protected Dictionary<string, AzureBlobStorage> _storageContainers;
+        protected readonly CloudStorageAccount _account;
+        protected readonly Dictionary<string, AzureBlobStorage> _storageContainers;
         private ITableStorage? _tableStorage;
 
         /// <summary>
@@ -29,17 +31,49 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// <summary>
         /// Creates a connection to Azure Storage from an account name, key, and endpoints
         /// </summary>
-        public AzureStorageAccount(string accountName, string accountKey, Uri blobStorageEndpoint, Uri queueStorageEndpoint, Uri tableStorageEndpoint, Uri fileStorageEndpoint)
+        public AzureStorageAccount(
+            string accountName,
+            string accountKey,
+            Uri? blobStorageEndpoint,
+            Uri? queueStorageEndpoint,
+            Uri? tableStorageEndpoint,
+            Uri? fileStorageEndpoint)
         {
+            if ((blobStorageEndpoint == null) &&
+                (queueStorageEndpoint == null) &&
+                (tableStorageEndpoint == null) &&
+                (fileStorageEndpoint == null))
+            {
+                throw new ArgumentException($"{nameof(AzureStorageAccount)} must have at least one remote URI to connect to");
+            }
+
             StorageCredentials credentials = new StorageCredentials(accountName, accountKey);
             _account = new CloudStorageAccount(credentials, blobStorageEndpoint, queueStorageEndpoint, tableStorageEndpoint, fileStorageEndpoint);
             _storageContainers = new Dictionary<string, AzureBlobStorage>();
             _tableStorage = null;
         }
 
-        /// <summary>
-        /// Retrieves a connection to a Blob Storage container
-        /// </summary>
+        /// <inheritdoc />
+        public virtual async Task<IEnumerable<string>> ListBlobContainersAsync()
+        {
+            List<string> containers = new List<string>();
+            BlobContinuationToken token = new BlobContinuationToken();
+            ContainerResultSegment result;
+            while ((result = await _account.CreateCloudBlobClient().ListContainersSegmentedAsync(token).ConfigureAwait(false)) != null)
+            {
+                if (result.Results?.Any() == false)
+                {
+                    break;
+                }
+
+                containers.AddRange(result.Results.Select(c => c.Name));
+                token = result.ContinuationToken;
+            }
+
+            return containers;
+        }
+
+        /// <inheritdoc />
         public virtual async Task<IBlobStorage> GetBlobStorageAsync(string containerName)
         {
             if (_storageContainers.ContainsKey(containerName) == false)
@@ -51,9 +85,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             return _storageContainers[containerName];
         }
 
-        /// <summary>
-        /// Retrieves a connection to Table Storage
-        /// </summary>
+        /// <inheritdoc />
         public ITableStorage GetTableStorage()
         {
             if (_tableStorage == null)
