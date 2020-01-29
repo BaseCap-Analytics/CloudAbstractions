@@ -31,6 +31,11 @@ namespace BaseCap.CloudAbstractions.Abstractions
         public string ContainerName { get; set; }
 
         /// <summary>
+        /// Flag indicating if this BlobItem is a directory or a file
+        /// </summary>
+        public bool IsDirectory { get; set; }
+
+        /// <summary>
         /// When this Blob was last created
         /// </summary>
         public DateTimeOffset Created { get; set; }
@@ -52,6 +57,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
             LastModified = blobItem.Properties.LastModified.HasValue ?
                             blobItem.Properties.LastModified.Value :
                             DateTimeOffset.MinValue;
+            IsDirectory = false;
         }
 
         internal BlobItem(CloudBlobDirectory directory)
@@ -62,6 +68,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
             ContainerName = directory.Container.Name;
             Created = DateTimeOffset.MinValue;
             LastModified = DateTimeOffset.MinValue;
+            IsDirectory = true;
         }
     }
 }
