@@ -22,4 +22,4 @@ jobs:
         run: dotnet pack -c Release --include-symbols
       - name: Publish Package
         working-directory: ./src
-        run: dotnet nuget push ./src/bin/Release/*.nupkg
+        run: dotnet nuget push ./src/bin/Release/*.nupkg --source "github"
