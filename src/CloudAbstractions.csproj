@@ -11,6 +11,8 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseUrl>https://raw.githubusercontent.com/basecap-analytics/CloudAbstractions/master/LICENSE</PackageLicenseUrl>
     <Copyright>Copyright 2018 (c) BaseCap Analytics. All rights reserved.</Copyright>
+    <Version Condition="'$(Configuration)'!='Release'">99.99.$([System.DateTime]::Now.ToString(yyMM)).$([System.DateTime]::Now.ToString(dd))</Version>
+    <Version Condition="'$(Configuration)'=='Release'">4.$([System.DateTime]::Now.ToString(yyMM)).$([System.DateTime]::Now.ToString(dd))</Version>
     <IncludeSymbols>True</IncludeSymbols>
     <IncludeSource>True</IncludeSource>
     <LangVersion>preview</LangVersion>

@@ -1,0 +1,25 @@
+name: CI/CD
+on:
+  push:
+    branches:
+    - master
+jobs:
+  build:
+    name: Build CI/CD
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '3.0.100'
+          source-url: https://nuget.pkg.github.com/basecap-analytics/index.json
+        env:
+          NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Build Package
+        working-directory: ./src
+        run: dotnet pack -c Release --include-symbols
+      - name: Publish Package
+        working-directory: ./src
+        run: dotnet nuget push ./src/bin/Release/*.nupkg
