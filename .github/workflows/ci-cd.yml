@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     name: Build CI/CD
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     env:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
     steps:
