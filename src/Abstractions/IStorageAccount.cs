@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Abstractions
@@ -16,5 +17,11 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// Retrieves a specific Blob Container
         /// </summary>
         Task<IBlobStorage> GetBlobStorageAsync(string containerName);
+
+        /// <summary>
+        /// List the available blob storage containers
+        /// </summary>
+        /// <returns>Returns an enumeration of the available blob containers</returns>
+        Task<IEnumerable<string>> ListBlobContainersAsync();
     }
 }
