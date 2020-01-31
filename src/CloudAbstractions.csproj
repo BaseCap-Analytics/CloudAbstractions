@@ -22,14 +22,14 @@
 
   <ItemGroup>
     <PackageReference Include="BaseCap.Security" Version="2.1.180207.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.11.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.12.1" />
     <PackageReference Include="Microsoft.Azure.EventHubs" Version="4.1.0" />
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.4" />
     <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="3.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="3.0.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.2" />
-    <PackageReference Include="MongoDB.Driver" Version="2.9.2" />
-    <PackageReference Include="Sendgrid" Version="9.12.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="3.1.1" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.6" />
+    <PackageReference Include="MongoDB.Driver" Version="2.10.1" />
+    <PackageReference Include="Sendgrid" Version="9.12.6" />
     <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
   </ItemGroup>
