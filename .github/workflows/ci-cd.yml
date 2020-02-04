@@ -20,4 +20,4 @@ jobs:
         run: dotnet pack -c Release --include-symbols
       - name: Publish Package
         working-directory: ./src
-        run: nuget push ./bin/Release/*.nupkg ${{ secrets.GITHUB_TOKEN }} -source "https://nuget.pkg.github.com/basecap-analytics/index.json"
+        run: nuget push ./bin/Release/*.nupkg ${{ secrets.NuGet_API_Key }} -source "https://www.myget.org/F/bca/api/v2/package"
