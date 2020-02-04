@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     name: Build CI/CD
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     env:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
     steps:
@@ -14,9 +14,12 @@ jobs:
       - uses: actions/setup-dotnet@v1.4.0
         with:
           dotnet-version: '3.0.100'
+      - uses: nuget/setup-nuget@v1
+      - name: Add GitHub to NuGet config
+        run: nuget setapikey ${{ secrets.GITHUB_TOKEN }} -source "https://nuget.pkg.github.com/basecap-analytics/index.json"
       - name: Build Package
         working-directory: ./src
         run: dotnet pack -c Release --include-symbols
       - name: Publish Package
         working-directory: ./src
-        run: dotnet nuget push ./bin/Release/*.nupkg -k ${{secrets.GITHUB_TOKEN}} -s "github"
+        run: nuget push ./bin/Release/*.nupkg -s "https://nuget.pkg.github.com/basecap-analytics/index.json"
