@@ -58,9 +58,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         {
             List<string> containers = new List<string>();
             BlobContinuationToken token = new BlobContinuationToken();
+            CloudBlobClient client = _account.CreateCloudBlobClient();
             ContainerResultSegment result;
-            while ((result = await _account.CreateCloudBlobClient().ListContainersSegmentedAsync(token).ConfigureAwait(false)) != null)
+            do
             {
+                result = await client.ListContainersSegmentedAsync(token).ConfigureAwait(false);
                 if (result.Results?.Any() == false)
                 {
                     break;
@@ -69,6 +71,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
                 containers.AddRange(result.Results.Select(c => c.Name));
                 token = result.ContinuationToken;
             }
+            while (token != null);
 
             return containers;
         }
