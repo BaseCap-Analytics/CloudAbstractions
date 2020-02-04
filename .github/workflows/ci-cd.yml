@@ -15,11 +15,9 @@ jobs:
         with:
           dotnet-version: '3.0.100'
       - uses: nuget/setup-nuget@v1
-      - name: Add GitHub to NuGet config
-        run: nuget setapikey ${{ secrets.GITHUB_TOKEN }} -source "https://nuget.pkg.github.com/basecap-analytics/index.json"
       - name: Build Package
         working-directory: ./src
         run: dotnet pack -c Release --include-symbols
       - name: Publish Package
         working-directory: ./src
-        run: nuget push ./bin/Release/*.nupkg -source "https://nuget.pkg.github.com/basecap-analytics/index.json"
+        run: nuget push ./bin/Release/*.nupkg ${{ secrets.GITHUB_TOKEN }} -source "https://nuget.pkg.github.com/basecap-analytics/index.json"
