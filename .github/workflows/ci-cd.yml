@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     name: Build CI/CD
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     env:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
     steps:
@@ -14,10 +14,9 @@ jobs:
       - uses: actions/setup-dotnet@v1.4.0
         with:
           dotnet-version: '3.0.100'
-      - uses: nuget/setup-nuget@v1
       - name: Build Package
         working-directory: ./src
         run: dotnet pack -c Release --include-symbols
       - name: Publish Package
         working-directory: ./src
-        run: nuget push ./bin/Release/*.nupkg ${{ secrets.NuGet_API_Key }} -source "https://www.myget.org/F/bca/api/v2/package"
+        run: dotnet nuget push ./bin/Release/*.nupkg -k ${{ secrets.NuGet_API_Key }} -s "https://www.myget.org/F/bca/api/v2/package"
