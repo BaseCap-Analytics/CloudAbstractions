@@ -1,4 +1,4 @@
-using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.Azure.Storage.Blob;
 using System;
 using System.IO;
 
@@ -45,7 +45,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         public DateTimeOffset LastModified { get; set; }
 
-        internal BlobItem(CloudBlockBlob blobItem)
+        internal BlobItem(CloudBlob blobItem)
         {
             Name = Path.GetFileName(blobItem.Name);
             RelativePath = blobItem.Name;
