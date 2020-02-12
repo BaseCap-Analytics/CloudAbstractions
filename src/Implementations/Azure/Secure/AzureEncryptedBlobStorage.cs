@@ -1,5 +1,5 @@
 using BaseCap.Security;
-using Microsoft.WindowsAzure.Storage;
+using Microsoft.Azure.Storage;
 using System.IO;
 using System.Threading.Tasks;
 

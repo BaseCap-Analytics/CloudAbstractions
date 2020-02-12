@@ -9,11 +9,6 @@ namespace BaseCap.CloudAbstractions.Abstractions
     public interface IStorageAccount
     {
         /// <summary>
-        /// Retrieves a contract to Table storage
-        /// </summary>
-        ITableStorage GetTableStorage();
-
-        /// <summary>
         /// Retrieves a specific Blob Container
         /// </summary>
         Task<IBlobStorage> GetBlobStorageAsync(string containerName);

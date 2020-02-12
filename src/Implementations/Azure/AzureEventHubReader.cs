@@ -1,7 +1,7 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.Azure.EventHubs;
+using Microsoft.Azure.Storage;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.WindowsAzure.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;

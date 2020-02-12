@@ -1,7 +1,7 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage.RetryPolicies;
+using Microsoft.Azure.Storage;
+using Microsoft.Azure.Storage.Blob;
+using Microsoft.Azure.Storage.RetryPolicies;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -132,10 +132,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             return blob.DeleteIfExistsAsync();
         }
 
-        /// <summary>
-        /// Retrieves metadata about every blob in the storage medium under the given path
-        /// </summary>
-        public async Task<IEnumerable<BlobItem>> GetAllBlobMetadatasAsync(string path)
+        /// <inheritdoc />
+        public async Task<IEnumerable<BlobItem>> ListAllBlobsAsync(string path)
         {
             List<BlobItem> blobs = new List<BlobItem>();
             BlobContinuationToken? continuationToken = null;
@@ -153,9 +151,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
                 continuationToken = segment.ContinuationToken;
                 foreach (IListBlobItem blob in segment.Results)
                 {
-                    if (blob is CloudBlockBlob)
+                    if (blob is CloudBlob)
                     {
-                        CloudBlockBlob cbb = (CloudBlockBlob)blob;
+                        CloudBlob cbb = (CloudBlob)blob;
 
                         // Don't add deleted blobs since they're there as artifacts
                         if (cbb.IsDeleted == false)
@@ -163,76 +161,16 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
                             blobs.Add(new BlobItem(cbb));
                         }
                     }
-                }
-            }
-            while (continuationToken != null);
-
-            return blobs;
-        }
-
-        /// <summary>
-        /// Retrieves metadata about every directory in the storage medium under the given path
-        /// </summary>
-        public async Task<IEnumerable<BlobItem>> GetAllDirectoriesInPathAsync(string path)
-        {
-            List<BlobItem> blobs = new List<BlobItem>();
-            BlobContinuationToken? continuationToken = null;
-
-            do
-            {
-                BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
-                    path,
-                    false,
-                    BlobListingDetails.Metadata,
-                    null,
-                    continuationToken,
-                    null,
-                    null);
-                continuationToken = segment.ContinuationToken;
-                foreach (IListBlobItem blob in segment.Results)
-                {
-                    if (blob is CloudBlobDirectory)
+                    else if (blob is CloudBlobDirectory)
                     {
-                        blobs.Add(new BlobItem((CloudBlobDirectory)blob));
-                        continue;
+                        CloudBlobDirectory dir = (CloudBlobDirectory)blob;
+                        blobs.Add(new BlobItem(dir));
                     }
                 }
             }
             while (continuationToken != null);
 
             return blobs;
-        }
-
-        /// <inheritdoc />
-        public async Task DeleteOldBlobsAsync(string parentPath, TimeSpan age, CancellationToken token)
-        {
-            BlobContinuationToken? continuationToken = null;
-
-            do
-            {
-                BlobResultSegment segment = await _blobStorage.ListBlobsSegmentedAsync(
-                    parentPath,
-                    true,
-                    BlobListingDetails.Metadata,
-                    null,
-                    continuationToken,
-                    new BlobRequestOptions() { AbsorbConditionalErrorsOnRetry = true, RetryPolicy = new LinearRetry() },
-                    null);
-                IEnumerable<CloudBlockBlob> oldBlobs = segment.Results.OfType<CloudBlockBlob>().Where(b => (b.Properties.LastModified - DateTimeOffset.Now) < age);
-                continuationToken = segment.ContinuationToken;
-                foreach (CloudBlockBlob blob in oldBlobs)
-                {
-                    try
-                    {
-                        await blob.DeleteAsync();
-                    }
-                    catch
-                    {
-                        // Fail silently
-                    }
-                }
-            }
-            while ((continuationToken != null) && (token.IsCancellationRequested == false));
         }
     }
 }

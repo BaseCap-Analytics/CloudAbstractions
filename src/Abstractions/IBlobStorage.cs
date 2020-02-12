@@ -57,19 +57,8 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Retrieves metadata about every blob in the storage medium
         /// </summary>
-        Task<IEnumerable<BlobItem>> GetAllBlobMetadatasAsync(string path);
-
-        /// <summary>
-        /// Retrieves metadata about every directory in the storage medium under the given path
-        /// </summary>
-        Task<IEnumerable<BlobItem>> GetAllDirectoriesInPathAsync(string path);
-
-        /// <summary>
-        /// Deletes blobs older than a certain age
-        /// </summary>
-        /// <param name="parentPath">The root path to search under</param>
-        /// <param name="age">The maximum age of a blob before it is deleted</param>
-        /// <param name="token">Cancellation token for cancelling the task</param>
-        Task DeleteOldBlobsAsync(string parentPath, TimeSpan age, CancellationToken token);
+        /// <param name="path">The path to list blobs under; null for the root of the container</param>
+        /// <returns>Returns an enumeration of blobs under a path</returns>
+        Task<IEnumerable<BlobItem>> ListAllBlobsAsync(string path);
     }
 }

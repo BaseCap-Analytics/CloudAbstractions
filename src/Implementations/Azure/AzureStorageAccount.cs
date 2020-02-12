@@ -1,7 +1,7 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
-using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.Azure.Storage;
+using Microsoft.Azure.Storage.Auth;
+using Microsoft.Azure.Storage.Blob;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +16,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
     {
         protected readonly CloudStorageAccount _account;
         protected readonly Dictionary<string, AzureBlobStorage> _storageContainers;
-        private ITableStorage? _tableStorage;
 
         /// <summary>
         /// Creates a connection to Azure Storage from a connection string
@@ -25,7 +24,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         {
             _account = CloudStorageAccount.Parse(connectionString);
             _storageContainers = new Dictionary<string, AzureBlobStorage>();
-            _tableStorage = null;
         }
 
         /// <summary>
@@ -50,7 +48,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             StorageCredentials credentials = new StorageCredentials(accountName, accountKey);
             _account = new CloudStorageAccount(credentials, blobStorageEndpoint, queueStorageEndpoint, tableStorageEndpoint, fileStorageEndpoint);
             _storageContainers = new Dictionary<string, AzureBlobStorage>();
-            _tableStorage = null;
         }
 
         /// <inheritdoc />
@@ -86,17 +83,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             }
 
             return _storageContainers[containerName];
-        }
-
-        /// <inheritdoc />
-        public ITableStorage GetTableStorage()
-        {
-            if (_tableStorage == null)
-            {
-                _tableStorage = new AzureTableStorage(_account);
-            }
-
-            return _tableStorage;
         }
     }
 }
