@@ -3,6 +3,7 @@ using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis
@@ -217,6 +218,30 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
+        public async Task<bool> AppendHashFieldAsync(string hashKey, string fieldKey, string value, CancellationToken cancellation = default(CancellationToken))
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(AppendHashFieldAsync)}");
+            }
+
+            bool committed = false;
+            while ((committed == false) && (cancellation.IsCancellationRequested == false))
+            {
+                string current = await _database.HashGetAsync(hashKey, fieldKey).ConfigureAwait(false);
+                ITransaction txn = _database.CreateTransaction();
+                txn.AddCondition(Condition.HashEqual(hashKey, fieldKey, current));
+                current = current ?? string.Empty; // current will be null if the key doesn't exist, but we can't set it to string empty before the above condition
+#pragma warning disable CS4014 // This shuld not be awaited since it won't be completed until the Execute call returns
+                txn.HashSetAsync(hashKey, fieldKey, current.Insert(current.Length, value));
+#pragma warning restore CS4014
+                committed = await txn.ExecuteAsync().ConfigureAwait(false);
+            }
+
+            return committed;
+        }
+
+        /// <inheritdoc />
         public async Task<object?> GetHashFieldAsync(string hashKey, string fieldKey)
         {
             if (_database == null)
@@ -316,6 +341,17 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
+        public IAsyncEnumerable<HashEntry> GetHashEntriesEnumerable(string hashKey)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(GetHashEntriesEnumerable)}");
+            }
+
+            return _database.HashScanAsync(hashKey);
+        }
+
+        /// <inheritdoc />
         public Task<bool> AddToSetAsync(string setName, string member, bool waitForResponse = false)
         {
             if (_database == null)
@@ -346,6 +382,17 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
 
             return output;
+        }
+
+        /// <inheritdoc />
+        public IAsyncEnumerable<RedisValue> GetSetMembersEnumerable(string setName)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(GetSetMembersEnumerable)}");
+            }
+
+            return _database.SetScanAsync(setName);
         }
 
         /// <inheritdoc />
@@ -380,6 +427,17 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
 
             return output;
+        }
+
+        /// <inheritdoc />
+        public IAsyncEnumerable<SortedSetEntry> GetSortedSetMembersEnumerable(string setName)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(GetSortedSetMembersEnumerable)}");
+            }
+
+            return _database.SortedSetScanAsync(setName);
         }
     }
 }
