@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using StackExchange.Redis;
 
 namespace BaseCap.CloudAbstractions.Abstractions
 {
@@ -121,6 +123,16 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<bool> SetHashFieldAsync(string hashKey, string fieldKey, string value, bool waitForResponse = false);
 
         /// <summary>
+        /// Appends a value to the end of a Hash Field
+        /// </summary>
+        /// <param name="hashKey">The key to the hashset</param>
+        /// <param name="fieldKey">The field name in the hashset</param>
+        /// <param name="value">The value to put into the field</param>
+        /// <param name="cancellation">A Cancellation Token to cancel the request</param>
+        /// <returns>Returns true if the value was set; otherwise, returns false</returns>
+        Task<bool> AppendHashFieldAsync(string hashKey, string fieldKey, string value, CancellationToken cancellation);
+
+        /// <summary>
         /// Retrieves the specified field value of a hashset
         /// </summary>
         /// <param name="hashKey">The key to the hashset</param>
@@ -144,6 +156,13 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<IEnumerable<long?>> GetHashKeyFieldValuesAsync(string hashKey, params string[] fields);
 
         /// <summary>
+        /// Retrieves an enumerable over all entries in the hash set
+        /// </summary>
+        /// <param name="hashKey">The key to the hashset</param>
+        /// <returns>Returns an enumerable to the hash entries</returns>
+        IAsyncEnumerable<HashEntry> GetHashEntriesEnumerable(string hashKey);
+
+        /// <summary>
         /// Adds a value to a set
         /// </summary>
         /// <param name="setName">The set name</param>
@@ -158,6 +177,13 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="setName">The set name</param>
         /// <returns>Returns an enumeration of the members</param>
         Task<IEnumerable<string>> GetSetMembersAsync(string setName);
+
+        /// <summary>
+        /// Iterate over every member of a Set
+        /// </summary>
+        /// <param name="setName">The set name</param>
+        /// <returns>Returns an async enumerable of the members</returns>
+        IAsyncEnumerable<RedisValue> GetSetMembersEnumerable(string setName);
 
         /// <summary>
         /// Increments the score of a sorted set member by the increment value
@@ -177,5 +203,12 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="sortDesc">Flag indicating if the retrieval should be for the highest score (true) or lowest score (false)</param>
         /// <returns>Returns a sorted enumeration of the members with their scores</param>
         Task<IEnumerable<KeyValuePair<string, double>>> GetSortedSetMembersAsync(string setName, int count, bool sortDesc);
+
+        /// <summary>
+        /// Retrieves an enumerator over the unordered members from a sorted set
+        /// </summary>
+        /// <param name="setName">The sorted set name</param>
+        /// <returns>Returns an enumerable to the unsorted members</returns>
+        IAsyncEnumerable<SortedSetEntry> GetSortedSetMembersEnumerable(string setName);
     }
 }

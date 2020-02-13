@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>BaseCap.CloudAbstractions</AssemblyName>
     <AssemblyTitle>BaseCap Analytics Cloud Abstractions Package</AssemblyTitle>
     <AssemblyCompany>BaseCap Analytics</AssemblyCompany>
@@ -23,14 +23,14 @@
     <PackageReference Include="BaseCap.Security" Version="2.1.180207.1" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.12.1" />
     <PackageReference Include="Microsoft.Azure.EventHubs" Version="4.1.0" />
-    <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.4" />
-    <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="3.0.4" />
+    <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.5" />
+    <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="3.0.5" />
     <PackageReference Include="Microsoft.Azure.Storage.Blob" Version="11.1.3" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="3.1.1" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.6" />
     <PackageReference Include="MongoDB.Driver" Version="2.10.1" />
     <PackageReference Include="Sendgrid" Version="9.12.6" />
-    <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
+    <PackageReference Include="StackExchange.Redis" Version="2.1.0-preview.23" />
   </ItemGroup>
 
 </Project>
