@@ -16,7 +16,7 @@ jobs:
           dotnet-version: '3.0.100'
       - name: Build Package
         working-directory: ./src
-        run: dotnet pack -c Release --include-symbols
+        run: dotnet pack -c Release --version-suffix "${GITHUB_SHA::7}" --include-symbols
       - name: Publish Package
         working-directory: ./src
         run: dotnet nuget push ./bin/Release/*.nupkg -k ${{ secrets.NuGet_API_Key }} -s "https://www.myget.org/F/bca/api/v2/package"
