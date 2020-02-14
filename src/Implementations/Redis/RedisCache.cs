@@ -272,6 +272,17 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
+        public Task RemoveHashFieldAsync(string hashKey, string fieldKey)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(RemoveHashFieldAsync)}");
+            }
+
+            return _database.HashDeleteAsync(hashKey, fieldKey, CommandFlags.FireAndForget);
+        }
+
+        /// <inheritdoc />
         public async Task<Dictionary<string, string?>?> GetAllHashFieldsAsync(string hashKey)
         {
             if (_database == null)
@@ -363,6 +374,18 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             return _database.SetAddAsync(setName, member, flags);
         }
 
+        /// <inheritdoc />
+        public Task RemoveFromSetAsync(string setName, string member, bool waitForResponse = false)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(RemoveFromSetAsync)}");
+            }
+
+            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
+            return _database.SetRemoveAsync(setName, member, flags);
+        }
+
         /// <inheritdoc/>
         public async Task<IEnumerable<string>> GetSetMembersAsync(string setName)
         {
@@ -405,6 +428,18 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
             return _database.SortedSetIncrementAsync(setName, member, increment);
+        }
+
+        /// <inheritdoc />
+        public Task SortedSetMemberRemoveAsync(string setName, string member, bool waitForResponse = false)
+        {
+            if (_database == null)
+            {
+                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SortedSetMemberRemoveAsync)}");
+            }
+
+            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
+            return _database.SortedSetRemoveAsync(setName, member, flags);
         }
 
         /// <inheritdoc />

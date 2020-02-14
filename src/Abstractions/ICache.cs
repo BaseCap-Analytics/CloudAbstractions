@@ -141,6 +141,14 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<object?> GetHashFieldAsync(string hashKey, string fieldKey);
 
         /// <summary>
+        /// Removes the specified field from a hashset
+        /// </summary>
+        /// <param name="hashKey">The key to the hashset</param>
+        /// <param name="fieldKey">The field name in the hashset</param>
+        /// <returns>Returns an awaitable task</returns>
+        Task RemoveHashFieldAsync(string hashKey, string fieldKey);
+
+        /// <summary>
         /// Retrieves all Keys and Values in a HashField
         /// </summary>
         /// <param name="hashKey">The key to the hashset</param>
@@ -172,6 +180,15 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task<bool> AddToSetAsync(string setName, string member, bool waitForResponse = false);
 
         /// <summary>
+        /// Removes a value from a set
+        /// </summary>
+        /// <param name="setName">The set name</param>
+        /// <param name="member">The name of the member in the set</param>
+        /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
+        /// <returns>Returns an awaitable Task</returns>
+        Task RemoveFromSetAsync(string setName, string member, bool waitForResponse = false);
+
+        /// <summary>
         /// Retrieves all values in a set
         /// </summary>
         /// <param name="setName">The set name</param>
@@ -194,6 +211,15 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
         /// <returns>Returns the new score of the member</returns>
         Task<double> SortedSetIncrementAsync(string setName, string member, double increment = 1, bool waitForResponse = false);
+
+        /// <summary>
+        /// Removes an entry from a sorted set
+        /// </summary>
+        /// <param name="setName">The sorted set name</param>
+        /// <param name="member">The name of the member in the sorted set</param>
+        /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
+        /// <returns>Returns an awaitable task</returns>
+        Task SortedSetMemberRemoveAsync(string setName, string member, bool waitForResponse = false);
 
         /// <summary>
         /// Retrieves a specified number of top members from a sorted set
