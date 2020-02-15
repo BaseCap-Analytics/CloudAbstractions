@@ -74,6 +74,12 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Creates a Queue Message from the delivered information
+        /// </summary>
+        protected virtual Task<QueueMessage> GetQueueMessageAsync(byte[] body, IBasicProperties properties, bool redelivered) =>
+            Task.FromResult(new QueueMessage(properties, body, redelivered));
+
         /// <inheritdoc />
         public override async Task HandleBasicDeliver(
             string consumerTag,
@@ -86,7 +92,8 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
         {
             try
             {
-                await _target!.OnMessageReceived(new QueueMessage(properties, body, redelivered)).ConfigureAwait(false);
+                QueueMessage msg = await GetQueueMessageAsync(body, properties, redelivered).ConfigureAwait(false);
+                await _target!.OnMessageReceived(msg).ConfigureAwait(false);
             }
             finally
             {

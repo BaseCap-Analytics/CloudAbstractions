@@ -79,17 +79,7 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
         internal virtual Task<byte[]> GetMessageContentsAsync(object data)
         {
             string serialized = JsonConvert.SerializeObject(data);
-            return GetMessageContentsAsync((string)serialized);
-        }
-
-        /// <summary>
-        /// Convert a string to a queue message to send
-        /// </summary>
-        /// <param name="data">The string to send as a message</param>
-        /// <returns>Returns the string in a byte-serialized format</returns>
-        internal virtual Task<byte[]> GetMessageContentsAsync(string data)
-        {
-            byte[] body = Encoding.UTF8.GetBytes(data);
+            byte[] body = Encoding.UTF8.GetBytes(serialized);
             return Task.FromResult(body);
         }
 
@@ -102,19 +92,6 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             }
 
             byte[] body = await GetMessageContentsAsync(data).ConfigureAwait(false);
-            InternalPublishMessage(body);
-        }
-
-        /// <inheritdoc />
-        public async Task PublishMessageAsync(string data)
-        {
-            if (string.IsNullOrWhiteSpace(data))
-            {
-                throw new ArgumentNullException(nameof(data));
-            }
-
-            // Use string cast to ensure we don't call the `object` overload
-            byte[] body = await GetMessageContentsAsync((string)data).ConfigureAwait(false);
             InternalPublishMessage(body);
         }
 

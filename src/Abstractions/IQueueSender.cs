@@ -12,11 +12,5 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <returns>Returns an awaitable task</returns>
         Task PublishMessageAsync(object data);
-
-        /// <summary>
-        /// Publish a raw string to a queue
-        /// </summary>
-        /// <returns>Returns an awaitable task</returns>
-        Task PublishMessageAsync(string data);
     }
 }
