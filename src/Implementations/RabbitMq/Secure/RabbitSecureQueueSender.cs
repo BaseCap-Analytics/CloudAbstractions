@@ -30,14 +30,5 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             byte[] encrypted = await EncryptionHelpers.EncryptDataAsync(plaintext, _encryptionKey).ConfigureAwait(false);
             return encrypted;
         }
-
-        /// <inheritdoc />
-        internal override async Task<byte[]> GetMessageContentsAsync(string data)
-        {
-            // Use string cast to ensure we don't call the `object` overload
-            byte[] plaintext = await base.GetMessageContentsAsync((string)data).ConfigureAwait(false);
-            byte[] encrypted = await EncryptionHelpers.EncryptDataAsync(plaintext, _encryptionKey).ConfigureAwait(false);
-            return encrypted;
-        }
     }
 }

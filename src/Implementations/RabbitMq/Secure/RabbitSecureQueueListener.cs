@@ -1,3 +1,4 @@
+using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
 using RabbitMQ.Client;
 using System.Threading.Tasks;
@@ -25,24 +26,10 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
         }
 
         /// <inheritdoc />
-        public override async Task HandleBasicDeliver(
-            string consumerTag,
-            ulong deliveryTag,
-            bool redelivered,
-            string exchange,
-            string routingKey,
-            IBasicProperties properties,
-            byte[] body)
+        protected override async Task<QueueMessage> GetQueueMessageAsync(byte[] body, IBasicProperties properties, bool redelivered)
         {
-            try
-            {
-                byte[] decrypted = await EncryptionHelpers.DecryptDataAsync(body, _encryptionKey);
-                await base.HandleBasicDeliver(consumerTag, deliveryTag, redelivered, exchange, routingKey, properties, decrypted).ConfigureAwait(false);
-            }
-            catch
-            {
-                throw;
-            }
+            byte[] decrypted = await EncryptionHelpers.DecryptDataAsync(body, _encryptionKey);
+            return new QueueMessage(properties, decrypted, redelivered);
         }
     }
 }
