@@ -36,10 +36,6 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             {
                 throw new ArgumentNullException(nameof(model));
             }
-            else if (string.IsNullOrWhiteSpace(exchange))
-            {
-                throw new ArgumentNullException(nameof(exchange));
-            }
             else if (string.IsNullOrWhiteSpace(queue))
             {
                 throw new ArgumentNullException(nameof(queue));
