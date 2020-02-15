@@ -105,6 +105,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 string processingMsg;
                 QueueMessage msg = DeserializeObject<QueueMessage>(message);
                 msg.DequeueCount++;
+                msg.ReDelivery = msg.DequeueCount > 1;
                 processingMsg = SerializeObject(msg);
 
                 // If we need to deadletter this message, do it and don't send to a listener

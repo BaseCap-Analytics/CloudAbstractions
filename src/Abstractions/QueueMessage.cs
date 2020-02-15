@@ -1,4 +1,7 @@
+using Newtonsoft.Json;
+using RabbitMQ.Client;
 using System;
+using System.Text;
 
 namespace BaseCap.CloudAbstractions.Abstractions
 {
@@ -18,17 +21,32 @@ namespace BaseCap.CloudAbstractions.Abstractions
         public DateTimeOffset InsertionTime { get; set; }
 
         /// <summary>
-        /// The number of times this message has been delivered
+        /// Flag indicating if there has been an attempt to deliver this message before
         /// </summary>
-        public int DequeueCount { get; set; }
+        public bool ReDelivery { get; set; }
+
+        [JsonProperty]
+        internal int DequeueCount { get; set; }
 
         /// <summary>
-        /// Converts an Azure message into our abstraction
+        /// Converts a RabbitMQ message into our abstraction
         /// </summary>
-        internal QueueMessage(string content)
+        internal QueueMessage(IBasicProperties properties, byte[] data, bool isReDelivery)
         {
-            Content = content;
+            Content = Encoding.UTF8.GetString(data);
+            InsertionTime = DateTimeOffset.FromUnixTimeMilliseconds(properties.Timestamp.UnixTime);
+            ReDelivery = isReDelivery;
+            DequeueCount = 0;
+        }
+
+        /// <summary>
+        /// Converts a Redis message into our abstraction
+        /// </summary>
+        internal QueueMessage(string data)
+        {
+            Content = data;
             InsertionTime = DateTimeOffset.UtcNow;
+            ReDelivery = false;
             DequeueCount = 0;
         }
 
@@ -39,6 +57,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         {
             Content = string.Empty;
             InsertionTime = DateTimeOffset.UtcNow;
+            ReDelivery = false;
             DequeueCount = 0;
         }
     }

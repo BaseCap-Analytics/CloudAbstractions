@@ -1,0 +1,48 @@
+using BaseCap.Security;
+using RabbitMQ.Client;
+using System.Threading.Tasks;
+
+namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
+{
+    /// <summary>
+    /// A listener to a Rabbit MQ queue that will decrypt secured messages on-the-fly
+    /// </summary>
+    internal sealed class RabbitSecureQueueListener : RabbitQueueListener
+    {
+        private readonly byte[] _encryptionKey;
+
+        /// <summary>
+        /// Creates a new RabbitSecureQueueListener
+        /// </summary>
+        /// <param name="connection">The connection to the Rabbit MQ server</param>
+        /// <param name="model">The Rabbit MQ queue to send to</param>
+        /// <param name="queue">The queue to listen on</param>
+        /// <param name="encryptionKey">The encryption key used to encrypt messages</param>
+        internal RabbitSecureQueueListener(IConnection connection, IModel model, string queue, byte[] encryptionKey)
+            : base(connection, model, queue)
+        {
+            _encryptionKey = encryptionKey;
+        }
+
+        /// <inheritdoc />
+        public override async Task HandleBasicDeliver(
+            string consumerTag,
+            ulong deliveryTag,
+            bool redelivered,
+            string exchange,
+            string routingKey,
+            IBasicProperties properties,
+            byte[] body)
+        {
+            try
+            {
+                byte[] decrypted = await EncryptionHelpers.DecryptDataAsync(body, _encryptionKey);
+                await base.HandleBasicDeliver(consumerTag, deliveryTag, redelivered, exchange, routingKey, properties, decrypted).ConfigureAwait(false);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+    }
+}
