@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Abstractions
@@ -11,6 +12,12 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// Publish an object to a queue
         /// </summary>
         /// <returns>Returns an awaitable task</returns>
-        Task PublishMessageAsync(object data);
+        Task PublishMessageAsync<T>(T data) where T : class;
+
+        /// <summary>
+        /// Publish multiple objects to a queue
+        /// </summary>
+        /// <returns>Returns an awaitable task</returns>
+        Task PublishMessageAsync<T>(IEnumerable<T> data) where T : class;
     }
 }
