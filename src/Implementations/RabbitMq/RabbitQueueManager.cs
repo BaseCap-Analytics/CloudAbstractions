@@ -4,6 +4,9 @@ using System;
 
 namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
 {
+    /// <summary>
+    /// Manager for creating queue access classes
+    /// </summary>
     public static class RabbitQueueManager
     {
         private static void CreateRabbitConnection(
@@ -61,11 +64,10 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             }
 
             model.QueueDeclare(queue, true, false, false); // Make sure our queue exists
-            model.BasicQos(0, 1, false); // Make sure the exchange waits for a message reader to ack that it completed processing before giving it more messages
         }
 
         /// <summary>
-        /// Creates a new Queue Listener to listen for plaintext messages
+        /// Creates a new Queue Listener to listen for single plaintext messages
         /// </summary>
         /// <param name="queue">The queue to send the message to</param>
         /// <param name="username">The username to connect to the queue with</param>
@@ -86,7 +88,7 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
         }
 
         /// <summary>
-        /// Creates a new Queue Listener to listen for encrypted messages
+        /// Creates a new Queue Listener to listen for single encrypted messages
         /// </summary>
         /// <param name="queue">The queue to send the message to</param>
         /// <param name="username">The username to connect to the queue with</param>

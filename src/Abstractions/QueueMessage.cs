@@ -28,15 +28,19 @@ namespace BaseCap.CloudAbstractions.Abstractions
         [JsonProperty]
         internal int DequeueCount { get; set; }
 
+        [JsonProperty]
+        internal ulong MessageId { get; set; }
+
         /// <summary>
         /// Converts a RabbitMQ message into our abstraction
         /// </summary>
-        internal QueueMessage(IBasicProperties properties, byte[] data, bool isReDelivery)
+        internal QueueMessage(IBasicProperties properties, byte[] data, bool isReDelivery, ulong messageId)
         {
             Content = Encoding.UTF8.GetString(data);
             InsertionTime = DateTimeOffset.FromUnixTimeMilliseconds(properties.Timestamp.UnixTime);
             ReDelivery = isReDelivery;
             DequeueCount = 0;
+            MessageId = messageId;
         }
 
         /// <summary>

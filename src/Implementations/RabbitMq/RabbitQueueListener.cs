@@ -1,7 +1,11 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using RabbitMQ.Client;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
 {
@@ -10,10 +14,16 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
     /// </summary>
     internal class RabbitQueueListener : AsyncDefaultBasicConsumer, IQueueListener, IDisposable
     {
+        private const int MAX_BATCH_SIZE = 100; // arbitrary
         private readonly string _queue;
+        private readonly List<QueueMessage> _messages;
         private IConnection _connection;
         private IModel _model;
-        private IQueueListenerTarget? _target;
+        private IQueueListenerTarget? _singleTarget;
+        private IQueueBatchListenerTarget? _batchTarget;
+        private System.Timers.Timer? _fallback;
+        private AutoResetEvent? _lock;
+        private Func<QueueMessage, Task>? _handler;
 
         /// <summary>
         /// Creates a new RabbitQueueListener
@@ -28,7 +38,12 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             _queue = queue;
             _connection = connection;
             _model = model;
-            _target = null;
+            _singleTarget = null;
+            _batchTarget = null;
+            _messages = new List<QueueMessage>(MAX_BATCH_SIZE);
+            _fallback = null;
+            _lock = null;
+            _handler = null;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -36,12 +51,25 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             if ((_connection != null) && disposing)
             {
 #nullable disable
+                if (_fallback != null)
+                {
+                    _fallback.Close();
+                    _fallback.Dispose();
+                    _fallback = null;
+                }
                 _model.Close();
                 _model.Dispose();
                 _model = null;
                 _connection.Close();
                 _connection.Dispose();
                 _connection = null;
+
+                if (_lock != null)
+                {
+                    _lock.Close();
+                    _lock.Dispose();
+                    _lock = null;
+                }
 #nullable enable
             }
         }
@@ -54,6 +82,39 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             GC.SuppressFinalize(this);
         }
 
+        private void FallbackTimerEvent(object sender, ElapsedEventArgs e)
+        {
+            _lock!.WaitOne(TimeSpan.FromSeconds(60));
+
+            try
+            {
+                if (_messages.Count > 0)
+                {
+                    FireMessageBatchReceivedHandlerAsync(_messages.Last().MessageId).ConfigureAwait(false).GetAwaiter().GetResult();
+                }
+            }
+            finally
+            {
+                _lock.Set();
+                _fallback!.Start();
+            }
+        }
+
+        /// <inheritdoc />
+        public Task StartListeningAsync(IQueueBatchListenerTarget target)
+        {
+            _handler = HandleBatchDeliveryAsync;
+            _lock = new AutoResetEvent(true);
+            _batchTarget = target;
+            _model.BasicQos(0, MAX_BATCH_SIZE, false); // We can batch up messages
+            _model.BasicConsume(_queue, false, this);
+            _fallback = new System.Timers.Timer(TimeSpan.FromSeconds(10).TotalMilliseconds);
+            _fallback.AutoReset = false;
+            _fallback.Elapsed += FallbackTimerEvent;
+            _fallback.Start();
+            return Task.CompletedTask;
+        }
+
         /// <inheritdoc />
         public Task StartListeningAsync(IQueueListenerTarget target)
         {
@@ -62,7 +123,9 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
                 throw new ArgumentNullException(nameof(target));
             }
 
-            _target = target;
+            _handler = HandleSingleDeliveryAsync;
+            _singleTarget = target;
+            _model.BasicQos(0, 1, false); // Make sure the exchange waits for a message reader to ack that it completed processing before giving it more messages
             _model.BasicConsume(_queue, false, this);
             return Task.CompletedTask;
         }
@@ -77,8 +140,8 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
         /// <summary>
         /// Creates a Queue Message from the delivered information
         /// </summary>
-        protected virtual Task<QueueMessage> GetQueueMessageAsync(byte[] body, IBasicProperties properties, bool redelivered) =>
-            Task.FromResult(new QueueMessage(properties, body, redelivered));
+        protected virtual Task<QueueMessage> GetQueueMessageAsync(byte[] body, IBasicProperties properties, bool redelivered, ulong messageId) =>
+            Task.FromResult(new QueueMessage(properties, body, redelivered, messageId));
 
         /// <inheritdoc />
         public override async Task HandleBasicDeliver(
@@ -90,14 +153,51 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             IBasicProperties properties,
             byte[] body)
         {
+            QueueMessage msg = await GetQueueMessageAsync(body, properties, redelivered, deliveryTag).ConfigureAwait(false);
+            await _handler!.Invoke(msg).ConfigureAwait(false);
+        }
+
+        private async Task HandleBatchDeliveryAsync(QueueMessage message)
+        {
+            _lock!.WaitOne(TimeSpan.FromSeconds(60));
+
             try
             {
-                QueueMessage msg = await GetQueueMessageAsync(body, properties, redelivered).ConfigureAwait(false);
-                await _target!.OnMessageReceived(msg).ConfigureAwait(false);
+                _messages.Add(message);
+                if (_messages.Count >= MAX_BATCH_SIZE)
+                {
+                    await FireMessageBatchReceivedHandlerAsync(message.MessageId).ConfigureAwait(false);
+                }
             }
             finally
             {
-                this.Model.BasicAck(deliveryTag, false);
+                _lock.Set();
+            }
+        }
+
+        private async Task HandleSingleDeliveryAsync(QueueMessage message)
+        {
+            try
+            {
+                await _singleTarget!.OnMessageReceived(message).ConfigureAwait(false);
+            }
+            finally
+            {
+                this.Model.BasicAck(message.MessageId, false);
+            }
+        }
+
+        // Run this on a threadpool thread so we don't mess with RabbitMQ threads
+        private async Task FireMessageBatchReceivedHandlerAsync(ulong lastReceivedMessageId)
+        {
+            try
+            {
+                await Task.Run(async () => await _batchTarget!.OnMessagesReceivedAsync(_messages).ConfigureAwait(false)).ConfigureAwait(false);
+                _messages.Clear();
+            }
+            finally
+            {
+                this.Model.BasicAck(lastReceivedMessageId, true);
             }
         }
     }
