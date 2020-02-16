@@ -15,6 +15,13 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task StartListeningAsync(IQueueListenerTarget target);
 
         /// <summary>
+        /// Begins listening for batches of messages on the queue
+        /// </summary>
+        /// <param name="target">The application listener for queue messages</param>
+        /// <returns>Returns an awaitable task</returns>
+        Task StartListeningAsync(IQueueBatchListenerTarget target);
+
+        /// <summary>
         /// Stops listening for messages on the queue
         /// </summary>
         /// <returns>Returns an awaitable task</returns>

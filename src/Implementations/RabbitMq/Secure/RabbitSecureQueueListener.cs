@@ -26,10 +26,10 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
         }
 
         /// <inheritdoc />
-        protected override async Task<QueueMessage> GetQueueMessageAsync(byte[] body, IBasicProperties properties, bool redelivered)
+        protected override async Task<QueueMessage> GetQueueMessageAsync(byte[] body, IBasicProperties properties, bool redelivered, ulong messageId)
         {
             byte[] decrypted = await EncryptionHelpers.DecryptDataAsync(body, _encryptionKey);
-            return new QueueMessage(properties, decrypted, redelivered);
+            return new QueueMessage(properties, decrypted, redelivered, messageId);
         }
     }
 }
