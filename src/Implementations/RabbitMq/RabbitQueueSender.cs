@@ -112,7 +112,7 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
 
             foreach (T item in data)
             {
-                byte[] body = await GetMessageContentsAsync(data).ConfigureAwait(false);
+                byte[] body = await GetMessageContentsAsync(item).ConfigureAwait(false);
                 InternalPublishMessage(body);
             }
         }
