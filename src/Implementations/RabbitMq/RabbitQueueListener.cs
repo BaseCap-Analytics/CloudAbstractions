@@ -130,20 +130,26 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             await _handler!.Invoke(msg).ConfigureAwait(false);
         }
 
-        private Task HandleBatchDeliveryAsync(QueueMessage message)
+        private async Task HandleBatchDeliveryAsync(QueueMessage message)
         {
             lock (_messages)
             {
                 _messages.Add(message);
             }
-            return Task.CompletedTask;
+
+            if (_messages.Count >= MAX_BATCH_SIZE)
+            {
+                _timer!.Stop();
+                await FireMessageBatchReceivedHandlerAsync().ConfigureAwait(false);
+                _timer.Start();
+            }
         }
 
         private void TimerEvent(object sender, ElapsedEventArgs e)
         {
             _timer!.Stop();
             FireMessageBatchReceivedHandlerAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            _timer!.Start();
+            _timer.Start();
         }
 
         private Task HandleSingleDeliveryAsync(QueueMessage message)
