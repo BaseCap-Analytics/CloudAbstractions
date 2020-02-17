@@ -17,6 +17,7 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
         private const int MAX_BATCH_SIZE = 100; // arbitrary
         private readonly string _queue;
         private readonly List<QueueMessage> _messages;
+        private readonly Dictionary<QueueMessage, bool> _messageResults;
         private IConnection _connection;
         private IModel _model;
         private IQueueListenerTarget? _singleTarget;
@@ -41,6 +42,7 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             _singleTarget = null;
             _batchTarget = null;
             _messages = new List<QueueMessage>(MAX_BATCH_SIZE);
+            _messageResults = new Dictionary<QueueMessage, bool>(MAX_BATCH_SIZE);
             _fallback = null;
             _lock = null;
             _handler = null;
@@ -175,51 +177,54 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             }
         }
 
-        private async Task HandleSingleDeliveryAsync(QueueMessage message)
+        private Task HandleSingleDeliveryAsync(QueueMessage message)
         {
-            bool result = false;
-
-            try
-            {
-                result = await _singleTarget!.OnMessageReceived(message).ConfigureAwait(false);
-            }
-            finally
-            {
-                // If the message was properly processed, send an ack to clear it out.
-                // If the message was not processed, tell the system to re-queue the message and try again
-                if (result)
-                {
-                    Model.BasicAck(message.MessageId, false);
-                }
-                else
-                {
-                    Model.BasicNack(message.MessageId, false, true);
-                }
-            }
+            return _singleTarget!.OnMessageReceived(message);
         }
 
         // Run this on a threadpool thread so we don't mess with RabbitMQ threads
         private async Task FireMessageBatchReceivedHandlerAsync(ulong lastReceivedMessageId)
         {
-            bool result = false;
-            try
+            await Task.Run(async () => await _batchTarget!.OnMessagesReceivedAsync(_messages).ConfigureAwait(false)).ConfigureAwait(false);
+            _messages.Clear();
+        }
+
+        /// <inheritdoc />
+        public void SetBatchCommitResult(bool succeeded)
+        {
+            // If the batch commit failed then fail all messages
+            // since the processing completed but the client failed
+            // to commit the result
+            if (succeeded == false)
             {
-                result = await Task.Run(async () => await _batchTarget!.OnMessagesReceivedAsync(_messages).ConfigureAwait(false)).ConfigureAwait(false);
-                _messages.Clear();
-            }
-            finally
-            {
-                // If the messages were properly processed, send an ack to clear them out.
-                // If the messages were not processed, tell the system to re-queue the messages and try again
-                if (result)
+                foreach (QueueMessage msg in _messageResults.Keys)
                 {
-                    Model.BasicAck(lastReceivedMessageId, true);
-                }
-                else
-                {
-                    Model.BasicNack(lastReceivedMessageId, true, true);
+                    Model.BasicNack(msg.MessageId, false, true);
                 }
             }
+            else
+            {
+                // The commit didn't fail so send the individual ack/nack for each message.
+                // The messages aren't in any guaranteed order and ordering would be
+                // less efficient than just looping through the batch.
+                foreach (KeyValuePair<QueueMessage, bool> result in _messageResults)
+                {
+                    if (result.Value)
+                    {
+                        Model.BasicAck(result.Key.MessageId, false);
+                    }
+                    else
+                    {
+                        Model.BasicNack(result.Key.MessageId, false, true);
+                    }
+                }
+            }
+        }
+
+        /// <inheritdoc />
+        public void SetMessageResult(QueueMessage message, bool succeeded)
+        {
+            _messageResults.Add(message, succeeded);
         }
     }
 }
