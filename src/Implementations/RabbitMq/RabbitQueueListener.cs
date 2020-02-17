@@ -177,27 +177,48 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
 
         private async Task HandleSingleDeliveryAsync(QueueMessage message)
         {
+            bool result = false;
+
             try
             {
-                await _singleTarget!.OnMessageReceived(message).ConfigureAwait(false);
+                result = await _singleTarget!.OnMessageReceived(message).ConfigureAwait(false);
             }
             finally
             {
-                this.Model.BasicAck(message.MessageId, false);
+                // If the message was properly processed, send an ack to clear it out.
+                // If the message was not processed, tell the system to re-queue the message and try again
+                if (result)
+                {
+                    Model.BasicAck(message.MessageId, false);
+                }
+                else
+                {
+                    Model.BasicNack(message.MessageId, false, true);
+                }
             }
         }
 
         // Run this on a threadpool thread so we don't mess with RabbitMQ threads
         private async Task FireMessageBatchReceivedHandlerAsync(ulong lastReceivedMessageId)
         {
+            bool result = false;
             try
             {
-                await Task.Run(async () => await _batchTarget!.OnMessagesReceivedAsync(_messages).ConfigureAwait(false)).ConfigureAwait(false);
+                result = await Task.Run(async () => await _batchTarget!.OnMessagesReceivedAsync(_messages).ConfigureAwait(false)).ConfigureAwait(false);
                 _messages.Clear();
             }
             finally
             {
-                this.Model.BasicAck(lastReceivedMessageId, true);
+                // If the messages were properly processed, send an ack to clear them out.
+                // If the messages were not processed, tell the system to re-queue the messages and try again
+                if (result)
+                {
+                    Model.BasicAck(lastReceivedMessageId, true);
+                }
+                else
+                {
+                    Model.BasicNack(lastReceivedMessageId, true, true);
+                }
             }
         }
     }

@@ -11,7 +11,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Callback for when Queue Messages have been received
         /// </summary>
-        /// <returns>Returns an awaitable Task</returns>
-        Task OnMessagesReceivedAsync(IEnumerable<QueueMessage> messages);
+        /// <returns>Returns true when the messages are correctly processed; otherwise, returns false</returns>
+        Task<bool> OnMessagesReceivedAsync(IEnumerable<QueueMessage> messages);
     }
 }
