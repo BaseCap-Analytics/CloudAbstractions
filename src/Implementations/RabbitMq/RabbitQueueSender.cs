@@ -15,6 +15,7 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
     internal class RabbitQueueSender : IQueueSender, IDisposable
     {
         private const int MAX_RETRIES = 10;
+        private readonly string MESSAGE_TTL = TimeSpan.FromHours(12).TotalMilliseconds.ToString();
         private readonly bool _confirmSend;
         private readonly string _exchange;
         private readonly string _queue;
@@ -123,6 +124,7 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             bool publishSucceeded = false;
             IBasicProperties props = _model.CreateBasicProperties();
             props.Persistent = true;
+            props.Expiration = MESSAGE_TTL;
 
             do
             {
