@@ -43,9 +43,16 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Retrieves all values in a List
         /// </summary>
-        /// <param name="key">The key to store the value as</param>
+        /// <param name="key">The key of the List</param>
         /// <returns>Returns the values in the list</returns>
         Task<IEnumerable<string>> GetListAsync(string key);
+
+        /// <summary>
+        /// Retrieves an element from a List at an Index
+        /// </summary>
+        /// <param name="key">The key of the List</param>
+        /// <returns>Returns the element at the given index</returns>
+        Task<string> GetListElementAtIndexAsync(string key, long index);
 
         /// <summary>
         /// Retrieves the number of entries in a list
