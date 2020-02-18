@@ -120,6 +120,21 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
+        public async Task<string> GetListElementAtIndexAsync(string key, long index)
+        {
+            IDatabase db = GetRedisDatabase();
+            RedisValue? val = await db.ListGetByIndexAsync(key, index).ConfigureAwait(false);
+            if ((val == null) || val.Value.IsNullOrEmpty || string.IsNullOrWhiteSpace(val.Value.ToString()))
+            {
+                throw new ArgumentException($"No element found at index {index}");
+            }
+            else
+            {
+                return val.Value.ToString();
+            }
+        }
+
+        /// <inheritdoc />
         public Task<long> GetListCountAsync(string key)
         {
             IDatabase db = GetRedisDatabase();
