@@ -34,12 +34,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             return base.CleanupAsync();
         }
 
-        protected override void ResetConnection()
-        {
-            base.ResetConnection();
-            base.Subscribe(_channel, ReceiveHandler);
-        }
-
         internal virtual void ReceiveHandler(RedisChannel channel, RedisValue value)
         {
             if (_handler == null)

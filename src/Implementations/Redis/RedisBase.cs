@@ -14,14 +14,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     public abstract class RedisBase : IDisposable
     {
         private const int MAX_STREAM_LENGTH = 100000; // 100k records in stream before removing old ones
-        protected readonly ConfigurationOptions _options;
+        private readonly ConfigurationOptions _options;
         private readonly JsonSerializerSettings _jsonOptions;
-        protected ConnectionMultiplexer? _cacheConnection;
-        protected IDatabase? _database;
-        protected ISubscriber? _subscription;
+        private readonly object _synclock;
         protected readonly string _errorContextName;
         protected readonly string _errorContextValue;
         protected readonly ILogger _logger;
+        private ConnectionMultiplexer? _cacheConnection;
 
         internal RedisBase(IEnumerable<string> endpoints, string password, bool useSsl, string errorContextName, string errorContextValue, ILogger logger)
         {
@@ -30,6 +29,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 throw new ArgumentNullException(nameof(endpoints));
             }
 
+            _synclock = new object();
             _options = new ConfigurationOptions()
             {
                 AbortOnConnectFail = false,
@@ -57,6 +57,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         internal RedisBase(ConfigurationOptions options, string errorContextName, string errorContextValue, ILogger logger)
         {
+            _synclock = new object();
             _jsonOptions = new JsonSerializerSettings()
             {
                 Formatting = Formatting.None,
@@ -77,7 +78,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 _cacheConnection.Close();
                 _cacheConnection.Dispose();
                 _cacheConnection = null;
-                _database = null;
             }
         }
 
@@ -89,92 +89,87 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             GC.SuppressFinalize(this);
         }
 
+        /// <inheritdoc />
+        public IHyperLogLog CreateHyperLogLog(string logName)
+        {
+            return (IHyperLogLog)new RedisHyperLogLog(logName, _options, _logger);
+        }
+
         protected void Subscribe(string channel, Action<RedisChannel, RedisValue> handler)
         {
-            if (_subscription == null)
-            {
-                throw new InvalidOperationException("Must setup the cache before subscribing");
-            }
-
-            _subscription.Subscribe(channel, handler);
+            ISubscriber sub = GetSubscriber();
+            sub.Subscribe(channel, handler);
         }
 
-        protected virtual void ResetConnection()
+        protected IDatabase GetRedisDatabase()
         {
-            if ((_subscription == null) || (_cacheConnection == null))
+            IDatabase database;
+            lock (_synclock)
             {
-                throw new InvalidOperationException("Subscription is null when it shouldn't be");
+                if (_cacheConnection == null)
+                {
+                    throw new InvalidOperationException("Cannot get Database from a null connection");
+                }
+                else
+                {
+                    database = _cacheConnection.GetDatabase();
+                }
+
             }
 
-            try
-            {
-                _subscription.UnsubscribeAll();
-                _cacheConnection.Close();
-                _cacheConnection.Dispose();
-            }
-            finally
-            {
-                CreateConnection();
-            }
+            return database;
         }
 
-        private void CreateConnection()
+        protected ISubscriber GetSubscriber()
         {
-            _cacheConnection = ConnectionMultiplexer.Connect(_options);
-            _cacheConnection.ConnectionFailed += OnConnectionFailure;
-            _cacheConnection.ConnectionRestored += OnConnectionRestored;
-            _cacheConnection.ErrorMessage += OnError;
-            _cacheConnection.InternalError += OnRedisInternalError;
-            _cacheConnection.IncludeDetailInExceptions = true;
-            _cacheConnection.IncludePerformanceCountersInExceptions = true;
-            _database = _cacheConnection.GetDatabase();
-            _subscription = _cacheConnection.GetSubscriber();
+            ISubscriber sub;
+            lock (_synclock)
+            {
+                if (_cacheConnection == null)
+                {
+                    throw new InvalidOperationException("Cannot get Subscriber from a null connection");
+                }
+                else
+                {
+                    sub = _cacheConnection.GetSubscriber();
+                }
+            }
+
+            return sub;
         }
 
         protected async Task CreateStreamIfNecessaryAsync(string streamName)
         {
-            if (_database == null)
-            {
-                throw new InvalidOperationException("Must setup the cache before creating a stream");
-            }
-
             // If the stream doesn't exist, create it the only way possible; adding a value.
             // To ensure we don't mess up readers, we then delete the value, leaving an empty stream.
-            if (await _database.KeyExistsAsync(streamName) == false)
+            IDatabase db = GetRedisDatabase();
+            if (await db.KeyExistsAsync(streamName) == false)
             {
-                RedisValue msgId = await _database.StreamAddAsync(
+                RedisValue msgId = await db.StreamAddAsync(
                     streamName,
                     "create",
                     "create",
                     maxLength: MAX_STREAM_LENGTH,
                     useApproximateMaxLength: true)
                     .ConfigureAwait(false);
-                await _database.StreamDeleteAsync(streamName, new[] { msgId }).ConfigureAwait(false);
+                await db.StreamDeleteAsync(streamName, new[] { msgId }).ConfigureAwait(false);
             }
         }
 
         protected Task TrimStreamAsync(string streamName)
         {
-            if (_database == null)
-            {
-                throw new InvalidOperationException("Must setup the cache before trimming stream");
-            }
-
-            return _database.StreamTrimAsync(streamName, MAX_STREAM_LENGTH, true);
+            IDatabase db = GetRedisDatabase();
+            return db.StreamTrimAsync(streamName, MAX_STREAM_LENGTH, true);
         }
 
         protected async Task CreateStreamConsumerGroupIfNecessaryAsync(string streamName, string consumerGroup)
         {
-            if (_database == null)
-            {
-                throw new InvalidOperationException("Must setup the cache before creating a stream consumer group");
-            }
-
             // Check if the consumer group exists; if it doesn't create it
-            StreamGroupInfo[] groups = await _database.StreamGroupInfoAsync(streamName).ConfigureAwait(false);
+            IDatabase db = GetRedisDatabase();
+            StreamGroupInfo[] groups = await db.StreamGroupInfoAsync(streamName).ConfigureAwait(false);
             if (groups.Any(g => string.Equals(g.Name, consumerGroup, StringComparison.OrdinalIgnoreCase)) == false)
             {
-                await _database.StreamCreateConsumerGroupAsync(streamName, consumerGroup).ConfigureAwait(false);
+                await db.StreamCreateConsumerGroupAsync(streamName, consumerGroup).ConfigureAwait(false);
             }
         }
 
@@ -195,8 +190,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 {
                     [_errorContextName] = _errorContextValue,
                 });
-
-            ResetConnection();
         }
 
         private void OnConnectionRestored(object sender, ConnectionFailedEventArgs e)
@@ -207,19 +200,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 {
                     [_errorContextName] = _errorContextValue,
                 });
-        }
-
-        private void OnError(object sender, RedisErrorEventArgs e)
-        {
-            _logger.LogException(
-                new Exception(e.Message),
-                new Dictionary<string, string>()
-                {
-                    [_errorContextName] = _errorContextValue,
-                    ["Endpoint"] = e.EndPoint.ToString(),
-                });
-
-            ResetConnection();
         }
 
         private void OnRedisInternalError(object sender, InternalErrorEventArgs e)
@@ -233,28 +213,36 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                     ["Endpoint"] = e.EndPoint.ToString(),
                     ["Origin"] = e.Origin,
                 });
-
-            ResetConnection();
         }
 
-        protected Task InitializeAsync()
+        protected async Task InitializeAsync()
         {
-            CreateConnection();
-            return Task.CompletedTask;
+            _cacheConnection = await ConnectionMultiplexer.ConnectAsync(_options).ConfigureAwait(false);
+            _cacheConnection.ConnectionFailed += OnConnectionFailure;
+            _cacheConnection.ConnectionRestored += OnConnectionRestored;
+            _cacheConnection.InternalError += OnRedisInternalError;
+            _cacheConnection.IncludeDetailInExceptions = true;
+            _cacheConnection.IncludePerformanceCountersInExceptions = true;
         }
 
-        protected async Task CleanupAsync()
+        protected Task CleanupAsync()
         {
-            if ((_subscription == null) || (_cacheConnection == null))
+            if (_cacheConnection == null)
             {
-                throw new InvalidOperationException("Subscription is null when it shouldn't be");
+                return Task.CompletedTask;
             }
 
-            _database = null;
-            await _subscription.UnsubscribeAllAsync().ConfigureAwait(false);
-            await _cacheConnection.CloseAsync().ConfigureAwait(false);
-            _cacheConnection.Dispose();
-            _cacheConnection = null;
+            ISubscriber sub = GetSubscriber();
+            sub.UnsubscribeAll();
+
+            lock (_synclock)
+            {
+                _cacheConnection.CloseAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                _cacheConnection.Dispose();
+                _cacheConnection = null;
+            }
+
+            return Task.CompletedTask;
         }
 
         protected virtual string SerializeObject(object o) => JsonConvert.SerializeObject(o, _jsonOptions);

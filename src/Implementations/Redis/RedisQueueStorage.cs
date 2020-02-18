@@ -55,12 +55,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             await base.CleanupAsync().ConfigureAwait(false);
         }
 
-        protected override void ResetConnection()
-        {
-            base.ResetConnection();
-            base.Subscribe(_channelName, InternalOnMessageReceived);
-        }
-
         private async Task PollingFallbackAsync()
         {
             // Have a polling fallback just in case the pub/sub fails
@@ -80,14 +74,15 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         private void HandleMessage()
         {
-            string work = _database!.ListRightPopAsync(_queueName).ConfigureAwait(false).GetAwaiter().GetResult();
+            IDatabase db = GetRedisDatabase();
+            string work = db.ListRightPopAsync(_queueName).ConfigureAwait(false).GetAwaiter().GetResult();
             while (string.IsNullOrWhiteSpace(work) == false)
             {
                 // The Pub/Sub is used as a shoulder tap to tell us that there is work to do.
                 // We use this instead of Blocking Queues because StackExchange.Redis does not
                 // support blocking operations on Redis.
                 OnMessageReceivedAsync(work).ConfigureAwait(false).GetAwaiter().GetResult();
-                work = _database.ListRightPopAsync(_queueName).ConfigureAwait(false).GetAwaiter().GetResult();
+                work = db.ListRightPopAsync(_queueName).ConfigureAwait(false).GetAwaiter().GetResult();
             }
         }
 
@@ -111,8 +106,10 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 // If we need to deadletter this message, do it and don't send to a listener
                 if (msg.DequeueCount > 25)
                 {
-                    await _database!.ListLeftPushAsync(DEADLETTER_QUEUE, processingMsg).ConfigureAwait(false);
-                    await _subscription!.PublishAsync(DEADLETTER_CHANNEL, "").ConfigureAwait(false);
+                    IDatabase db = GetRedisDatabase();
+                    ISubscriber sub = GetSubscriber();
+                    await db.ListLeftPushAsync(DEADLETTER_QUEUE, processingMsg).ConfigureAwait(false);
+                    await sub.PublishAsync(DEADLETTER_CHANNEL, "").ConfigureAwait(false);
                     _logger.LogEvent(
                         "QueueDeadletter",
                         new Dictionary<string, string>()
@@ -161,19 +158,16 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         private async Task PushObjectToQueueAsync(QueueMessage msg)
         {
-            if ((_database == null) || (_subscription == null))
-            {
-                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(PushObjectAsMessageAsync)}");
-            }
-
             string serialized = SerializeObject(msg);
             if (string.IsNullOrWhiteSpace(serialized))
             {
                 throw new InvalidOperationException("Cannot send empty message");
             }
 
-            await _database.ListLeftPushAsync(_queueName, serialized, flags: CommandFlags.FireAndForget).ConfigureAwait(false);
-            await _subscription.PublishAsync(_channelName, "").ConfigureAwait(false);
+            IDatabase db = GetRedisDatabase();
+            ISubscriber sub = GetSubscriber();
+            await db.ListLeftPushAsync(_queueName, serialized, flags: CommandFlags.FireAndForget).ConfigureAwait(false);
+            await sub.PublishAsync(_channelName, "").ConfigureAwait(false);
         }
 
         protected virtual Task<QueueMessage> CreateQueueMessageAsync(string content)

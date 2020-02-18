@@ -48,11 +48,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public Task SendEventDataAsync(IList<object> msgs, string partition)
         {
-            if (_database == null)
-            {
-                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(SendEventDataAsync)}");
-            }
-            else if (msgs.Any() == false)
+            if (msgs.Any() == false)
             {
                 throw new InvalidOperationException("Cannot send empty message");
             }
@@ -63,7 +59,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 entries[i] = new NameValueEntry($"{DATA_FIELD}_{i}", SerializeObject(msgs[i]));
             }
 
-            return _database.StreamAddAsync(_streamName, entries);
+            IDatabase db = GetRedisDatabase();
+            return db.StreamAddAsync(_streamName, entries);
         }
     }
 }
