@@ -14,8 +14,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     public class RedisStreamReader : RedisBase, IEventStreamReader
     {
         private const string CONSUMER_GROUP_LATEST_UNREAD_MESSAGES = ">";
-        private readonly TimeSpan POLL_TIMEOUT = TimeSpan.FromSeconds(3);
         private const int MAX_MESSAGES_PER_BATCH = 50;
+        private readonly TimeSpan POLL_TIMEOUT = TimeSpan.FromSeconds(3);
         protected readonly string _streamName;
         protected readonly string _consumerGroup;
         protected readonly string _consumerName;
@@ -98,11 +98,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             int? maxMessagesToRead,
             CancellationToken token = default(CancellationToken))
         {
-            if (_database == null)
-            {
-                throw new InvalidOperationException($"Must call {nameof(SetupAsync)} before calling {nameof(ReadAsync)}");
-            }
-            else if (onMessageReceived == null)
+            if (onMessageReceived == null)
             {
                 throw new ArgumentNullException(nameof(onMessageReceived));
             }
@@ -116,7 +112,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             RedisValue streamPosition;
             if (string.IsNullOrWhiteSpace(_consumerGroup))
             {
-                StreamInfo info = await _database.StreamInfoAsync(_streamName).ConfigureAwait(false);
+                IDatabase db = GetRedisDatabase();
+                StreamInfo info = await db.StreamInfoAsync(_streamName).ConfigureAwait(false);
                 streamPosition = info.LastGeneratedId;
             }
             else
@@ -180,12 +177,14 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         private Task<StreamEntry[]> ReadWithoutConsumerGroupAsync(int maxMessages, RedisValue streamPosition)
         {
-            return _database!.StreamReadAsync(_streamName, streamPosition, maxMessages);
+            IDatabase db = GetRedisDatabase();
+            return db.StreamReadAsync(_streamName, streamPosition, maxMessages);
         }
 
         private Task<StreamEntry[]> ReadUsingConsumerGroupAsync(int maxMessages, RedisValue streamPosition)
         {
-            return _database!.StreamReadGroupAsync(
+            IDatabase db = GetRedisDatabase();
+            return db.StreamReadGroupAsync(
                         _streamName,
                         _consumerGroup,
                         _consumerName,
@@ -200,7 +199,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         private async Task<RedisValue> AcknowledgeConsumerGroupReadAsync(StreamEntry[] messages)
         {
-            await _database!.StreamAcknowledgeAsync(_streamName, _consumerGroup, messages.Select(m => m.Id).ToArray());
+            IDatabase db = GetRedisDatabase();
+            await db.StreamAcknowledgeAsync(_streamName, _consumerGroup, messages.Select(m => m.Id).ToArray());
             return StreamPosition.NewMessages;
         }
 
