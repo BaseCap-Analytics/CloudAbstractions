@@ -243,5 +243,23 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="setName">The sorted set name</param>
         /// <returns>Returns an enumerable to the unsorted members</returns>
         IAsyncEnumerable<SortedSetEntry> GetSortedSetMembersEnumerable(string setName);
+
+        /// <summary>
+        /// Adds an entry to a Sorted Set with a given score
+        /// </summary>
+        /// <param name="setName">The sorted set name</param>
+        /// <param name="memberToAdd">The member to add to the set</param>
+        /// <param name="score">The score to add the member at</param>
+        /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
+        /// <returns>Returns an awaitable Task</returns>
+        Task SortedSetAddItemByScoreAsync(string setName, string memberToAdd, double score, bool waitForResponse = false);
+
+        /// <summary>
+        /// Retrieves all members of a sorted set that have the specified score
+        /// </summary>
+        /// <param name="setName">The sorted set name</param>
+        /// <param name="score">The score to to retrieve members for</param>
+        /// <returns>Returns an enumeration of members with the given score</returns>
+        Task<IEnumerable<string>> GetSortedSetItemsByScoreAsync(string setName, double score);
     }
 }
