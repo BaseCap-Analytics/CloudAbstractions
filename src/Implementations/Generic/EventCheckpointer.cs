@@ -1,4 +1,5 @@
 using BaseCap.CloudAbstractions.Abstractions;
+using Serilog;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -44,12 +45,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Generic
                 using (StreamReader sr = new StreamReader(blobStream))
                 {
                     value = sr.ReadToEnd()?.Trim();
-                    _logger.LogEvent(
-                        "NoCheckpointFound",
-                        new Dictionary<string, string>()
-                        {
-                            ["Partition"] = id,
-                        });
+                    _logger.Warning("Not Checkpoint Found on Partition {Partition}", id);
                 }
             }
             catch

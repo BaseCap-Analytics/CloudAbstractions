@@ -2,6 +2,7 @@ using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.Azure.EventHubs;
 using Microsoft.Azure.Storage;
 using Microsoft.Extensions.Caching.Memory;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -88,13 +89,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
                 {
                     // This usually means a problem with the reader; rebuild it and try again
                     _reader = await _receiverRefreshAsync(_reader);
-                    _logger.LogException(
-                        sx,
-                        new Dictionary<string, string>()
-                        {
-                            ["Partition"] = _reader.PartitionId,
-                            ["ConsumerGroup"] = _reader.ConsumerGroupName,
-                        });
+                    _logger.Error(sx,"Partition {Partition} on Consumer Group {ConsumerGroup}", _reader.PartitionId, _reader.ConsumerGroupName);
                 }
             }
         }

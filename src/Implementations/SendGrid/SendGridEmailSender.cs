@@ -2,6 +2,7 @@ using BaseCap.CloudAbstractions.Abstractions;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using SendGrid.Helpers.Reliability;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,14 +65,7 @@ namespace BaseCap.CloudAbstractions.Implementations.SendGrid
             }
             else
             {
-                logger.LogEvent(
-                    "SendEmailFailed",
-                    new Dictionary<string, string>()
-                    {
-                        ["TemplateId"] = templateId,
-                        ["RecipientCount"] = toAddresses.Count().ToString(),
-                        ["ErrorCode"] = resp.StatusCode.ToString(),
-                    });
+                logger.Error("Failed to fire SendGrid Email {TemplateId} to {Count} with Error Code {Error}", templateId, toAddresses.Count(), resp.StatusCode);
                 return false;
             }
         }

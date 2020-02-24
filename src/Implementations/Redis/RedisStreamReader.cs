@@ -1,4 +1,6 @@
 using BaseCap.CloudAbstractions.Abstractions;
+using Prometheus;
+using Serilog;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -13,6 +15,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     /// </summary>
     public class RedisStreamReader : RedisBase, IEventStreamReader
     {
+        private static readonly Counter UnhandledError = Metrics.CreateCounter("bca_redis_stream_read_unhandled_error", "Counts the number of unhandled errors while reading from a Redis Stream");
         private const string CONSUMER_GROUP_LATEST_UNREAD_MESSAGES = ">";
         private const int MAX_MESSAGES_PER_BATCH = 50;
         private readonly TimeSpan POLL_TIMEOUT = TimeSpan.FromSeconds(3);
@@ -154,22 +157,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
             catch (Exception ex)
             {
-                _logger.LogException(
-                    ex,
-                    new Dictionary<string, string>()
-                    {
-                        ["StreamName"] = _streamName,
-                        ["ConsumerGroup"] = _consumerGroup,
-                        ["ConsumerName"] = _consumerName,
-                    });
-                _logger.LogEvent(
-                    "EventStreamReaderFatalError",
-                    new Dictionary<string, string>()
-                    {
-                        ["StreamName"] = _streamName,
-                        ["ConsumerGroup"] = _consumerGroup,
-                        ["ConsumerName"] = _consumerName,
-                    });
+                _logger.Error(ex, "Error on Stream {Name} Group {Group} Consumer {Consumer}", _streamName, _consumerGroup, _consumerName);
+                UnhandledError.Inc();
 
                 throw;
             }
@@ -221,23 +210,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         private async Task ProcessMessagesAsync(StreamEntry[] entries, Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived)
         {
-            try
-            {
-                List<EventMessage> messages = await ProcessMessagesAsync(entries).ConfigureAwait(false);
-                await onMessagesReceived(messages, _streamName).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(
-                    ex,
-                    new Dictionary<string, string>()
-                    {
-                        ["StreamName"] = _streamName,
-                        ["ConsumerGroup"] = _consumerGroup,
-                        ["ConsumerName"] = _consumerName,
-                        ["EntryCount"] = entries.Length.ToString(),
-                    });
-            }
+            List<EventMessage> messages = await ProcessMessagesAsync(entries).ConfigureAwait(false);
+            await onMessagesReceived(messages, _streamName).ConfigureAwait(false);
         }
     }
 }
