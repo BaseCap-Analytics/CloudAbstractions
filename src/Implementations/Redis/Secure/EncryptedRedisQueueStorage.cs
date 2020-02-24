@@ -1,5 +1,6 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
+using Serilog;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -46,15 +47,10 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                 decryptedMsg = base.SerializeObject(msg);
                 await base.OnMessageReceivedAsync(decryptedMsg);
             }
-            catch
+            catch (Exception ex)
             {
-                _logger.LogEvent(
-                    "UnknownEncryptedQueueMessage",
-                    new Dictionary<string, string>()
-                    {
-                        ["QueueName"] = _queueName,
-                        ["Message"] = message,
-                    });
+                _logger.Error(ex, "Failed decrypting on Queue {Name}: {Value}", _queueName, message);
+                DecryptFailures.Inc();
             }
         }
     }

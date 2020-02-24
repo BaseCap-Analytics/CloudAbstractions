@@ -1,5 +1,6 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.Azure.EventHubs;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Threading;

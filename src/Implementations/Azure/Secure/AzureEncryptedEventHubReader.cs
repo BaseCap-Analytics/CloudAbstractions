@@ -1,6 +1,7 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
 using Microsoft.Azure.EventHubs;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;

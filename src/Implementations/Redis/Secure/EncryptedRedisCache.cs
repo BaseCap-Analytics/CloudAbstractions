@@ -1,5 +1,6 @@
-using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
+using Prometheus;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -36,14 +37,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                 string strdata = Encoding.UTF8.GetString(decrypted);
                 return base.DeserializeObject<T>(strdata);
             }
-            catch
+            catch (Exception ex)
             {
-                _logger.LogEvent(
-                    "UnknownCacheEntryFormat",
-                    new Dictionary<string, string>()
-                    {
-                        ["Value"] = value,
-                    });
+                _logger.Error(ex, "Failed decrypting {Value}", value);
+                DecryptFailures.Inc();
+
 #nullable disable // Nullable doesn't work with generics and default
                 return default(T);
 #nullable enable

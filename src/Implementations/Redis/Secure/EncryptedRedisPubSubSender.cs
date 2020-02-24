@@ -1,5 +1,5 @@
-using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -27,10 +27,19 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
 
         internal override string GetNotificationValue(object notification)
         {
-            string serialized = base.SerializeObject(notification);
-            byte[] plaintext = Encoding.UTF8.GetBytes(serialized);
-            byte[] encrypted = EncryptionHelpers.EncryptDataAsync(plaintext, _encryptionKey).ConfigureAwait(false).GetAwaiter().GetResult();
-            return Convert.ToBase64String(encrypted);
+            try
+            {
+                string serialized = base.SerializeObject(notification);
+                byte[] plaintext = Encoding.UTF8.GetBytes(serialized);
+                byte[] encrypted = EncryptionHelpers.EncryptDataAsync(plaintext, _encryptionKey).ConfigureAwait(false).GetAwaiter().GetResult();
+                return Convert.ToBase64String(encrypted);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Failed encrypting {@Value}", notification);
+                DecryptFailures.Inc();
+                throw;
+            }
         }
     }
 }

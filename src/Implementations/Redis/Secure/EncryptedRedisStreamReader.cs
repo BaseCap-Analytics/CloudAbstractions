@@ -1,5 +1,6 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
+using Serilog;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -58,19 +59,18 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                     string plaintext = Encoding.UTF8.GetString(plaintextBytes);
                     msg.Content = plaintext;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    _logger.LogEvent(
-                        "InvalidMessageInEncryptedStream",
-                        new Dictionary<string, string>()
-                        {
-                            ["StreamName"] = _streamName,
-                            ["ConsumerGroup"] = _consumerGroup,
-                            ["ConsumerName"] = _consumerName,
-                            ["MessageOffset"] = msg.Offset,
-                            ["MessageSequence"] = msg.SequenceNumber.ToString(),
-                            ["MessageValue"] = msg.Content?.ToString() ?? string.Empty,
-                        });
+                    _logger.Error(
+                        ex,
+                        "Failed decrypting on Stream {Name} Consumer Group {Group} Consumer {Consumer} at {Offset}-{Sequence}: {Value}",
+                        _streamName,
+                        _consumerGroup,
+                        _consumerName,
+                        msg.Offset,
+                        msg.SequenceNumber,
+                        msg.Content?.ToString() ?? string.Empty);
+                    DecryptFailures.Inc();
                 }
             }
 

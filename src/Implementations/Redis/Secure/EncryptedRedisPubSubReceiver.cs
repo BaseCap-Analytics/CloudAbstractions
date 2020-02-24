@@ -1,5 +1,5 @@
-using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
+using Serilog;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -36,15 +36,10 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                 string data = Encoding.UTF8.GetString(decrypted);
                 base.ReceiveHandler(channel, data);
             }
-            catch
+            catch (Exception ex)
             {
-                _logger.LogEvent(
-                    "UnknownPubSubMessage",
-                    new Dictionary<string, string>()
-                    {
-                        ["Channel"] = _channel,
-                        ["Message"] = value,
-                    });
+                _logger.Error(ex, "Failed decrypting on Channel {Channel}: {Value}", _channel, value);
+                DecryptFailures.Inc();
             }
         }
     }

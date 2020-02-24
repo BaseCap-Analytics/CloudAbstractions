@@ -1,4 +1,5 @@
 using BaseCap.CloudAbstractions.Abstractions;
+using Serilog;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;

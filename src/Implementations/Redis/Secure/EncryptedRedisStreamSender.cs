@@ -1,5 +1,5 @@
-using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -27,10 +27,19 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
 
         protected override string SerializeObject(object obj)
         {
-            string serialized = base.SerializeObject(obj);
-            byte[] plaintextBytes = Encoding.UTF8.GetBytes(serialized);
-            byte[] encryptedBytes = EncryptionHelpers.EncryptDataAsync(plaintextBytes, _encryptionKey).ConfigureAwait(false).GetAwaiter().GetResult();
-            return Convert.ToBase64String(encryptedBytes);
+            try
+            {
+                string serialized = base.SerializeObject(obj);
+                byte[] plaintextBytes = Encoding.UTF8.GetBytes(serialized);
+                byte[] encryptedBytes = EncryptionHelpers.EncryptDataAsync(plaintextBytes, _encryptionKey).ConfigureAwait(false).GetAwaiter().GetResult();
+                return Convert.ToBase64String(encryptedBytes);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Failed encrypting {@Value}", obj);
+                DecryptFailures.Inc();
+                throw;
+            }
         }
     }
 }
