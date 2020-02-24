@@ -1,7 +1,6 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
 using Microsoft.Azure.EventHubs;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -19,9 +18,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure.Secure
             PartitionReceiver reader,
             Func<PartitionReceiver, Task<PartitionReceiver>> receiverRefresh,
             Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived,
-            byte[] encryptionKey,
-            ILogger logger)
-            : base(reader, receiverRefresh, onMessagesReceived, logger)
+            byte[] encryptionKey)
+            : base(reader, receiverRefresh, onMessagesReceived)
         {
             _encryptionKey = encryptionKey;
         }

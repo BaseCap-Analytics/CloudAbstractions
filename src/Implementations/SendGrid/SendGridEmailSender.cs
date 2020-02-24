@@ -44,7 +44,6 @@ namespace BaseCap.CloudAbstractions.Implementations.SendGrid
             IEnumerable<(string email, string name)> toAddresses,
             string templateId,
             T? templateData,
-            ILogger logger,
             CancellationToken token = default(CancellationToken)) where T : class
         {
             SendGridMessage msg = new SendGridMessage();
@@ -65,7 +64,7 @@ namespace BaseCap.CloudAbstractions.Implementations.SendGrid
             }
             else
             {
-                logger.Error("Failed to fire SendGrid Email {TemplateId} to {Count} with Error Code {Error}", templateId, toAddresses.Count(), resp.StatusCode);
+                Log.Logger.Error("Failed to fire SendGrid Email {TemplateId} to {Count} with Error Code {Error}", templateId, toAddresses.Count(), resp.StatusCode);
                 return false;
             }
         }

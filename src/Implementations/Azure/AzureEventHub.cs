@@ -17,7 +17,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         private Func<IEnumerable<EventMessage>, string, Task>? _onMessagesReceived;
         private readonly EventHubClient _client;
         private readonly ICheckpointer _checkpointer;
-        private readonly ILogger _logger;
 
         /// <summary>
         /// Creates a new connection with an Azure Event Hub
@@ -25,14 +24,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         public AzureEventHub(
             string eventHubConnectionString,
             string eventHubEntity,
-            ICheckpointer checkpointer,
-            ILogger logger)
+            ICheckpointer checkpointer)
         {
             _readers = new List<AzureEventHubReader>();
             _client = EventHubClient.CreateFromConnectionString(
                 new EventHubsConnectionStringBuilder(eventHubConnectionString) { EntityPath = eventHubEntity }.ToString());
             _checkpointer = checkpointer;
-            _logger = logger;
         }
 
         /// <summary>
@@ -49,7 +46,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             foreach (string partition in info.PartitionIds)
             {
                 PartitionReceiver receiver = await setupTask(consumerGroup, partition);
-                AzureEventHubReader reader = new AzureEventHubReader(receiver, RefreshPartitionReaderAsync, _onMessagesReceived, _logger);
+                AzureEventHubReader reader = new AzureEventHubReader(receiver, RefreshPartitionReaderAsync, _onMessagesReceived);
                 _readers.Add(reader);
                 reader.Open(token);
             }

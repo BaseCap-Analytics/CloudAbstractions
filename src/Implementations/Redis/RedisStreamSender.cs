@@ -1,5 +1,4 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Serilog;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -20,9 +19,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             IEnumerable<string> endpoints,
             string password,
             bool useSsl,
-            string streamName,
-            ILogger logger)
-            : base(endpoints, password, useSsl, "EventStreamWriter", $"{streamName}", logger)
+            string streamName)
+            : base(endpoints, password, useSsl, "EventStreamWriter", $"{streamName}")
         {
             _streamName = streamName;
         }

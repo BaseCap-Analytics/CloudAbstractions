@@ -1,5 +1,4 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Serilog;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -14,8 +13,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     {
         private readonly string _channel;
 
-        public RedisPubSubSender(IEnumerable<string> endpoints, string password, string channel, bool useSsl, ILogger logger)
-            : base(endpoints, password, useSsl, "Channel", channel, logger)
+        public RedisPubSubSender(IEnumerable<string> endpoints, string password, string channel, bool useSsl)
+            : base(endpoints, password, useSsl, "Channel", channel)
         {
             _channel = channel;
         }

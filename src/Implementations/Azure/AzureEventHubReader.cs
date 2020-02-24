@@ -23,7 +23,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         protected Task? _readerTask;
         protected readonly Func<IEnumerable<EventMessage>, string, Task> _onMessagesReceived;
         protected readonly Func<PartitionReceiver, Task<PartitionReceiver>> _receiverRefreshAsync;
-        protected readonly ILogger _logger;
         protected readonly MemoryCache _eventIdCache;
 
         /// <summary>
@@ -32,13 +31,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         internal AzureEventHubReader(
             PartitionReceiver reader,
             Func<PartitionReceiver, Task<PartitionReceiver>> receiverRefresh,
-            Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived,
-            ILogger logger)
+            Func<IEnumerable<EventMessage>, string, Task> onMessagesReceived)
         {
             _reader = reader;
             _receiverRefreshAsync = receiverRefresh;
             _onMessagesReceived = onMessagesReceived;
-            _logger = logger;
             _eventIdCache = new MemoryCache(new MemoryCacheOptions());
         }
 
@@ -89,7 +86,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
                 {
                     // This usually means a problem with the reader; rebuild it and try again
                     _reader = await _receiverRefreshAsync(_reader);
-                    _logger.Error(sx,"Partition {Partition} on Consumer Group {ConsumerGroup}", _reader.PartitionId, _reader.ConsumerGroupName);
+                    Log.Logger.Error(sx,"Partition {Partition} on Consumer Group {ConsumerGroup}", _reader.PartitionId, _reader.ConsumerGroupName);
                 }
             }
         }

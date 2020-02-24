@@ -24,9 +24,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             bool useSsl,
             string streamName,
             string consumerGroup,
-            string consumerName,
-            ILogger logger)
-            : base(endpoints, password, useSsl, streamName, consumerGroup, consumerName, logger)
+            string consumerName)
+            : base(endpoints, password, useSsl, streamName, consumerGroup, consumerName)
         {
             _encryptionKey = encryptionKey;
         }
@@ -38,9 +37,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             string password,
             bool useSsl,
             string streamName,
-            string consumerName,
-            ILogger logger)
-            : base(endpoints, password, useSsl, streamName, consumerName, logger)
+            string consumerName)
+            : base(endpoints, password, useSsl, streamName, consumerName)
         {
             _encryptionKey = encryptionKey;
         }
@@ -61,7 +59,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(
+                    Log.Logger.Error(
                         ex,
                         "Failed decrypting on Stream {Name} Consumer Group {Group} Consumer {Consumer} at {Offset}-{Sequence}: {Value}",
                         _streamName,
