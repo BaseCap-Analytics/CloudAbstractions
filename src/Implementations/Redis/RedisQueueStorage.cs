@@ -28,8 +28,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <summary>
         /// Creates a new connection to an Azure Queue Storage
         /// </summary>
-        public RedisQueueStorage(IEnumerable<string> endpoints, string password, string queueName, bool useSsl, ILogger logger)
-            : base(endpoints, password, useSsl, "QueueName", queueName, logger)
+        public RedisQueueStorage(IEnumerable<string> endpoints, string password, string queueName, bool useSsl)
+            : base(endpoints, password, useSsl, "QueueName", queueName)
         {
             _queueName = queueName;
             _channelName = $"{_queueName}{CHANNEL_SUFFIX}";
@@ -71,7 +71,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, "Redis Queue Polling Error");
+                    Log.Logger.Error(ex, "Redis Queue Polling Error");
                 }
             }
         }
@@ -114,7 +114,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                     ISubscriber sub = GetSubscriber();
                     await db.ListLeftPushAsync(DEADLETTER_QUEUE, processingMsg).ConfigureAwait(false);
                     await sub.PublishAsync(DEADLETTER_CHANNEL, "").ConfigureAwait(false);
-                    _logger.Warning("Redis Queue {QueueName} Deadletter: {Message}", _queueName, processingMsg);
+                    Log.Logger.Warning("Redis Queue {QueueName} Deadletter: {Message}", _queueName, processingMsg);
                     DeadletterCounter.Inc();
                     return;
                 }
@@ -132,7 +132,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
             catch
             {
-                _logger.Warning("Redis Queue {QueueName} Unhandled Message: {Message}", _queueName, message);
+                Log.Logger.Warning("Redis Queue {QueueName} Unhandled Message: {Message}", _queueName, message);
                 UnhandledMessageCount.Inc();
             }
         }

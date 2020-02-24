@@ -24,10 +24,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         private readonly object _synclock;
         protected readonly string _errorContextName;
         protected readonly string _errorContextValue;
-        protected readonly ILogger _logger;
         private ConnectionMultiplexer? _cacheConnection;
 
-        internal RedisBase(IEnumerable<string> endpoints, string password, bool useSsl, string errorContextName, string errorContextValue, ILogger logger)
+        internal RedisBase(IEnumerable<string> endpoints, string password, bool useSsl, string errorContextName, string errorContextValue)
         {
             if ((endpoints == null) || (endpoints.Any() == false))
             {
@@ -57,10 +56,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             };
             _errorContextName = errorContextName;
             _errorContextValue = errorContextValue;
-            _logger = logger;
         }
 
-        internal RedisBase(ConfigurationOptions options, string errorContextName, string errorContextValue, ILogger logger)
+        internal RedisBase(ConfigurationOptions options, string errorContextName, string errorContextValue)
         {
             _synclock = new object();
             _jsonOptions = new JsonSerializerSettings()
@@ -73,7 +71,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             _options = options;
             _errorContextName = errorContextName;
             _errorContextValue = errorContextValue;
-            _logger = logger;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -97,7 +94,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public IHyperLogLog CreateHyperLogLog(string logName)
         {
-            return (IHyperLogLog)new RedisHyperLogLog(logName, _options, _logger);
+            return (IHyperLogLog)new RedisHyperLogLog(logName, _options);
         }
 
         protected void Subscribe(string channel, Action<RedisChannel, RedisValue> handler)
@@ -180,21 +177,21 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
         private void OnConnectionFailure(object sender, ConnectionFailedEventArgs e)
         {
-            _logger.Error(e.Exception, "Redis Connection Failure {Type} on {Name} {Context} at Endpoint {Endpoint}", e.FailureType, _errorContextName, _errorContextValue, e.EndPoint);
-            _logger.Warning("Redis Connection Failure at {Name} {Value}", _errorContextName, _errorContextValue);
+            Log.Logger.Error(e.Exception, "Redis Connection Failure {Type} on {Name} {Context} at Endpoint {Endpoint}", e.FailureType, _errorContextName, _errorContextValue, e.EndPoint);
+            Log.Logger.Warning("Redis Connection Failure at {Name} {Value}", _errorContextName, _errorContextValue);
             ConnectionsBroken.Inc();
         }
 
         private void OnConnectionRestored(object sender, ConnectionFailedEventArgs e)
         {
-            _logger.Warning("Redis Connection Restored at {Name} {Value}", _errorContextName, _errorContextValue);
+            Log.Logger.Warning("Redis Connection Restored at {Name} {Value}", _errorContextName, _errorContextValue);
             ConnectionsBroken.Dec();
         }
 
         private void OnRedisInternalError(object sender, InternalErrorEventArgs e)
         {
-            _logger.Error(e.Exception, "Redis Internal Failure: {Type} on {Name} {Context} at {Endpoint}", e.Origin, _errorContextName, _errorContextValue, e.EndPoint);
-            _logger.Warning("Redis Internal Failure at {Name} {Value}", _errorContextName, _errorContextValue);
+            Log.Logger.Error(e.Exception, "Redis Internal Failure: {Type} on {Name} {Context} at {Endpoint}", e.Origin, _errorContextName, _errorContextValue, e.EndPoint);
+            Log.Logger.Warning("Redis Internal Failure at {Name} {Value}", _errorContextName, _errorContextValue);
             InternalErrors.Inc();
         }
 

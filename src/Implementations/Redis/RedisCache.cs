@@ -1,5 +1,4 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Serilog;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -17,8 +16,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <summary>
         /// Creates a new RedisCache
         /// </summary>
-        public RedisCache(IEnumerable<string> endpoints, string password, bool useSsl, ILogger logger)
-            : base(endpoints, password, useSsl, "Cache", "[default]", logger)
+        public RedisCache(IEnumerable<string> endpoints, string password, bool useSsl)
+            : base(endpoints, password, useSsl, "Cache", "[default]")
         {
         }
 

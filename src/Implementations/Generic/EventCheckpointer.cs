@@ -1,6 +1,5 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using Serilog;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -13,16 +12,14 @@ namespace BaseCap.CloudAbstractions.Implementations.Generic
     {
         protected readonly IBlobStorage _storage;
         protected readonly string _applicationName;
-        protected readonly ILogger _logger;
 
         /// <summary>
         /// Creates a connection to an application's checkpoint list
         /// </summary>
-        public EventCheckpointer(IBlobStorage storage, string applicationName, ILogger logger)
+        public EventCheckpointer(IBlobStorage storage, string applicationName)
         {
             _storage = storage;
             _applicationName = applicationName;
-            _logger = logger;
         }
 
         private string GetBlobName(string id)
@@ -45,7 +42,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Generic
                 using (StreamReader sr = new StreamReader(blobStream))
                 {
                     value = sr.ReadToEnd()?.Trim();
-                    _logger.Warning("Not Checkpoint Found on Partition {Partition}", id);
+                    Log.Logger.Warning("Not Checkpoint Found on Partition {Partition}", id);
                 }
             }
             catch

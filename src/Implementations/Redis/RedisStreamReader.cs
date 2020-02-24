@@ -29,30 +29,26 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             bool useSsl,
             string streamName,
             string consumerGroup,
-            string consumerName,
-            ILogger logger)
-            : base(endpoints, password, useSsl, "EventStreamReader", $"{streamName}.{consumerGroup}:{consumerName}", logger)
+            string consumerName)
+            : base(endpoints, password, useSsl, "EventStreamReader", $"{streamName}.{consumerGroup}:{consumerName}")
         {
             if ((endpoints == null) || (endpoints.Any() == false) || (endpoints.Any(e => string.IsNullOrWhiteSpace(e))))
             {
                 throw new ArgumentNullException(nameof(endpoints));
             }
-            if (string.IsNullOrWhiteSpace(streamName))
+            else if (string.IsNullOrWhiteSpace(streamName))
             {
                 throw new ArgumentNullException(nameof(streamName));
             }
-            if (string.IsNullOrWhiteSpace(consumerGroup))
+            else if (string.IsNullOrWhiteSpace(consumerGroup))
             {
                 throw new ArgumentNullException(nameof(consumerGroup));
             }
-            if (string.IsNullOrWhiteSpace(consumerName))
+            else if (string.IsNullOrWhiteSpace(consumerName))
             {
                 throw new ArgumentNullException(nameof(consumerName));
             }
-            if (logger == null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
+
             _streamName = streamName;
             _consumerGroup = consumerGroup;
             _consumerName = consumerName;
@@ -63,26 +59,22 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             string password,
             bool useSsl,
             string streamName,
-            string consumerName,
-            ILogger logger)
-            : base(endpoints, password, useSsl, "EventStreamReader-NonGroup", $"{streamName}:{consumerName}", logger)
+            string consumerName)
+            : base(endpoints, password, useSsl, "EventStreamReader-NonGroup", $"{streamName}:{consumerName}")
         {
             if ((endpoints == null) || (endpoints.Any() == false) || (endpoints.Any(e => string.IsNullOrWhiteSpace(e))))
             {
                 throw new ArgumentNullException(nameof(endpoints));
             }
-            if (string.IsNullOrWhiteSpace(streamName))
+            else if (string.IsNullOrWhiteSpace(streamName))
             {
                 throw new ArgumentNullException(nameof(streamName));
             }
-            if (string.IsNullOrWhiteSpace(consumerName))
+            else if (string.IsNullOrWhiteSpace(consumerName))
             {
                 throw new ArgumentNullException(nameof(consumerName));
             }
-            if (logger == null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
+
             _streamName = streamName;
             _consumerGroup = string.Empty;
             _consumerName = consumerName;
@@ -157,7 +149,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error on Stream {Name} Group {Group} Consumer {Consumer}", _streamName, _consumerGroup, _consumerName);
+                Log.Logger.Error(ex, "Error on Stream {Name} Group {Group} Consumer {Consumer}", _streamName, _consumerGroup, _consumerName);
                 UnhandledError.Inc();
 
                 throw;

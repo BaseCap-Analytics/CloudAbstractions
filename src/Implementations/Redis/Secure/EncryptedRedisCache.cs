@@ -1,5 +1,4 @@
 using BaseCap.Security;
-using Prometheus;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -14,8 +13,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
     {
         private byte[] _encryptionKey;
 
-        public EncryptedRedisCache(IEnumerable<string> endpoints, string password, bool useSsl, byte[] encryptionKey, ILogger logger)
-            : base(endpoints, password, useSsl, logger)
+        public EncryptedRedisCache(IEnumerable<string> endpoints, string password, bool useSsl, byte[] encryptionKey)
+            : base(endpoints, password, useSsl)
         {
             _encryptionKey = encryptionKey;
         }
@@ -39,7 +38,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Failed decrypting {Value}", value);
+                Log.Logger.Error(ex, "Failed decrypting {Value}", value);
                 DecryptFailures.Inc();
 
 #nullable disable // Nullable doesn't work with generics and default
