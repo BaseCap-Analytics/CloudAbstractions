@@ -2,7 +2,6 @@ using BaseCap.Security;
 using Serilog;
 using StackExchange.Redis;
 using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
@@ -15,12 +14,10 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
         private readonly byte[] _encryptionKey;
 
         public EncryptedRedisPubSubReceiver(
+            string connectionString,
             byte[] encryptionKey,
-            IEnumerable<string> endpoints,
-            string password,
-            string channel,
-            bool useSsl)
-            : base(endpoints, password, channel, useSsl)
+            string channel)
+            : base(connectionString, channel)
         {
             _encryptionKey = encryptionKey;
         }
