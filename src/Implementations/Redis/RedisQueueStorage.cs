@@ -3,7 +3,6 @@ using Prometheus;
 using Serilog;
 using StackExchange.Redis;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis
@@ -28,8 +27,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <summary>
         /// Creates a new connection to an Azure Queue Storage
         /// </summary>
-        public RedisQueueStorage(IEnumerable<string> endpoints, string password, string queueName, bool useSsl)
-            : base(endpoints, password, useSsl, "QueueName", queueName)
+        public RedisQueueStorage(string connectionString, string queueName)
+            : base(connectionString, "QueueName", queueName)
         {
             _queueName = queueName;
             _channelName = $"{_queueName}{CHANNEL_SUFFIX}";

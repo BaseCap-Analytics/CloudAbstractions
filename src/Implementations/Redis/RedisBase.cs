@@ -4,7 +4,6 @@ using Prometheus;
 using Serilog;
 using StackExchange.Redis;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -26,36 +25,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         protected readonly string _errorContextValue;
         private ConnectionMultiplexer? _cacheConnection;
 
-        internal RedisBase(IEnumerable<string> endpoints, string password, bool useSsl, string errorContextName, string errorContextValue)
+        internal RedisBase(string connectionString, string errorContextName, string errorContextValue)
+            : this(ConfigurationOptions.Parse(connectionString), errorContextName, errorContextValue)
         {
-            if ((endpoints == null) || (endpoints.Any() == false))
-            {
-                throw new ArgumentNullException(nameof(endpoints));
-            }
-
-            _synclock = new object();
-            _options = new ConfigurationOptions()
-            {
-                AbortOnConnectFail = false,
-                ConnectRetry = 3,
-                ConnectTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds),
-                Password = password,
-                Ssl = useSsl,
-                SyncTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds),
-            };
-            foreach (string endpoint in endpoints)
-            {
-                _options.EndPoints.Add(endpoint);
-            }
-            _jsonOptions = new JsonSerializerSettings()
-            {
-                Formatting = Formatting.None,
-                MaxDepth = 15, // Arbitrary value,
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                PreserveReferencesHandling = PreserveReferencesHandling.Objects,
-            };
-            _errorContextName = errorContextName;
-            _errorContextValue = errorContextValue;
         }
 
         internal RedisBase(ConfigurationOptions options, string errorContextName, string errorContextValue)
@@ -69,6 +41,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 PreserveReferencesHandling = PreserveReferencesHandling.Objects,
             };
             _options = options;
+            _options.ConnectRetry = 3;
+            _options.ConnectTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds);
+            _options.SyncTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds);
             _errorContextName = errorContextName;
             _errorContextValue = errorContextValue;
         }

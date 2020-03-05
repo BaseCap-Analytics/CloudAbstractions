@@ -24,19 +24,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         protected readonly string _consumerName;
 
         public RedisStreamReader(
-            IEnumerable<string> endpoints,
-            string password,
-            bool useSsl,
+            string connectionString,
             string streamName,
             string consumerGroup,
             string consumerName)
-            : base(endpoints, password, useSsl, "EventStreamReader", $"{streamName}.{consumerGroup}:{consumerName}")
+            : base(connectionString, "EventStreamReader", $"{streamName}.{consumerGroup}:{consumerName}")
         {
-            if ((endpoints == null) || (endpoints.Any() == false) || (endpoints.Any(e => string.IsNullOrWhiteSpace(e))))
-            {
-                throw new ArgumentNullException(nameof(endpoints));
-            }
-            else if (string.IsNullOrWhiteSpace(streamName))
+            if (string.IsNullOrWhiteSpace(streamName))
             {
                 throw new ArgumentNullException(nameof(streamName));
             }
@@ -55,18 +49,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         public RedisStreamReader(
-            IEnumerable<string> endpoints,
-            string password,
-            bool useSsl,
+            string connectionString,
             string streamName,
             string consumerName)
-            : base(endpoints, password, useSsl, "EventStreamReader-NonGroup", $"{streamName}:{consumerName}")
+            : base(connectionString, "EventStreamReader-NonGroup", $"{streamName}:{consumerName}")
         {
-            if ((endpoints == null) || (endpoints.Any() == false) || (endpoints.Any(e => string.IsNullOrWhiteSpace(e))))
-            {
-                throw new ArgumentNullException(nameof(endpoints));
-            }
-            else if (string.IsNullOrWhiteSpace(streamName))
+            if (string.IsNullOrWhiteSpace(streamName))
             {
                 throw new ArgumentNullException(nameof(streamName));
             }
