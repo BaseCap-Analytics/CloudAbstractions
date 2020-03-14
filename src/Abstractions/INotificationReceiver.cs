@@ -6,7 +6,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
     /// <summary>
     /// The contract for receiving notifications
     /// </summary>
-    public interface INotificationReceiver
+    public interface INotificationReceiver : IDisposable
     {
         /// <summary>
         /// Starts receiving messages on the given channel

@@ -32,6 +32,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             EventHubsConnectionStringBuilder builder = new EventHubsConnectionStringBuilder(eventHubConnectionString) { EntityPath = eventHubEntity };
             _connectionString = builder.ToString();
         }
+        
+        public void Dispose()
+        {
+            CloseAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+        }
 
         /// <summary>
         /// Initializes the connection to Azure

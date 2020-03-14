@@ -6,7 +6,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
     /// <summary>
     /// The contract for interacting with distributed, cloud-based queues
     /// </summary>
-    public interface IQueue
+    public interface IQueue : IDisposable
     {
         /// <summary>
         /// Constructs the underlying stream connection for write connections

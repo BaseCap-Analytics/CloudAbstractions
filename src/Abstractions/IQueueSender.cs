@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -6,7 +7,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
     /// <summary>
     /// Contract for sending messages to a queue service
     /// </summary>
-    public interface IQueueSender
+    public interface IQueueSender : IDisposable
     {
         /// <summary>
         /// Publish an object to a queue
