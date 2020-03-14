@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Abstractions
@@ -5,7 +6,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
     /// <summary>
     /// The contract for utilizing a HyperLogLog
     /// </summary>
-    public interface IHyperLogLog
+    public interface IHyperLogLog : IDisposable
     {
         /// <summary>
         /// Initializes the connection

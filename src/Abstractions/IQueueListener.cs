@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Abstractions
@@ -5,7 +6,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
     /// <summary>
     /// Contract for working with Queue Listeners
     /// </summary>
-    public interface IQueueListener
+    public interface IQueueListener : IDisposable
     {
         /// <summary>
         /// Begins listening for messages on the queue

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -6,7 +7,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
     /// <summary>
     /// The contract for writing to an eventing system
     /// </summary>
-    public interface IEventStreamWriter
+    public interface IEventStreamWriter : IDisposable
     {
         /// <summary>
         /// Constructs the underlying stream connection

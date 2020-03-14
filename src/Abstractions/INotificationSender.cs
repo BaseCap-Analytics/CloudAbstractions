@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Abstractions
@@ -5,7 +6,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
     /// <summary>
     /// The contract for sending a notification to receivers
     /// </summary>
-    public interface INotificationSender
+    public interface INotificationSender : IDisposable
     {
         /// <summary>
         /// Initializes the notification system

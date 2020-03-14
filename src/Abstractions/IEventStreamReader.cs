@@ -8,7 +8,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
     /// <summary>
     /// Contract for reading from an Event Stream
     /// </summary>
-    public interface IEventStreamReader
+    public interface IEventStreamReader : IDisposable
     {
         /// <summary>
         /// Initializes the Stream Reader
