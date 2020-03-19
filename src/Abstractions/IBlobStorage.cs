@@ -55,6 +55,15 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task DeleteBlobAsync(string path);
 
         /// <summary>
+        /// Moves a Blob to a different directory
+        /// </summary>
+        /// <param name="path">The blob to move</param>
+        /// <param name="newDirectory">The new directory for the blob</param>
+        /// <param name="token">Cancellation Token for halting the move</param>
+        /// <returns>Returns an awaitable Task</returns>
+        Task MoveBlobAsync(string path, string newDirectory, CancellationToken token);
+
+        /// <summary>
         /// Retrieves metadata about every blob in the storage medium
         /// </summary>
         /// <param name="path">The path to list blobs under; null for the root of the container</param>

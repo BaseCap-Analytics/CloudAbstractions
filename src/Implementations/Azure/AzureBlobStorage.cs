@@ -172,5 +172,20 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
 
             return blobs;
         }
+
+        /// <inheritdoc />
+        public async Task MoveBlobAsync(string path, string newDirectory, CancellationToken token = default(CancellationToken))
+        {
+            CloudBlockBlob currentBlob = _blobStorage.GetBlockBlobReference(path);
+            if (await currentBlob.ExistsAsync() == false)
+            {
+                throw new FileNotFoundException($"Blob '{path}' does not exist");
+            }
+
+            CloudBlobDirectory newParent = _blobStorage.GetDirectoryReference(newDirectory);
+            CloudBlockBlob newBlob = newParent.GetBlockBlobReference(currentBlob.Name);
+            await newBlob.StartCopyAsync(currentBlob, token).ConfigureAwait(false);
+            await currentBlob.DeleteAsync();
+        }
     }
 }
