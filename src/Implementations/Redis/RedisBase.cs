@@ -4,6 +4,7 @@ using Prometheus;
 using Serilog;
 using StackExchange.Redis;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,8 +15,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     /// </summary>
     public abstract class RedisBase : IDisposable
     {
-        protected static readonly Counter DecryptFailures = Metrics.CreateCounter("bca_redis_decrypt_failures", "Counts the number of times we failed to decrypt a value in Redis");
         private const int MAX_STREAM_LENGTH = 100000; // 100k records in stream before removing old ones
+        private const int MAX_RETRIES = 5; // 5 attempts at a command
+        protected static readonly Counter DecryptFailures = Metrics.CreateCounter("bca_redis_decrypt_failures", "Counts the number of times we failed to decrypt a value in Redis");
         private static readonly Gauge ConnectionsBroken = Metrics.CreateGauge("bca_redis_broken_connections", "Number of currently broken Redis Connections");
         private static readonly Counter InternalErrors = Metrics.CreateCounter("bca_redis_internal_errors", "Number of Redis internal errors hit");
         private readonly ConfigurationOptions _options;
@@ -42,6 +44,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             };
             _options = options;
             _options.ConnectRetry = 3;
+            _options.AsyncTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds);
             _options.ConnectTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds);
             _options.SyncTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds);
             _errorContextName = errorContextName;
@@ -113,6 +116,94 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
 
             return sub;
+        }
+
+        protected async Task<T> ExecuteRedisCommandAsync<T>(Func<Task<T>> command)
+        {
+            int attempts = 0;
+            do
+            {
+                try
+                {
+                    T result = await command().ConfigureAwait(false);
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    if (attempts < MAX_RETRIES)
+                    {
+                        Log.Logger.Warning("Retrying failed Redis Command with error {Msg}", ex.Message);
+                        await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+                        attempts++;
+                    }
+                    else
+                    {
+                        Log.Logger.Error(ex, "Max retries hit on Redis Command; Error: {Msg}", ex.Message);
+                        throw;
+                    }
+                }
+            }
+            while (attempts <= MAX_RETRIES);
+
+#pragma warning disable CS8603
+            return default(T);
+#pragma warning restore CS8603
+        }
+
+        protected IAsyncEnumerable<T>? ExecuteRedisCommandAsync<T>(Func<IAsyncEnumerable<T>> command)
+        {
+            int attempts = 0;
+            do
+            {
+                try
+                {
+                    IAsyncEnumerable<T> result = command();
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    if (attempts < MAX_RETRIES)
+                    {
+                        Log.Logger.Warning("Retrying failed Redis Command with error {Msg}", ex.Message);
+                        Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false).GetAwaiter().GetResult();
+                        attempts++;
+                    }
+                    else
+                    {
+                        Log.Logger.Error(ex, "Max retries hit on Redis Command; Error: {Msg}", ex.Message);
+                        throw;
+                    }
+                }
+            }
+            while (attempts <= MAX_RETRIES);
+
+            return null;
+        }
+        protected async Task ExecuteRedisCommandAsync(Func<Task> command)
+        {
+            int attempts = 0;
+            do
+            {
+                try
+                {
+                    await command().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    if (attempts < MAX_RETRIES)
+                    {
+                        Log.Logger.Warning("Retrying failed Redis Command with error {Msg}", ex.Message);
+                        await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+                        attempts++;
+                    }
+                    else
+                    {
+                        Log.Logger.Error(ex, "Max retries hit on Redis Command; Error: {Msg}", ex.Message);
+                        throw;
+                    }
+                }
+            }
+            while (attempts <= MAX_RETRIES);
         }
 
         protected async Task CreateStreamIfNecessaryAsync(string streamName)

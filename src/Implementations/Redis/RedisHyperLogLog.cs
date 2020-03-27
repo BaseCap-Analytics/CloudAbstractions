@@ -36,21 +36,21 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         public Task<bool> CheckIfUniqueAsync(string key)
         {
             IDatabase db = GetRedisDatabase();
-            return db.HyperLogLogAddAsync(_logName, key);
+            return ExecuteRedisCommandAsync(() => db.HyperLogLogAddAsync(_logName, key));
         }
 
         /// <inheritdoc />
         public Task<long> GetUniqueCountAsync()
         {
             IDatabase db = GetRedisDatabase();
-            return db.HyperLogLogLengthAsync(_logName);
+            return ExecuteRedisCommandAsync(() => db.HyperLogLogLengthAsync(_logName));
         }
 
         /// <inheritdoc />
         public Task DeleteLogAsync()
         {
             IDatabase db = GetRedisDatabase();
-            return db.KeyDeleteAsync(_logName);
+            return ExecuteRedisCommandAsync(() => db.KeyDeleteAsync(_logName));
         }
     }
 }
