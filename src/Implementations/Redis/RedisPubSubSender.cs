@@ -34,7 +34,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
 
             ISubscriber  sub = GetSubscriber();
-            return sub.PublishAsync(_channel, serialized);
+            return ExecuteRedisCommandAsync(() => sub.PublishAsync(_channel, serialized));
         }
 
         internal virtual string GetNotificationValue(object notification)

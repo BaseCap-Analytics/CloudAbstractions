@@ -57,7 +57,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
 
             IDatabase db = GetRedisDatabase();
-            return db.StreamAddAsync(_streamName, entries);
+            return ExecuteRedisCommandAsync(() => db.StreamAddAsync(_streamName, entries));
         }
     }
 }

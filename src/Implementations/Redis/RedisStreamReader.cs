@@ -96,7 +96,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             if (string.IsNullOrWhiteSpace(_consumerGroup))
             {
                 IDatabase db = GetRedisDatabase();
-                StreamInfo info = await db.StreamInfoAsync(_streamName).ConfigureAwait(false);
+                StreamInfo info = await ExecuteRedisCommandAsync(() => db.StreamInfoAsync(_streamName)).ConfigureAwait(false);
                 streamPosition = info.LastGeneratedId;
             }
             else
@@ -147,18 +147,18 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         private Task<StreamEntry[]> ReadWithoutConsumerGroupAsync(int maxMessages, RedisValue streamPosition)
         {
             IDatabase db = GetRedisDatabase();
-            return db.StreamReadAsync(_streamName, streamPosition, maxMessages);
+            return ExecuteRedisCommandAsync(() => db.StreamReadAsync(_streamName, streamPosition, maxMessages));
         }
 
         private Task<StreamEntry[]> ReadUsingConsumerGroupAsync(int maxMessages, RedisValue streamPosition)
         {
             IDatabase db = GetRedisDatabase();
-            return db.StreamReadGroupAsync(
+            return ExecuteRedisCommandAsync(() => db.StreamReadGroupAsync(
                         _streamName,
                         _consumerGroup,
                         _consumerName,
                         streamPosition,
-                        maxMessages);
+                        maxMessages));
         }
 
         private Task<RedisValue> AcknowledgeReadAsync(StreamEntry[] messages)
@@ -169,7 +169,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         private async Task<RedisValue> AcknowledgeConsumerGroupReadAsync(StreamEntry[] messages)
         {
             IDatabase db = GetRedisDatabase();
-            await db.StreamAcknowledgeAsync(_streamName, _consumerGroup, messages.Select(m => m.Id).ToArray());
+            await ExecuteRedisCommandAsync(() => db.StreamAcknowledgeAsync(_streamName, _consumerGroup, messages.Select(m => m.Id).ToArray()));
             return StreamPosition.NewMessages;
         }
 

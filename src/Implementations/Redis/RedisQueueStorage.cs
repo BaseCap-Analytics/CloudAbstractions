@@ -78,7 +78,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         private void HandleMessage()
         {
             IDatabase db = GetRedisDatabase();
-            string work = db.ListRightPopAsync(_queueName).ConfigureAwait(false).GetAwaiter().GetResult();
+            string work = ExecuteRedisCommandAsync(() => db.ListRightPopAsync(_queueName)).ConfigureAwait(false).GetAwaiter().GetResult();
             while (string.IsNullOrWhiteSpace(work) == false)
             {
                 // The Pub/Sub is used as a shoulder tap to tell us that there is work to do.
@@ -111,8 +111,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 {
                     IDatabase db = GetRedisDatabase();
                     ISubscriber sub = GetSubscriber();
-                    await db.ListLeftPushAsync(DEADLETTER_QUEUE, processingMsg).ConfigureAwait(false);
-                    await sub.PublishAsync(DEADLETTER_CHANNEL, "").ConfigureAwait(false);
+                    await ExecuteRedisCommandAsync(() => db.ListLeftPushAsync(DEADLETTER_QUEUE, processingMsg)).ConfigureAwait(false);
+                    await ExecuteRedisCommandAsync(() => sub.PublishAsync(DEADLETTER_CHANNEL, "")).ConfigureAwait(false);
                     Log.Logger.Warning("Redis Queue {QueueName} Deadletter: {Message}", _queueName, processingMsg);
                     DeadletterCounter.Inc();
                     return;
@@ -159,8 +159,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
             IDatabase db = GetRedisDatabase();
             ISubscriber sub = GetSubscriber();
-            await db.ListLeftPushAsync(_queueName, serialized, flags: CommandFlags.FireAndForget).ConfigureAwait(false);
-            await sub.PublishAsync(_channelName, "").ConfigureAwait(false);
+            await ExecuteRedisCommandAsync(() => db.ListLeftPushAsync(_queueName, serialized, flags: CommandFlags.FireAndForget)).ConfigureAwait(false);
+            await ExecuteRedisCommandAsync(() => sub.PublishAsync(_channelName, "")).ConfigureAwait(false);
         }
 
         protected virtual Task<QueueMessage> CreateQueueMessageAsync(string content)
