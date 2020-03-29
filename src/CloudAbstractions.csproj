@@ -33,7 +33,7 @@
     <PackageReference Include="RabbitMQ.Client" Version="5.1.2" />
     <PackageReference Include="Sendgrid" Version="9.13.0" />
     <PackageReference Include="Serilog" Version="2.9.0" />
-    <PackageReference Include="StackExchange.Redis" Version="2.1.0-preview.23" />
+    <PackageReference Include="StackExchange.Redis" Version="2.1.0" />
   </ItemGroup>
 
 </Project>

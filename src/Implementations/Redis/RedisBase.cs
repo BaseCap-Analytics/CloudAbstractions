@@ -118,6 +118,24 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             return sub;
         }
 
+        private Task ResetConnectionIfNoConnectionBugAsync(Exception ex)
+        {
+            // Due to bug https://github.com/StackExchange/StackExchange.Redis/issues/1120, if there's an
+            // error with `No connection is available` then we need to rebuild the connection
+            if (ex.Message.Contains("No connection is available", StringComparison.OrdinalIgnoreCase))
+            {
+                if (_cacheConnection != null)
+                {
+                    _cacheConnection.Close();
+                    _cacheConnection.Dispose();
+                }
+
+                return InitializeAsync();
+            }
+
+            return Task.CompletedTask;
+        }
+
         protected async Task<T> ExecuteRedisCommandAsync<T>(Func<Task<T>> command)
         {
             int attempts = 0;
@@ -130,6 +148,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 }
                 catch (Exception ex)
                 {
+                    await ResetConnectionIfNoConnectionBugAsync(ex).ConfigureAwait(false);
+
                     if (attempts < MAX_RETRIES)
                     {
                         Log.Logger.Warning("Retrying failed Redis Command with error {Msg}", ex.Message);
@@ -162,6 +182,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 }
                 catch (Exception ex)
                 {
+                    ResetConnectionIfNoConnectionBugAsync(ex).GetAwaiter().GetResult();
+
+                    // Retry if we aren't past our max retry count
                     if (attempts < MAX_RETRIES)
                     {
                         Log.Logger.Warning("Retrying failed Redis Command with error {Msg}", ex.Message);
@@ -190,6 +213,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 }
                 catch (Exception ex)
                 {
+                    await ResetConnectionIfNoConnectionBugAsync(ex).ConfigureAwait(false);
+
                     if (attempts < MAX_RETRIES)
                     {
                         Log.Logger.Warning("Retrying failed Redis Command with error {Msg}", ex.Message);
