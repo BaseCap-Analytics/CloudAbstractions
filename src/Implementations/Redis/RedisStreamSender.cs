@@ -56,8 +56,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 entries[i] = new NameValueEntry($"{DATA_FIELD}_{i}", SerializeObject(msgs[i]));
             }
 
-            IDatabase db = GetRedisDatabase();
-            return ExecuteRedisCommandAsync(() => db.StreamAddAsync(_streamName, entries));
+            return ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.StreamAddAsync(_streamName, entries);
+            });
         }
     }
 }

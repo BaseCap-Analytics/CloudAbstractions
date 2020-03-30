@@ -33,8 +33,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 throw new InvalidOperationException("Cannot send empty message");
             }
 
-            ISubscriber  sub = GetSubscriber();
-            return ExecuteRedisCommandAsync(() => sub.PublishAsync(_channel, serialized));
+            return ExecuteRedisCommandAsync(() =>
+            {
+                ISubscriber sub = GetSubscriber();
+                return sub.PublishAsync(_channel, serialized);
+            });
         }
 
         internal virtual string GetNotificationValue(object notification)

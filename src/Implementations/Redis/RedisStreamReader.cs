@@ -95,8 +95,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             RedisValue streamPosition;
             if (string.IsNullOrWhiteSpace(_consumerGroup))
             {
-                IDatabase db = GetRedisDatabase();
-                StreamInfo info = await ExecuteRedisCommandAsync(() => db.StreamInfoAsync(_streamName)).ConfigureAwait(false);
+                StreamInfo info = await ExecuteRedisCommandAsync(() =>
+                {
+                    IDatabase db = GetRedisDatabase();
+                    return db.StreamInfoAsync(_streamName);
+                });
                 streamPosition = info.LastGeneratedId;
             }
             else
@@ -144,34 +147,31 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
         }
 
-        private Task<StreamEntry[]> ReadWithoutConsumerGroupAsync(int maxMessages, RedisValue streamPosition)
+        private Task<StreamEntry[]> ReadWithoutConsumerGroupAsync(int maxMessages, RedisValue streamPosition) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
-            return ExecuteRedisCommandAsync(() => db.StreamReadAsync(_streamName, streamPosition, maxMessages));
-        }
+            return db.StreamReadAsync(_streamName, streamPosition, maxMessages);
+        });
 
-        private Task<StreamEntry[]> ReadUsingConsumerGroupAsync(int maxMessages, RedisValue streamPosition)
+        private Task<StreamEntry[]> ReadUsingConsumerGroupAsync(int maxMessages, RedisValue streamPosition) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
-            return ExecuteRedisCommandAsync(() => db.StreamReadGroupAsync(
+            return db.StreamReadGroupAsync(
                         _streamName,
                         _consumerGroup,
                         _consumerName,
                         streamPosition,
-                        maxMessages));
-        }
+                        maxMessages);
+        });
 
-        private Task<RedisValue> AcknowledgeReadAsync(StreamEntry[] messages)
-        {
-            return Task.FromResult(messages.Last().Id);
-        }
+        private Task<RedisValue> AcknowledgeReadAsync(StreamEntry[] messages) => Task.FromResult(messages.Last().Id);
 
-        private async Task<RedisValue> AcknowledgeConsumerGroupReadAsync(StreamEntry[] messages)
+        private Task<RedisValue> AcknowledgeConsumerGroupReadAsync(StreamEntry[] messages) => ExecuteRedisCommandAsync(async () =>
         {
             IDatabase db = GetRedisDatabase();
-            await ExecuteRedisCommandAsync(() => db.StreamAcknowledgeAsync(_streamName, _consumerGroup, messages.Select(m => m.Id).ToArray()));
+            await db.StreamAcknowledgeAsync(_streamName, _consumerGroup, messages.Select(m => m.Id).ToArray()).ConfigureAwait(false);
             return StreamPosition.NewMessages;
-        }
+        });
 
         internal virtual Task<List<EventMessage>> ProcessMessagesAsync(StreamEntry[] entries)
         {

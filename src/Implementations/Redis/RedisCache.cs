@@ -34,8 +34,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 throw new ArgumentNullException(nameof(key));
             }
 
-            IDatabase db = GetRedisDatabase();
-            return ExecuteRedisCommandAsync(() => db.KeyExpireAsync(key, expire.ToUniversalTime().UtcDateTime, CommandFlags.FireAndForget));
+            return ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.KeyExpireAsync(key, expire.ToUniversalTime().UtcDateTime, CommandFlags.FireAndForget);
+            });
         }
 
         /// <inheritdoc />
@@ -46,8 +49,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 throw new ArgumentNullException(nameof(key));
             }
 
-            IDatabase db = GetRedisDatabase();
-            RedisValue value = await ExecuteRedisCommandAsync(() => db.StringGetAsync(key));
+            RedisValue value = await ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.StringGetAsync(key);
+            });
             if (value.IsNullOrEmpty)
             {
                 return null;
@@ -75,9 +81,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 throw new ArgumentNullException(nameof(obj));
             }
 
-            IDatabase db = GetRedisDatabase();
             string str = SerializeObject(obj);
-            bool success = await ExecuteRedisCommandAsync(() => db.StringSetAsync(key, RedisValue.Unbox(str), expiry));
+            bool success = await ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.StringSetAsync(key, RedisValue.Unbox(str), expiry);
+            });
             if (success == false)
             {
                 throw new InvalidOperationException($"Failed to set cache entry for '{key}'");
@@ -92,24 +101,33 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 throw new ArgumentNullException(nameof(key));
             }
 
-            IDatabase db = GetRedisDatabase();
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return ExecuteRedisCommandAsync(() => db.KeyDeleteAsync(key, flags));
+            return ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.KeyDeleteAsync(key, flags);
+            });
         }
 
         /// <inheritdoc />
         public Task<long> AddToListAsync(string key, string value, bool waitForResponse = false)
         {
-            IDatabase db = GetRedisDatabase();
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return ExecuteRedisCommandAsync(() => db.ListRightPushAsync(key, value, flags: flags));
+            return ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.ListRightPushAsync(key, value, flags: flags);
+            });
         }
 
         /// <inheritdoc />
         public async Task<IEnumerable<string>> GetListAsync(string key)
         {
-            IDatabase db = GetRedisDatabase();
-            RedisValue[] values = await ExecuteRedisCommandAsync(() => db.ListRangeAsync(key));
+            RedisValue[] values = await ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.ListRangeAsync(key);
+            });
             if (values == null)
             {
                 return Array.Empty<string>();
@@ -123,8 +141,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public async Task<string> GetListElementAtIndexAsync(string key, long index)
         {
-            IDatabase db = GetRedisDatabase();
-            RedisValue? val = await ExecuteRedisCommandAsync(() => db.ListGetByIndexAsync(key, index));
+            RedisValue? val = await ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.ListGetByIndexAsync(key, index);
+            });
             if ((val == null) || val.Value.IsNullOrEmpty || string.IsNullOrWhiteSpace(val.Value.ToString()))
             {
                 throw new ArgumentException($"No element found at index {index}");
@@ -136,58 +157,61 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task<long> GetListCountAsync(string key)
+        public Task<long> GetListCountAsync(string key) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
-            return ExecuteRedisCommandAsync(() => db.ListLengthAsync(key));
-        }
+            return db.ListLengthAsync(key);
+        });
 
         /// <inheritdoc />
-        public Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, bool waitForResponse = false)
-        {
-            IDatabase db = GetRedisDatabase();
-            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return ExecuteRedisCommandAsync(() => db.HashIncrementAsync(hashKey, fieldKey, flags: flags));
-        }
-
-        /// <inheritdoc />
-        public Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, int increment, bool waitForResponse = false)
+        public Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, bool waitForResponse = false) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return ExecuteRedisCommandAsync(() => db.HashIncrementAsync(hashKey, fieldKey, increment, flags: flags));
-        }
+            return db.HashIncrementAsync(hashKey, fieldKey, flags: flags);
+        });
 
         /// <inheritdoc />
-        public Task<bool> SetHashFieldFlagAsync(string hashKey, string fieldKey)
+        public Task<long> IncrementHashKeyAsync(string hashKey, string fieldKey, int increment, bool waitForResponse = false) => ExecuteRedisCommandAsync(() =>
+        {
+            IDatabase db = GetRedisDatabase();
+            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
+            return db.HashIncrementAsync(hashKey, fieldKey, increment, flags: flags);
+        });
+
+        /// <inheritdoc />
+        public Task<bool> SetHashFieldFlagAsync(string hashKey, string fieldKey) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
             ITransaction txn = db.CreateTransaction();
             txn.AddCondition(Condition.HashEqual(hashKey, fieldKey, 0));
             txn.HashIncrementAsync(hashKey, fieldKey);
-            return ExecuteRedisCommandAsync(() => txn.ExecuteAsync());
-        }
+            return txn.ExecuteAsync();
+        });
 
         /// <inheritdoc />
-        public Task<bool> DoesHashFieldExistAsync(string hashKey, string fieldKey)
+        public Task<bool> DoesHashFieldExistAsync(string hashKey, string fieldKey) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
-            return ExecuteRedisCommandAsync(() => db.HashExistsAsync(hashKey, fieldKey));
-        }
+            return db.HashExistsAsync(hashKey, fieldKey);
+        });
 
         /// <inheritdoc />
-        public Task<bool> SetHashFieldAsync(string hashKey, string fieldKey, string value, bool waitForResponse = false)
+        public Task<bool> SetHashFieldAsync(string hashKey, string fieldKey, string value, bool waitForResponse = false) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return ExecuteRedisCommandAsync(() => db.HashSetAsync(hashKey, fieldKey, value, When.Always, flags));
-        }
+            return db.HashSetAsync(hashKey, fieldKey, value, When.Always, flags);
+        });
 
         /// <inheritdoc />
         public async Task<object?> GetHashFieldAsync(string hashKey, string fieldKey)
         {
-            IDatabase db = GetRedisDatabase();
-            RedisValue? value = await ExecuteRedisCommandAsync(() => db.HashGetAsync(hashKey, fieldKey));
+            RedisValue? value = await ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.HashGetAsync(hashKey, fieldKey);
+            });
             if ((value == null) || value.Value.IsNullOrEmpty || string.IsNullOrWhiteSpace(value.Value.ToString()))
             {
                 return null;
@@ -210,17 +234,20 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public Task RemoveHashFieldAsync(string hashKey, string fieldKey)
+        public Task RemoveHashFieldAsync(string hashKey, string fieldKey) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
-            return ExecuteRedisCommandAsync(() => db.HashDeleteAsync(hashKey, fieldKey, CommandFlags.FireAndForget));
-        }
+            return db.HashDeleteAsync(hashKey, fieldKey, CommandFlags.FireAndForget);
+        });
 
         /// <inheritdoc />
         public async Task<Dictionary<string, string?>?> GetAllHashFieldsAsync(string hashKey)
         {
-            IDatabase db = GetRedisDatabase();
-            HashEntry[] entries = await ExecuteRedisCommandAsync(() => db.HashGetAllAsync(hashKey));
+            HashEntry[] entries = await ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.HashGetAllAsync(hashKey);
+            });
             Dictionary<string, string?>? lookup = new Dictionary<string, string?>();
             if (entries.Any())
             {
@@ -252,8 +279,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                 values[i] = fields[i];
             }
 
-            IDatabase db = GetRedisDatabase();
-            RedisValue[] fieldValues = await ExecuteRedisCommandAsync(() => db.HashGetAsync(hashKey, values));
+            RedisValue[] fieldValues = await ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.HashGetAsync(hashKey, values);
+            });
             long?[] returnValues = new long?[fieldValues.Length];
             for (int i = 0; i < fieldValues.Length; i++)
             {
@@ -278,34 +308,39 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public IAsyncEnumerable<HashEntry>? GetHashEntriesEnumerable(string hashKey)
+        public IAsyncEnumerable<HashEntry>? GetHashEntriesEnumerable(string hashKey) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
-            return ExecuteRedisCommandAsync(() => db.HashScanAsync(hashKey));
-        }
+            return db.HashScanAsync(hashKey);
+        });
 
         /// <inheritdoc />
-        public Task<bool> AddToSetAsync(string setName, string member, bool waitForResponse = false)
+        public Task<bool> AddToSetAsync(string setName, string member, bool waitForResponse = false) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return ExecuteRedisCommandAsync(() => db.SetAddAsync(setName, member, flags));
-        }
+            return db.SetAddAsync(setName, member, flags);
+        });
 
         /// <inheritdoc />
-        public Task RemoveFromSetAsync(string setName, string member, bool waitForResponse = false)
+        public Task RemoveFromSetAsync(string setName, string member, bool waitForResponse = false) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return ExecuteRedisCommandAsync(() => db.SetRemoveAsync(setName, member, flags));
-        }
+            return db.SetRemoveAsync(setName, member, flags);
+        });
 
         /// <inheritdoc/>
         public async Task<IEnumerable<string>> GetSetMembersAsync(string setName)
         {
-            IDatabase db = GetRedisDatabase();
             List<string> output = new List<string>();
-            RedisValue[] values = await ExecuteRedisCommandAsync(() => db.SetMembersAsync(setName));
+            RedisValue[] values = await ExecuteRedisCommandAsync(() =>
+            {
+                output.Clear();
+
+                IDatabase db = GetRedisDatabase();
+                return db.SetMembersAsync(setName);
+            });
             if (values.Any())
             {
                 foreach (RedisValue v in values)
@@ -318,35 +353,40 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public IAsyncEnumerable<RedisValue>? GetSetMembersEnumerable(string setName)
+        public IAsyncEnumerable<RedisValue>? GetSetMembersEnumerable(string setName) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
-            return ExecuteRedisCommandAsync(() => db.SetScanAsync(setName));
-        }
+            return db.SetScanAsync(setName);
+        });
 
         /// <inheritdoc />
-        public Task<double> SortedSetIncrementAsync(string setName, string member, double increment = 1, bool waitForResponse = false)
+        public Task<double> SortedSetIncrementAsync(string setName, string member, double increment = 1, bool waitForResponse = false) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return ExecuteRedisCommandAsync(() => db.SortedSetIncrementAsync(setName, member, increment));
-        }
+            return db.SortedSetIncrementAsync(setName, member, increment);
+        });
 
         /// <inheritdoc />
-        public Task SortedSetMemberRemoveAsync(string setName, string member, bool waitForResponse = false)
+        public Task SortedSetMemberRemoveAsync(string setName, string member, bool waitForResponse = false) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return ExecuteRedisCommandAsync(() => db.SortedSetRemoveAsync(setName, member, flags));
-        }
+            return db.SortedSetRemoveAsync(setName, member, flags);
+        });
 
         /// <inheritdoc />
         public async Task<IEnumerable<KeyValuePair<string, double>>>  GetSortedSetMembersAsync(string setName, int count, bool sortDesc)
         {
             List<KeyValuePair<string, double>> output = new List<KeyValuePair<string, double>>();
             Order sortOrder = sortDesc ? Order.Descending : Order.Ascending;
-            IDatabase db = GetRedisDatabase();
-            SortedSetEntry[] values = await ExecuteRedisCommandAsync(() => db.SortedSetRangeByRankWithScoresAsync(setName, 0, count, sortOrder));
+            SortedSetEntry[] values = await ExecuteRedisCommandAsync(() =>
+            {
+                output.Clear();
+
+                IDatabase db = GetRedisDatabase();
+                return db.SortedSetRangeByRankWithScoresAsync(setName, 0, count, sortOrder);
+            });
             if (values.Any())
             {
                 foreach (SortedSetEntry v in values)
@@ -359,26 +399,26 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
-        public IAsyncEnumerable<SortedSetEntry>? GetSortedSetMembersEnumerable(string setName)
+        public IAsyncEnumerable<SortedSetEntry>? GetSortedSetMembersEnumerable(string setName) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
-            return ExecuteRedisCommandAsync(() => db.SortedSetScanAsync(setName));
-        }
+            return db.SortedSetScanAsync(setName);
+        });
 
         /// <inheritdoc />
-        public Task SortedSetAddItemByScoreAsync(string setName, string memberToAdd, double score, bool waitForResponse = false)
+        public Task SortedSetAddItemByScoreAsync(string setName, string memberToAdd, double score, bool waitForResponse = false) => ExecuteRedisCommandAsync(() =>
         {
             IDatabase db = GetRedisDatabase();
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return ExecuteRedisCommandAsync(() => db.SortedSetAddAsync(setName, memberToAdd, score, flags));
-        }
+            return db.SortedSetAddAsync(setName, memberToAdd, score, flags);
+        });
 
         /// <inheritdoc />
-        public async Task<IEnumerable<string>> GetSortedSetItemsByScoreAsync(string setName, double score)
+        public Task<IEnumerable<string>> GetSortedSetItemsByScoreAsync(string setName, double score) => ExecuteRedisCommandAsync(async () =>
         {
             IDatabase db = GetRedisDatabase();
-            RedisValue[] values = await ExecuteRedisCommandAsync(() => db.SortedSetRangeByScoreAsync(setName, score, score));
+            RedisValue[] values = await db.SortedSetRangeByScoreAsync(setName, score, score);
             return values.Select(v => v.ToString());
-        }
+        });
     }
 }
