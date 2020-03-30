@@ -3,6 +3,7 @@ using BaseCap.Security;
 using Serilog;
 using StackExchange.Redis;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,8 +19,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
         /// <summary>
         /// Creates a new connection to a Azure Queue Storage container with a given encryption key
         /// </summary>
-        public EncryptedRedisQueueStorage(string connectionString, string queueName, byte[] encryptionKey)
-            : base(connectionString, queueName)
+        public EncryptedRedisQueueStorage(List<string> endpoints, string password, string queueName, byte[] encryptionKey)
+            : base(endpoints, password, queueName)
         {
             _encryptionKey = encryptionKey;
         }

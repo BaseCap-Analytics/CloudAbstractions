@@ -1,5 +1,6 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using StackExchange.Redis;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis
@@ -14,8 +15,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <summary>
         /// Creates a new RedisHyperLogLog
         /// </summary>
-        public RedisHyperLogLog(string connectionString, string logName)
-            : base(connectionString, "HyperLogLog", "[default]")
+        public RedisHyperLogLog(List<string> endpoints, string password, string logName)
+            : base(endpoints, password, "HyperLogLog", "[default]")
         {
             _logName = logName;
         }

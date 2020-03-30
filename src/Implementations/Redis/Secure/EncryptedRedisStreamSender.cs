@@ -1,6 +1,7 @@
 using BaseCap.Security;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
@@ -13,10 +14,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
         private readonly byte[] _encryptionKey;
 
         public EncryptedRedisStreamSender(
-            string connectionString,
+            List<string> endpoints,
+            string password,
             byte[] encryptionKey,
             string streamName)
-            : base(connectionString, streamName)
+            : base(endpoints, password, streamName)
         {
             _encryptionKey = encryptionKey;
         }
