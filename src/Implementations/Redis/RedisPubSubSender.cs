@@ -1,6 +1,7 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using StackExchange.Redis;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis
@@ -12,8 +13,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     {
         private readonly string _channel;
 
-        public RedisPubSubSender(string connectionString, string channel)
-            : base(connectionString, "Channel", channel)
+        public RedisPubSubSender(List<string> endpoints, string password, string channel)
+            : base(endpoints, password, "Channel", channel)
         {
             _channel = channel;
         }

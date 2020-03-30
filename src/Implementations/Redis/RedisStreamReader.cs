@@ -24,11 +24,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         protected readonly string _consumerName;
 
         public RedisStreamReader(
-            string connectionString,
+            List<string> endpoints,
+            string password,
             string streamName,
             string consumerGroup,
             string consumerName)
-            : base(connectionString, "EventStreamReader", $"{streamName}.{consumerGroup}:{consumerName}")
+            : base(endpoints, password, "EventStreamReader", $"{streamName}.{consumerGroup}:{consumerName}")
         {
             if (string.IsNullOrWhiteSpace(streamName))
             {
@@ -49,10 +50,11 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         public RedisStreamReader(
-            string connectionString,
+            List<string> endpoints,
+            string password,
             string streamName,
             string consumerName)
-            : base(connectionString, "EventStreamReader-NonGroup", $"{streamName}:{consumerName}")
+            : base(endpoints, password, "EventStreamReader-NonGroup", $"{streamName}:{consumerName}")
         {
             if (string.IsNullOrWhiteSpace(streamName))
             {

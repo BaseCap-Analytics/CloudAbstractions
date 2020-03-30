@@ -18,23 +18,25 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
 
         /// <inheritdoc />
         public EncryptedRedisStreamReader(
-            string connectionString,
+            List<string> endpoints,
+            string password,
             byte[] encryptionKey,
             string streamName,
             string consumerGroup,
             string consumerName)
-            : base(connectionString, streamName, consumerGroup, consumerName)
+            : base(endpoints, password, streamName, consumerGroup, consumerName)
         {
             _encryptionKey = encryptionKey;
         }
 
         /// <inheritdoc />
         public EncryptedRedisStreamReader(
-            string connectionString,
+            List<string> endpoints,
+            string password,
             byte[] encryptionKey,
             string streamName,
             string consumerName)
-            : base(connectionString, streamName, consumerName)
+            : base(endpoints, password, streamName, consumerName)
         {
             _encryptionKey = encryptionKey;
         }

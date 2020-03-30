@@ -1,6 +1,7 @@
 using BaseCap.Security;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
@@ -12,8 +13,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
     {
         private byte[] _encryptionKey;
 
-        public EncryptedRedisCache(string connectionString, byte[] encryptionKey)
-            : base(connectionString)
+        public EncryptedRedisCache(List<string> endpoints, string password, byte[] encryptionKey)
+            : base(endpoints, password)
         {
             _encryptionKey = encryptionKey;
         }

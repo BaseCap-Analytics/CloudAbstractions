@@ -16,9 +16,10 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         private readonly string _streamName;
 
         public RedisStreamSender(
-            string connectionString,
+            List<string> endpoints,
+            string password,
             string streamName)
-            : base(connectionString, "EventStreamWriter", $"{streamName}")
+            : base(endpoints, password, "EventStreamWriter", $"{streamName}")
         {
             _streamName = streamName;
         }

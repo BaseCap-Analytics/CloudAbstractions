@@ -27,9 +27,18 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         protected readonly string _errorContextValue;
         private ConnectionMultiplexer? _cacheConnection;
 
-        internal RedisBase(string connectionString, string errorContextName, string errorContextValue)
-            : this(ConfigurationOptions.Parse(connectionString), errorContextName, errorContextValue)
+        internal RedisBase(List<string> endpoints, string password, string errorContextName, string errorContextValue)
+            : this(new ConfigurationOptions(), errorContextName, errorContextValue)
         {
+            if (endpoints.Any() == false)
+            {
+                throw new ArgumentNullException(nameof(endpoints));
+            }
+
+            foreach (string e in endpoints)
+            {
+                _options.EndPoints.Add(e);
+            }
         }
 
         internal RedisBase(ConfigurationOptions options, string errorContextName, string errorContextValue)
