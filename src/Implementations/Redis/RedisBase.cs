@@ -39,6 +39,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             {
                 _options.EndPoints.Add(e);
             }
+
+            _options.Password = password;
         }
 
         internal RedisBase(ConfigurationOptions options, string errorContextName, string errorContextValue)
@@ -56,6 +58,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             _options.AsyncTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds);
             _options.ConnectTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds);
             _options.SyncTimeout = Convert.ToInt32(TimeSpan.FromSeconds(30).TotalMilliseconds);
+            _options.Ssl = false;
+            _options.AbortOnConnectFail = false;
             _errorContextName = errorContextName;
             _errorContextValue = errorContextValue;
         }
