@@ -118,22 +118,17 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             return sub;
         }
 
-        private Task ResetConnectionIfNoConnectionBugAsync(Exception ex)
+        private async Task ResetConnectionIfNoConnectionBugAsync(Exception ex)
         {
             // Due to bug https://github.com/StackExchange/StackExchange.Redis/issues/1120, if there's an
             // error with `No connection is available` then we need to rebuild the connection
             if (ex.Message.Contains("No connection is available", StringComparison.OrdinalIgnoreCase))
             {
-                if (_cacheConnection != null)
-                {
-                    _cacheConnection.Close();
-                    _cacheConnection.Dispose();
-                }
-
-                return InitializeAsync();
+                await CleanupAsync().ConfigureAwait(false);
+                await InitializeAsync().ConfigureAwait(false);
             }
 
-            return Task.CompletedTask;
+            return;
         }
 
         protected async Task<T> ExecuteRedisCommandAsync<T>(Func<Task<T>> command)
@@ -165,9 +160,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
             while (attempts <= MAX_RETRIES);
 
-#pragma warning disable CS8603
+#pragma warning disable CS8603, CS8653
             return default(T);
-#pragma warning restore CS8603
+#pragma warning restore CS8603, CS8653
         }
 
         protected IAsyncEnumerable<T>? ExecuteRedisCommandAsync<T>(Func<IAsyncEnumerable<T>> command)
