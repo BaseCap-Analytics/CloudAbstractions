@@ -1,6 +1,7 @@
 using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
 using RabbitMQ.Client;
+using System;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
@@ -26,7 +27,7 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
         }
 
         /// <inheritdoc />
-        protected override async Task<QueueMessage> GetQueueMessageAsync(byte[] body, IBasicProperties properties, bool redelivered, ulong messageId)
+        protected override async Task<QueueMessage> GetQueueMessageAsync(ReadOnlyMemory<byte> body, IBasicProperties properties, bool redelivered, ulong messageId)
         {
             byte[] decrypted = await EncryptionHelpers.DecryptDataAsync(body, _encryptionKey);
             return new QueueMessage(properties, decrypted, redelivered, messageId);
