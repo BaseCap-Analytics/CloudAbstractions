@@ -113,7 +113,7 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
         /// <summary>
         /// Creates a Queue Message from the delivered information
         /// </summary>
-        protected virtual Task<QueueMessage> GetQueueMessageAsync(byte[] body, IBasicProperties properties, bool redelivered, ulong messageId) =>
+        protected virtual Task<QueueMessage> GetQueueMessageAsync(ReadOnlyMemory<byte> body, IBasicProperties properties, bool redelivered, ulong messageId) =>
             Task.FromResult(new QueueMessage(properties, body, redelivered, messageId));
 
         /// <inheritdoc />
@@ -124,7 +124,7 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
             string exchange,
             string routingKey,
             IBasicProperties properties,
-            byte[] body)
+            ReadOnlyMemory<byte> body)
         {
             QueueMessage msg = await GetQueueMessageAsync(body, properties, redelivered, deliveryTag).ConfigureAwait(false);
             await _handler!.Invoke(msg).ConfigureAwait(false);

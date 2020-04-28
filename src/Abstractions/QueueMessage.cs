@@ -34,9 +34,9 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <summary>
         /// Converts a RabbitMQ message into our abstraction
         /// </summary>
-        internal QueueMessage(IBasicProperties properties, byte[] data, bool isReDelivery, ulong messageId)
+        internal QueueMessage(IBasicProperties properties, ReadOnlyMemory<byte> body, bool isReDelivery, ulong messageId)
         {
-            Content = Encoding.UTF8.GetString(data);
+            Content = Encoding.UTF8.GetString(body.Span);
             InsertionTime = DateTimeOffset.FromUnixTimeMilliseconds(properties.Timestamp.UnixTime);
             ReDelivery = isReDelivery;
             DequeueCount = 0;
