@@ -42,6 +42,21 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
+        public Task<bool> DoesKeyExistAsync(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            return ExecuteRedisCommandAsync(() =>
+            {
+                IDatabase db = GetRedisDatabase();
+                return db.KeyExistsAsync(key);
+            });
+        }
+
+        /// <inheritdoc />
         public async Task<T?> GetCacheObjectAsync<T>(string key) where T : class
         {
             if (string.IsNullOrWhiteSpace(key))
@@ -411,6 +426,16 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             IDatabase db = GetRedisDatabase();
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
             return db.SortedSetAddAsync(setName, memberToAdd, score, flags);
+        });
+
+        /// <inheritdoc />
+        public Task SortedSetAddItemByScoreIfKeyExistsAsync(string setName, string memberToAdd, double score) => ExecuteRedisCommandAsync(() =>
+        {
+            IDatabase db = GetRedisDatabase();
+            ITransaction txn = db.CreateTransaction();
+            txn.AddCondition(Condition.KeyExists(setName));
+            txn.SortedSetAddAsync(setName, memberToAdd, score); // Do not await on this since the result isn't known until the transaction completes
+            return txn.ExecuteAsync();
         });
 
         /// <inheritdoc />

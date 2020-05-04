@@ -25,6 +25,13 @@ namespace BaseCap.CloudAbstractions.Abstractions
         Task SetKeyExpiryAsync(string key, DateTimeOffset expire);
 
         /// <summary>
+        /// Checks if a Key exists in the cache
+        /// </summary>
+        /// <param name="key">The key to check for</param>
+        /// <returns>Returns True if the key exists; otherwise, returns false</returns>
+        Task<bool> DoesKeyExistAsync(string key);
+
+        /// <summary>
         /// Creates a HyperLogLog from this cache
         /// </summary>
         /// <param name="logName">The name of the HyperLogLog to create</param>
@@ -243,6 +250,15 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
         /// <returns>Returns an awaitable Task</returns>
         Task SortedSetAddItemByScoreAsync(string setName, string memberToAdd, double score, bool waitForResponse = false);
+
+        /// <summary>
+        /// Adds an entry to a Sorted Set with a given score if the set exists
+        /// </summary>
+        /// <param name="setName">The sorted set name</param>
+        /// <param name="memberToAdd">The member to add to the set</param>
+        /// <param name="score">The score to add the member at</param>
+        /// <returns>Returns an awaitable Task</returns>
+        Task SortedSetAddItemByScoreIfKeyExistsAsync(string setName, string memberToAdd, double score);
 
         /// <summary>
         /// Retrieves all members of a sorted set that have the specified score
