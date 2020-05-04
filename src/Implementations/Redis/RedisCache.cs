@@ -420,5 +420,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             RedisValue[] values = await db.SortedSetRangeByScoreAsync(setName, score, score);
             return values.Select(v => v.ToString());
         });
+
+        /// <inheritdoc />
+        public Task DeleteSortedSetItemByScoreAsync(string setName, double score, bool waitForResponse = false) => ExecuteRedisCommandAsync(() =>
+        {
+            IDatabase db = GetRedisDatabase();
+            CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
+            return db.SortedSetRemoveRangeByScoreAsync(setName, score, score, flags: flags);
+        });
     }
 }
