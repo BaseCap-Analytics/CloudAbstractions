@@ -251,5 +251,14 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="score">The score to to retrieve members for</param>
         /// <returns>Returns an enumeration of members with the given score</returns>
         Task<IEnumerable<string>> GetSortedSetItemsByScoreAsync(string setName, double score);
+
+        /// <summary>
+        /// Deletes an entry in a sorted set by it's score
+        /// </summary>
+        /// <param name="setName">The name of the sorted set to delete from</param>
+        /// <param name="score">The score of the entry to remove</param>
+        /// <param name="waitForResponse">Flag indicating if we care about redis' response</param>
+        /// <returns>Returns an awaitable Task</returns>
+        Task DeleteSortedSetItemByScoreAsync(string setName, double score, bool waitForResponse = false);
     }
 }
