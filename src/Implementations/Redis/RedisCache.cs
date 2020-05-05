@@ -220,6 +220,16 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         });
 
         /// <inheritdoc />
+        public Task<bool> SetHashFieldIfHashExistsAsync(string hashKey, string fieldKey, string value) => ExecuteRedisCommandAsync(() =>
+        {
+            IDatabase db = GetRedisDatabase();
+            ITransaction txn = db.CreateTransaction();
+            txn.AddCondition(Condition.KeyExists(hashKey));
+            txn.HashSetAsync(hashKey, fieldKey, value); // Do not await on this since the result isn't known until the transaction completes
+            return txn.ExecuteAsync();
+        });
+
+        /// <inheritdoc />
         public async Task<object?> GetHashFieldAsync(string hashKey, string fieldKey)
         {
             RedisValue? value = await ExecuteRedisCommandAsync(() =>
