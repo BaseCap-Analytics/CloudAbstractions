@@ -2,6 +2,7 @@ using BaseCap.CloudAbstractions.Abstractions;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaseCap.CloudAbstractions.Implementations.Redis
@@ -13,6 +14,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     {
         protected readonly string _channel;
         private Func<string, Task>? _handler;
+        private ChannelMessageQueue? _blockingHandler;
 
         public RedisPubSubReceiver(List<string> endpoints, string password, string channel)
             : base(endpoints, password, "Channel", channel)
@@ -23,9 +25,37 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <inheritdoc />
         public async Task SetupAsync(Func<string, Task> handler)
         {
+            if ((_handler != null) || (_blockingHandler != null))
+            {
+                throw new InvalidOperationException("Cannot setup when already running");
+            }
+
             _handler = handler;
             await base.InitializeAsync().ConfigureAwait(false);
             base.Subscribe(_channel, ReceiveHandler);
+        }
+
+        public async ValueTask SetupBlockingAsync()
+        {
+            if ((_handler != null) || (_blockingHandler != null))
+            {
+                throw new InvalidOperationException("Cannot setup when already running");
+            }
+
+            await base.InitializeAsync().ConfigureAwait(false);
+            _blockingHandler = base.Subscribe(_channel);
+        }
+
+        /// <inheritdoc />
+        public async ValueTask<string> BlockingReadAsync(CancellationToken token)
+        {
+            if (_blockingHandler == null)
+            {
+                throw new InvalidOperationException("Must setup for blocking reads");
+            }
+
+            ChannelMessage msg = await _blockingHandler.ReadAsync(token);
+            return msg.Message;
         }
 
         /// <inheritdoc />

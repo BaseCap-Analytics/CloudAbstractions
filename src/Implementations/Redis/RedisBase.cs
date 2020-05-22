@@ -94,6 +94,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             sub.Subscribe(channel, handler);
         }
 
+        protected ChannelMessageQueue Subscribe(string channel)
+        {
+            ISubscriber sub = GetSubscriber();
+            return sub.Subscribe(channel);
+        }
+
         protected IDatabase GetRedisDatabase()
         {
             IDatabase database;
@@ -134,7 +140,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         private async Task ResetConnectionIfNoConnectionBugAsync(Exception ex)
         {
             // Due to bug https://github.com/StackExchange/StackExchange.Redis/issues/1120, if there's an
-            // error with `No connection is available` then we need to rebuild the connection
+            // error with `No connection is available` then the whole redis instance is crapped out.
             if (ex.Message.Contains("No connection is available", StringComparison.OrdinalIgnoreCase))
             {
                 await CleanupAsync().ConfigureAwait(false);
