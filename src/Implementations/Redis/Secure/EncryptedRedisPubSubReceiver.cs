@@ -40,5 +40,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                 DecryptFailures.Inc();
             }
         }
+
+        internal override string TransformResult(RedisValue value)
+        {
+            string encoded = (string)value;
+            byte[] decoded = Convert.FromBase64String(encoded);
+            byte[] decrypted = EncryptionHelpers.DecryptDataAsync(decoded, _encryptionKey).ConfigureAwait(false).GetAwaiter().GetResult();
+            return Encoding.UTF8.GetString(decrypted);
+        }
     }
 }

@@ -20,6 +20,12 @@ namespace BaseCap.CloudAbstractions.Abstractions
         ValueTask SetupBlockingAsync();
 
         /// <summary>
+        /// Returns if the receiver is setup for blocking reads
+        /// </summary>
+        /// <returns>Returns true if the receiver is setup for blocking reads; otherwise, returns false</returns>
+        bool IsSetupForBlocking();
+
+        /// <summary>
         /// Starts a blocking read on the notification channel
         /// </summary>
         /// <param name="token">Cancellation token for exiting without a message</param>

@@ -47,6 +47,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         }
 
         /// <inheritdoc />
+        public bool IsSetupForBlocking() => _blockingHandler != null;
+
+        /// <inheritdoc />
         public async ValueTask<string> BlockingReadAsync(CancellationToken token)
         {
             if (_blockingHandler == null)
@@ -55,7 +58,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
 
             ChannelMessage msg = await _blockingHandler.ReadAsync(token);
-            return msg.Message;
+            return TransformResult(msg.Message);
         }
 
         /// <inheritdoc />
@@ -73,5 +76,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
 
             _handler(value).GetAwaiter().GetResult();
         }
+
+        internal virtual string TransformResult(RedisValue value) => (string)value;
     }
 }
