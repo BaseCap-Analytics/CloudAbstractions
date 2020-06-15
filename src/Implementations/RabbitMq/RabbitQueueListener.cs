@@ -13,7 +13,7 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
     /// </summary>
     internal class RabbitQueueListener : AsyncDefaultBasicConsumer, IQueueListener, IDisposable
     {
-        private const int MAX_BATCH_SIZE = 100; // arbitrary
+        private const int MAX_BATCH_SIZE = 1000; // arbitrary
         private readonly string _queue;
         private readonly List<QueueMessage> _messages;
         private readonly SortedDictionary<QueueMessage, bool> _messageResults;
@@ -75,11 +75,16 @@ namespace BaseCap.CloudAbstractions.Implementations.RabbitMq
         }
 
         /// <inheritdoc />
-        public Task StartListeningAsync(IQueueBatchListenerTarget target)
+        public Task StartListeningAsync(IQueueBatchListenerTarget target, ushort maxBatchSize = MAX_BATCH_SIZE)
         {
+            if (maxBatchSize > MAX_BATCH_SIZE)
+            {
+                maxBatchSize = MAX_BATCH_SIZE;
+            }
+
             _handler = HandleBatchDeliveryAsync;
             _batchTarget = target;
-            _model.BasicQos(0, MAX_BATCH_SIZE, false); // We can batch up messages
+            _model.BasicQos(0, maxBatchSize, false); // We can batch up messages
             _model.BasicConsume(_queue, false, this);
             _timer = new System.Timers.Timer(TimeSpan.FromSeconds(10).TotalMilliseconds);
             _timer.AutoReset = false;
