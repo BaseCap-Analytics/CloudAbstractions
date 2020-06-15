@@ -19,8 +19,9 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// Begins listening for batches of messages on the queue
         /// </summary>
         /// <param name="target">The application listener for queue messages</param>
+        /// <param name="maxBatchSize">The maximum number of entries that can be returned in one batch</param>
         /// <returns>Returns an awaitable task</returns>
-        Task StartListeningAsync(IQueueBatchListenerTarget target);
+        Task StartListeningAsync(IQueueBatchListenerTarget target, ushort maxBatchSize);
 
         /// <summary>
         /// Stops listening for messages on the queue
