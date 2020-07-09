@@ -13,8 +13,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     {
         private readonly string _channel;
 
-        public RedisPubSubSender(List<string> endpoints, string password, string channel)
-            : base(endpoints, password, "Channel", channel)
+        public RedisPubSubSender(List<string> endpoints, string password, string channel, bool useSsl)
+            : base(endpoints, password, "Channel", channel, useSsl)
         {
             _channel = channel;
         }

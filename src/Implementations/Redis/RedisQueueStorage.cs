@@ -1,5 +1,4 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Prometheus;
 using Serilog;
 using StackExchange.Redis;
 using System;
@@ -13,8 +12,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     /// </summary>
     public class RedisQueueStorage : RedisBase, IQueue
     {
-        private static readonly Counter DeadletterCounter = Metrics.CreateCounter("bca_redis_deadletter", "Counts the number of deadletter messages hit");
-        private static readonly Counter UnhandledMessageCount = Metrics.CreateCounter("bca_redis_unhandled_queue_message_error", "Counts the number of messages not properly received");
         private const string DEADLETTER_QUEUE = "DEADLETTER";
         private const string DEADLETTER_CHANNEL = DEADLETTER_QUEUE + CHANNEL_SUFFIX;
         private const string CHANNEL_SUFFIX = "_notifications";
@@ -28,8 +25,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <summary>
         /// Creates a new connection to an Azure Queue Storage
         /// </summary>
-        public RedisQueueStorage(List<string> endpoints, string password, string queueName)
-            : base(endpoints, password, "QueueName", queueName)
+        public RedisQueueStorage(List<string> endpoints, string password, string queueName, bool useSsl)
+            : base(endpoints, password, "QueueName", queueName, useSsl)
         {
             _queueName = queueName;
             _channelName = $"{_queueName}{CHANNEL_SUFFIX}";
@@ -121,7 +118,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
                         return sub.PublishAsync(DEADLETTER_CHANNEL, "");
                     });
                     Log.Logger.Warning("Redis Queue {QueueName} Deadletter: {Message}", _queueName, processingMsg);
-                    DeadletterCounter.Inc();
                     return;
                 }
 
@@ -139,7 +135,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             catch
             {
                 Log.Logger.Warning("Redis Queue {QueueName} Unhandled Message: {Message}", _queueName, message);
-                UnhandledMessageCount.Inc();
             }
         }
 

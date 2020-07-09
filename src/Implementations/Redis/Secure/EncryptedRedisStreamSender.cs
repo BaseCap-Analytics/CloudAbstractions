@@ -17,8 +17,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             List<string> endpoints,
             string password,
             byte[] encryptionKey,
-            string streamName)
-            : base(endpoints, password, streamName)
+            string streamName,
+            bool useSsl)
+            : base(endpoints, password, streamName, useSsl)
         {
             _encryptionKey = encryptionKey;
         }
@@ -35,7 +36,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             catch (Exception ex)
             {
                 Log.Logger.Error(ex, "Failed encrypting {@Value}", obj);
-                DecryptFailures.Inc();
                 throw;
             }
         }

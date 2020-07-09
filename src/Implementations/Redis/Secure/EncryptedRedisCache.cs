@@ -13,8 +13,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
     {
         private byte[] _encryptionKey;
 
-        public EncryptedRedisCache(List<string> endpoints, string password, byte[] encryptionKey)
-            : base(endpoints, password)
+        public EncryptedRedisCache(List<string> endpoints, string password, byte[] encryptionKey, bool useSsl)
+            : base(endpoints, password, useSsl)
         {
             _encryptionKey = encryptionKey;
         }
@@ -39,7 +39,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             catch (Exception ex)
             {
                 Log.Logger.Error(ex, "Failed decrypting {Value}", value);
-                DecryptFailures.Inc();
 
 #nullable disable // Nullable doesn't work with generics and default
                 return default(T);

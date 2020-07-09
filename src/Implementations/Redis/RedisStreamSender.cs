@@ -18,8 +18,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         public RedisStreamSender(
             List<string> endpoints,
             string password,
-            string streamName)
-            : base(endpoints, password, "EventStreamWriter", $"{streamName}")
+            string streamName,
+            bool useSsl)
+            : base(endpoints, password, "EventStreamWriter", $"{streamName}", useSsl)
         {
             _streamName = streamName;
         }
