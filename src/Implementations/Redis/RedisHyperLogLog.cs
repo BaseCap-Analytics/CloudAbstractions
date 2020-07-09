@@ -11,18 +11,20 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     public class RedisHyperLogLog : RedisBase, IHyperLogLog
     {
         private readonly string _logName;
+        private readonly bool _useSsl;
 
         /// <summary>
         /// Creates a new RedisHyperLogLog
         /// </summary>
-        public RedisHyperLogLog(List<string> endpoints, string password, string logName)
-            : base(endpoints, password, "HyperLogLog", "[default]")
+        public RedisHyperLogLog(List<string> endpoints, string password, string logName, bool useSsl)
+            : base(endpoints, password, "HyperLogLog", "[default]", useSsl)
         {
             _logName = logName;
+            _useSsl = useSsl;
         }
 
-        internal RedisHyperLogLog(string logName, ConfigurationOptions options)
-            : base(options, "HyperLogLog", "[default]")
+        internal RedisHyperLogLog(string logName, ConfigurationOptions options, bool useSsl)
+            : base(options, "HyperLogLog", "[default]", useSsl)
         {
             _logName = logName;
         }

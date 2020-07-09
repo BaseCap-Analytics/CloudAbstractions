@@ -16,8 +16,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         /// <summary>
         /// Creates a new RedisCache
         /// </summary>
-        public RedisCache(List<string> endpoints, string password)
-            : base(endpoints, password, "Cache", "[default]")
+        public RedisCache(List<string> endpoints, string password, bool useSsl)
+            : base(endpoints, password, "Cache", "[default]", useSsl)
         {
         }
 

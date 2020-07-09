@@ -16,8 +16,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         private Func<string, Task>? _handler;
         private ChannelMessageQueue? _blockingHandler;
 
-        public RedisPubSubReceiver(List<string> endpoints, string password, string channel)
-            : base(endpoints, password, "Channel", channel)
+        public RedisPubSubReceiver(List<string> endpoints, string password, string channel, bool useSsl)
+            : base(endpoints, password, "Channel", channel, useSsl)
         {
             _channel = channel;
         }

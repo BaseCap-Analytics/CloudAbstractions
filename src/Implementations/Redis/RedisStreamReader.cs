@@ -1,5 +1,4 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Prometheus;
 using Serilog;
 using StackExchange.Redis;
 using System;
@@ -15,7 +14,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
     /// </summary>
     public class RedisStreamReader : RedisBase, IEventStreamReader
     {
-        private static readonly Counter UnhandledError = Metrics.CreateCounter("bca_redis_stream_read_unhandled_error", "Counts the number of unhandled errors while reading from a Redis Stream");
         private const string CONSUMER_GROUP_LATEST_UNREAD_MESSAGES = ">";
         private const int MAX_MESSAGES_PER_BATCH = 50;
         private readonly TimeSpan POLL_TIMEOUT = TimeSpan.FromSeconds(3);
@@ -28,8 +26,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             string password,
             string streamName,
             string consumerGroup,
-            string consumerName)
-            : base(endpoints, password, "EventStreamReader", $"{streamName}.{consumerGroup}:{consumerName}")
+            string consumerName,
+            bool useSsl)
+            : base(endpoints, password, "EventStreamReader", $"{streamName}.{consumerGroup}:{consumerName}", useSsl)
         {
             if (string.IsNullOrWhiteSpace(streamName))
             {
@@ -53,8 +52,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             List<string> endpoints,
             string password,
             string streamName,
-            string consumerName)
-            : base(endpoints, password, "EventStreamReader-NonGroup", $"{streamName}:{consumerName}")
+            string consumerName,
+            bool useSsl)
+            : base(endpoints, password, "EventStreamReader-NonGroup", $"{streamName}:{consumerName}", useSsl)
         {
             if (string.IsNullOrWhiteSpace(streamName))
             {
@@ -143,7 +143,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             catch (Exception ex)
             {
                 Log.Logger.Error(ex, "Error on Stream {Name} Group {Group} Consumer {Consumer}", _streamName, _consumerGroup, _consumerName);
-                UnhandledError.Inc();
 
                 throw;
             }

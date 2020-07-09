@@ -19,8 +19,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
         /// <summary>
         /// Creates a new connection to a Azure Queue Storage container with a given encryption key
         /// </summary>
-        public EncryptedRedisQueueStorage(List<string> endpoints, string password, string queueName, byte[] encryptionKey)
-            : base(endpoints, password, queueName)
+        public EncryptedRedisQueueStorage(List<string> endpoints, string password, string queueName, byte[] encryptionKey, bool useSsl)
+            : base(endpoints, password, queueName, useSsl)
         {
             _encryptionKey = encryptionKey;
         }
@@ -50,7 +50,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             catch (Exception ex)
             {
                 Log.Logger.Error(ex, "Failed decrypting on Queue {Name}: {Value}", _queueName, message);
-                DecryptFailures.Inc();
             }
         }
     }

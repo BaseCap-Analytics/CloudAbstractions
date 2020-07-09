@@ -23,8 +23,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             byte[] encryptionKey,
             string streamName,
             string consumerGroup,
-            string consumerName)
-            : base(endpoints, password, streamName, consumerGroup, consumerName)
+            string consumerName,
+            bool useSsl)
+            : base(endpoints, password, streamName, consumerGroup, consumerName, useSsl)
         {
             _encryptionKey = encryptionKey;
         }
@@ -35,8 +36,9 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
             string password,
             byte[] encryptionKey,
             string streamName,
-            string consumerName)
-            : base(endpoints, password, streamName, consumerName)
+            string consumerName,
+            bool useSsl)
+            : base(endpoints, password, streamName, consumerName, useSsl)
         {
             _encryptionKey = encryptionKey;
         }
@@ -66,7 +68,6 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                         msg.Offset,
                         msg.SequenceNumber,
                         msg.Content?.ToString() ?? string.Empty);
-                    DecryptFailures.Inc();
                 }
             }
 
