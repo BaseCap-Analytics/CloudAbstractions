@@ -1,6 +1,5 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using Microsoft.Azure.Storage;
-using Microsoft.Azure.Storage.Auth;
+using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.Storage.Blob;
 using System;
 using System.Collections.Generic;
@@ -14,7 +13,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
     /// </summary>
     public class AzureStorageAccount : IStorageAccount
     {
-        protected readonly CloudStorageAccount _account;
+        protected readonly Microsoft.Azure.Cosmos.Table.CloudStorageAccount? _tableAccount;
+        protected readonly Microsoft.Azure.Storage.CloudStorageAccount _account;
         protected readonly Dictionary<string, AzureBlobStorage> _storageContainers;
 
         /// <summary>
@@ -22,7 +22,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// </summary>
         public AzureStorageAccount(string connectionString)
         {
-            _account = CloudStorageAccount.Parse(connectionString);
+            _account = Microsoft.Azure.Storage.CloudStorageAccount.Parse(connectionString);
+            _tableAccount = Microsoft.Azure.Cosmos.Table.CloudStorageAccount.Parse(connectionString);
             _storageContainers = new Dictionary<string, AzureBlobStorage>();
         }
 
@@ -45,9 +46,15 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
                 throw new ArgumentException($"{nameof(AzureStorageAccount)} must have at least one remote URI to connect to");
             }
 
-            StorageCredentials credentials = new StorageCredentials(accountName, accountKey);
-            _account = new CloudStorageAccount(credentials, blobStorageEndpoint, queueStorageEndpoint, tableStorageEndpoint, fileStorageEndpoint);
+            Microsoft.Azure.Storage.Auth.StorageCredentials credentials = new Microsoft.Azure.Storage.Auth.StorageCredentials(accountName, accountKey);
+            _account = new Microsoft.Azure.Storage.CloudStorageAccount(credentials, blobStorageEndpoint, queueStorageEndpoint, tableStorageEndpoint, fileStorageEndpoint);
             _storageContainers = new Dictionary<string, AzureBlobStorage>();
+
+            if (tableStorageEndpoint != null)
+            {
+                Microsoft.Azure.Cosmos.Table.StorageCredentials tableCredentials = new Microsoft.Azure.Cosmos.Table.StorageCredentials(accountName, accountKey);
+                _tableAccount = new Microsoft.Azure.Cosmos.Table.CloudStorageAccount(tableCredentials, tableStorageEndpoint);
+            }
         }
 
         /// <inheritdoc />
@@ -88,8 +95,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         /// <inheritdoc />
         public virtual Task<Microsoft.Azure.Cosmos.Table.CloudTable> GetAzureTableStorageAsync(string tableName)
         {
-            Microsoft.Azure.Cosmos.Table.StorageCredentials creds = new Microsoft.Azure.Cosmos.Table.StorageCredentials(_account.Credentials.AccountName, _account.Credentials.ExportBase64EncodedKey());
-            Microsoft.Azure.Cosmos.Table.CloudTableClient client = new Microsoft.Azure.Cosmos.Table.CloudTableClient(_account.TableEndpoint, creds);
+            if (_tableAccount == null)
+            {
+                throw new InvalidOperationException("Not initialized with Table Storage access");
+            }
+
+            CloudTableClient client = _tableAccount.CreateCloudTableClient();
             return Task.FromResult(client.GetTableReference(tableName));
         }
     }
