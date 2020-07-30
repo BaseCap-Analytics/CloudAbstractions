@@ -18,5 +18,12 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// </summary>
         /// <returns>Returns an enumeration of the available blob containers</returns>
         Task<IEnumerable<string>> ListBlobContainersAsync();
+
+        /// <summary>
+        /// Retrieves the Azure CloudTable reference
+        /// </summary>
+        /// <param name="tableName">The name of the table to get a reference to</param>
+        /// <returns>Returns a CloudTable reference</returns>
+        Task<Microsoft.Azure.Cosmos.Table.CloudTable> GetAzureTableStorageAsync(string tableName);
     }
 }
