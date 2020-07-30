@@ -84,5 +84,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
 
             return _storageContainers[containerName];
         }
+
+        /// <inheritdoc />
+        public virtual Task<Microsoft.Azure.Cosmos.Table.CloudTable> GetAzureTableStorageAsync(string tableName)
+        {
+            Microsoft.Azure.Cosmos.Table.StorageCredentials creds = new Microsoft.Azure.Cosmos.Table.StorageCredentials(_account.Credentials.AccountName, _account.Credentials.ExportBase64EncodedKey());
+            Microsoft.Azure.Cosmos.Table.CloudTableClient client = new Microsoft.Azure.Cosmos.Table.CloudTableClient(_account.TableEndpoint, creds);
+            return Task.FromResult(client.GetTableReference(tableName));
+        }
     }
 }
