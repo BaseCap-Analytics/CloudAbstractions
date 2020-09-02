@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>BaseCap.CloudAbstractions</AssemblyName>
     <AssemblyTitle>BaseCap Analytics Cloud Abstractions Package</AssemblyTitle>
     <AssemblyCompany>BaseCap Analytics</AssemblyCompany>
@@ -21,17 +21,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BaseCap.Security" Version="2.2020.507.2" />
-    <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.7" />
-    <PackageReference Include="Microsoft.Azure.EventHubs" Version="4.2.0" />
+    <PackageReference Include="BaseCap.Security" Version="2.2020.902.1" />
+    <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
+    <PackageReference Include="Microsoft.Azure.EventHubs" Version="4.3.0" />
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.5" />
     <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="3.0.5" />
-    <PackageReference Include="Microsoft.Azure.Storage.Blob" Version="11.1.7" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="3.1.5" />
+    <PackageReference Include="Microsoft.Azure.Storage.Blob" Version="11.2.2" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="3.1.7" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
-    <PackageReference Include="MongoDB.Driver" Version="2.10.4" />
-    <PackageReference Include="RabbitMQ.Client" Version="6.1.0" />
-    <PackageReference Include="Sendgrid" Version="9.18.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.11.1" />
+    <PackageReference Include="RabbitMQ.Client" Version="6.2.1" />
+    <PackageReference Include="Sendgrid" Version="9.21.0" />
     <PackageReference Include="Serilog" Version="2.9.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.1.58" />
     <PackageReference Include="System.Buffers" Version="4.5.1" />

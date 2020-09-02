@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '3.0.100'
+          dotnet-version: '3.1.300'
       - name: Build Package
         working-directory: ./src
         run: dotnet pack -c Release --version-suffix "${GITHUB_RUN_NUMBER}" -p:VersionSuffix=${GITHUB_RUN_NUMBER} --include-symbols
