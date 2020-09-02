@@ -60,6 +60,8 @@ namespace BaseCap.CloudAbstractions.Redis.Database
 
         protected abstract string? ParseStringResponse(List<DataType> received);
 
+        protected abstract object? ParseScalarResponse(List<DataType> received);
+
         protected abstract Dictionary<string, string> ParseDictionaryResponse(List<DataType> received);
     }
 }
