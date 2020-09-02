@@ -30,7 +30,7 @@ namespace BaseCap.CloudAbstractions.Redis.Database
             return ParseIntegerResponse(result) == keys.Length;
         }
 
-        public async ValueTask<long> ExpireAtAsync(string key, DateTimeOffset when, CancellationToken token)
+        public async ValueTask<bool> ExpireAtAsync(string key, DateTimeOffset when, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -44,7 +44,7 @@ namespace BaseCap.CloudAbstractions.Redis.Database
             string cmd = PackageCommand("EXPIREAT", key, when.ToUnixTimeSeconds().ToString());
             int bytesReceived = await SendCommandAsync(cmd, token);
             List<DataType> result = await _parser.ParseAsync(bytesReceived, token);
-            return ParseIntegerResponse(result);
+            return ParseIntegerResponse(result) == 1;
         }
 
         public async ValueTask<long> DelAsync(CancellationToken token, params string[] keyNames)

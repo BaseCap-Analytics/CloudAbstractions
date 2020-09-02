@@ -47,9 +47,24 @@ namespace BaseCap.CloudAbstractions.Redis.Database
             return ParseIntegerResponse(result);
         }
 
-        public ValueTask<string?> HGetAsync(string keyName, string fieldName, CancellationToken token) => InternalHGetAsync(keyName, fieldName, token);
+        public async ValueTask<T> HGetAsync<T>(string keyName, string fieldName, CancellationToken token)
+        {
+            object? result = await InternalHGetAsync(keyName, fieldName, token);
+            if (result == null)
+            {
+                return default!;
+            }
+            else if (result is T)
+            {
+                return (T)result;
+            }
+            else
+            {
+                throw new RedisException($"Could not parse {result.GetType()} as {typeof(T)}");
+            }
+        }
 
-        public async ValueTask<T?> HGetAsync<T>(string keyName, string fieldName, CancellationToken token) where T : class
+        public async ValueTask<T?> HGetSerializedAsync<T>(string keyName, string fieldName, CancellationToken token) where T : class
         {
             if (string.IsNullOrWhiteSpace(keyName))
             {
@@ -64,18 +79,26 @@ namespace BaseCap.CloudAbstractions.Redis.Database
                 throw new InvalidOperationException("Cannot send command in PubSub mode");
             }
 
-            string? data = await InternalHGetAsync(keyName, fieldName, token);
-            if (string.IsNullOrWhiteSpace(data))
+            object? data = await InternalHGetAsync(keyName, fieldName, token);
+            if (data is string)
             {
-                return null;
+                string? strData = data as string;
+                if (string.IsNullOrWhiteSpace(strData))
+                {
+                    return null;
+                }
+                else
+                {
+                    return JsonConvert.DeserializeObject<T>(strData);
+                }
             }
             else
             {
-                return JsonConvert.DeserializeObject<T>(data);
+                throw new RedisException("Data in Hash Field is not a string");
             }
         }
 
-        private async ValueTask<string?> InternalHGetAsync(string keyName, string fieldName, CancellationToken token)
+        private async ValueTask<object?> InternalHGetAsync(string keyName, string fieldName, CancellationToken token)
         {
             if (string.IsNullOrWhiteSpace(keyName))
             {
@@ -93,7 +116,7 @@ namespace BaseCap.CloudAbstractions.Redis.Database
             string cmd = PackageCommand("HGET", keyName, fieldName);
             int bytesReceived = await SendCommandAsync(cmd, token);
             List<DataType> result = await _parser.ParseAsync(bytesReceived, token);
-            return ParseStringResponse(result);
+            return ParseScalarResponse(result);
         }
 
         public async ValueTask<long> HIncrementByAsync(string keyName, string fieldName, CancellationToken token, long increment = 1)

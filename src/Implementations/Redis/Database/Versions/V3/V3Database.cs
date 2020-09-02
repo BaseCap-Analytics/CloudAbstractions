@@ -95,6 +95,23 @@ namespace BaseCap.CloudAbstractions.Redis.Database.Versions.V3
             }
         }
 
+        protected override object? ParseScalarResponse(List<DataType> received)
+        {
+            if (received.Count != 1)
+            {
+                throw new RedisException("Response should be 1 element long");
+            }
+
+            DataType e = received[0];
+            object? result = GetObjectFromDataType(e);
+            if ((result is List<object?>) || (result is Dictionary<object, object?>))
+            {
+                throw new RedisException($"Expected Scalar value; instead found {result?.GetType()}");
+            }
+
+            return result;
+        }
+
         protected override Dictionary<string, string> ParseDictionaryResponse(List<DataType> received)
         {
             if (received.Count != 1)
