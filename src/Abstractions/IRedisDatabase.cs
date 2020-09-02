@@ -19,6 +19,23 @@ namespace BaseCap.CloudAbstractions.Redis.Database
         ValueTask<Dictionary<string, string>> HelloAsync(CancellationToken token);
 
         /// <summary>
+        /// Send the SET command to store a string value at a key
+        /// </summary>
+        /// <param name="keyName">The name of the Key for the entry in the database</param>
+        /// <param name="value">The value to store in the database</param>
+        /// <param name="token">A cancellation token to cancel the operation</param>
+        /// <returns>Returns true if the value was stored; otherwise, returns false</returns>
+        ValueTask<bool> SetAsync(string keyName, string value, CancellationToken token);
+
+        /// <summary>
+        /// Sends the GET command to retrieve a string value at a key
+        /// </summary>
+        /// <param name="keyName">The name of the Key for the entry in the database</param>
+        /// <param name="token">A cancellation token to cancel the operation</param>
+        /// <returns>Returns the string value that was stored, if it exists; otherwise, returns null</returns>
+        ValueTask<string?> GetAsync(string keyName, CancellationToken token);
+
+        /// <summary>
         /// Sends the HSET command to the server to set one or more hash fields on a key
         /// </summary>
         /// <param name="keyName">The name of the Key for the entry in the database</param>

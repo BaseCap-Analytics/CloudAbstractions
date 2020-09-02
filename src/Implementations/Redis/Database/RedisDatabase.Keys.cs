@@ -9,6 +9,32 @@ namespace BaseCap.CloudAbstractions.Redis.Database
 {
     public abstract partial class RedisDatabase : IDisposable
     {
+        public async ValueTask<bool> SetAsync(string keyName, string value, CancellationToken token)
+        {
+            if (string.IsNullOrWhiteSpace(keyName))
+            {
+                throw new ArgumentNullException(nameof(keyName));
+            }
+
+            string cmd = PackageCommand("SET", keyName, value);
+            int bytesReceived = await SendCommandAsync(cmd, token);
+            List<DataType> result = await _parser.ParseAsync(bytesReceived, token);
+            return ParseOkResult(result);
+        }
+
+        public async ValueTask<string?> GetAsync(string keyName, CancellationToken token)
+        {
+            if (string.IsNullOrWhiteSpace(keyName))
+            {
+                throw new ArgumentNullException(nameof(keyName));
+            }
+
+            string cmd = PackageCommand("GET", keyName);
+            int bytesReceived = await SendCommandAsync(cmd, token);
+            List<DataType> result = await _parser.ParseAsync(bytesReceived, token);
+            return ParseStringResponse(result);
+        }
+
         public async ValueTask<bool> ExistsAsync(CancellationToken token, params string[] keys)
         {
             if (keys.Length < 1)
