@@ -1,4 +1,4 @@
-using BaseCap.CloudAbstractions.Abstractions;
+using BaseCap.CloudAbstractions.Abstractions.Legacy;
 using Microsoft.Azure.EventHubs;
 using Microsoft.Azure.Storage;
 using Microsoft.Extensions.Caching.Memory;

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
+namespace BaseCap.CloudAbstractions.Implementations.Redis.Legacy.Secure
 {
     /// <summary>
     /// Provides seamless encryption writing to a Redis Stream

@@ -1,4 +1,3 @@
-using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
 using Microsoft.Azure.EventHubs;
 using Newtonsoft.Json;

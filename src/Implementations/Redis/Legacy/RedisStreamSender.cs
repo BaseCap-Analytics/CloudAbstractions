@@ -1,11 +1,11 @@
-using BaseCap.CloudAbstractions.Abstractions;
+using BaseCap.CloudAbstractions.Abstractions.Legacy;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Redis
+namespace BaseCap.CloudAbstractions.Implementations.Redis.Legacy
 {
     /// <summary>
     /// Provides write access to a Redis stream

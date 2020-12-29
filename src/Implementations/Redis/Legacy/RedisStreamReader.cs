@@ -1,4 +1,4 @@
-using BaseCap.CloudAbstractions.Abstractions;
+using BaseCap.CloudAbstractions.Abstractions.Legacy;
 using Serilog;
 using StackExchange.Redis;
 using System;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Redis
+namespace BaseCap.CloudAbstractions.Implementations.Redis.Legacy
 {
     /// <summary>
     /// Provides basic functionality for reading messages in a Redis Stream

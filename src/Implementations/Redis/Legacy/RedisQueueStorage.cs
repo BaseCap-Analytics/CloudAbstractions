@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Redis
+namespace BaseCap.CloudAbstractions.Implementations.Redis.Legacy
 {
     /// <summary>
     /// Provides a connection for data be passed to and from Redis Queues

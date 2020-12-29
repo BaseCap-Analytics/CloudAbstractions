@@ -1,9 +1,10 @@
 using BaseCap.CloudAbstractions.Abstractions;
+using BaseCap.CloudAbstractions.Abstractions.Legacy;
 using Serilog;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Generic
+namespace BaseCap.CloudAbstractions.Implementations.GenericLegacy
 {
     /// <summary>
     /// Provides a system to save and load the last read location from an event stream

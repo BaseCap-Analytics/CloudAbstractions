@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Abstractions
+namespace BaseCap.CloudAbstractions.Abstractions.Legacy
 {
     /// <summary>
     /// The contract for writing to an eventing system
