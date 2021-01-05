@@ -1,5 +1,4 @@
 using BaseCap.CloudAbstractions.Abstractions;
-using BaseCap.CloudAbstractions.Abstractions.Legacy;
 using Serilog;
 using System.IO;
 using System.Threading.Tasks;

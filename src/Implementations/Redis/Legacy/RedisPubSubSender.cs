@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Redis.Legacy
+namespace BaseCap.CloudAbstractions.Implementations.Redis
 {
     /// <summary>
     /// Redis Pub/Sub implementation for a Notification Sender

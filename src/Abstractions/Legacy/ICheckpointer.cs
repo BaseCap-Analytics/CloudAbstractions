@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Abstractions.Legacy
+namespace BaseCap.CloudAbstractions.Abstractions
 {
     /// <summary>
     /// The contract for interacting with a checkpointing system to keep track of progress

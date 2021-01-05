@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Abstractions.Legacy
+namespace BaseCap.CloudAbstractions.Abstractions
 {
     /// <summary>
     /// Contract for reading from an Event Stream

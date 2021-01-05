@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Redis.Legacy.Secure
+namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
 {
     /// <summary>
     /// Provides seamless encryption and decryption for data be passed to and from Azure Blob Queue Storage

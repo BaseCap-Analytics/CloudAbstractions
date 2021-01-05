@@ -1,4 +1,4 @@
-using BaseCap.CloudAbstractions.Abstractions.Legacy;
+using BaseCap.CloudAbstractions.Abstractions;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Redis.Legacy
+namespace BaseCap.CloudAbstractions.Implementations.Redis
 {
     /// <summary>
     /// A connection to a redis cache cluster
@@ -183,7 +183,8 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Legacy
         {
             IDatabase db = GetRedisDatabase();
             CommandFlags flags = waitForResponse ? CommandFlags.None : CommandFlags.FireAndForget;
-            return db.HashIncrementAsync(hashKey, fieldKey, flags: flags);
+            var result = db.HashIncrementAsync(hashKey, fieldKey, flags: flags);
+            return result;
         });
 
         /// <inheritdoc />

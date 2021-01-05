@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace BaseCap.CloudAbstractions.Abstractions.Legacy
+namespace BaseCap.CloudAbstractions.Abstractions
 {
     /// <summary>
     /// Abstraction around event data going into and out of an event hub

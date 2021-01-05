@@ -1,4 +1,4 @@
-using BaseCap.CloudAbstractions.Abstractions.Legacy;
+using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
 using Serilog;
 using StackExchange.Redis;
@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Redis.Legacy.Secure
+namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
 {
     /// <summary>
     /// Provides seamless decryption reading from a Redis stream

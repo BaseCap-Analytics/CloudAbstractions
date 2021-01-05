@@ -1,4 +1,4 @@
-using BaseCap.CloudAbstractions.Abstractions.Legacy;
+using BaseCap.CloudAbstractions.Abstractions;
 using Microsoft.Azure.EventHubs;
 using Newtonsoft.Json;
 using System;

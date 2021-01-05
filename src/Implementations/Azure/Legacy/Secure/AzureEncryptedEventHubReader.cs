@@ -1,4 +1,4 @@
-using BaseCap.CloudAbstractions.Abstractions.Legacy;
+using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.Security;
 using Microsoft.Azure.EventHubs;
 using System;

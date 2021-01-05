@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Redis.Legacy
+namespace BaseCap.CloudAbstractions.Implementations.Redis
 {
     /// <summary>
     /// Base class for communicating with Redis

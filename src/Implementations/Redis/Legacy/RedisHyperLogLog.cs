@@ -3,7 +3,7 @@ using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace BaseCap.CloudAbstractions.Implementations.Redis.Legacy
+namespace BaseCap.CloudAbstractions.Implementations.Redis
 {
     /// <summary>
     /// A connection to a redis hyperloglog

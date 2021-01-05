@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using StackExchange.Redis;
 
-namespace BaseCap.CloudAbstractions.Abstractions.Legacy
+namespace BaseCap.CloudAbstractions.Abstractions
 {
     /// <summary>
     /// A connection to a distributed cache
