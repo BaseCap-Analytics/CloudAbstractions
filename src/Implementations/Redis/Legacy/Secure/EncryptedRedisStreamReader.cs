@@ -52,10 +52,13 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                 try
                 {
                     string? content = msg.Content as string;
-                    byte[] encrypted = Convert.FromBase64String(content);
-                    byte[] plaintextBytes = await EncryptionHelpers.DecryptDataAsync(encrypted, _encryptionKey).ConfigureAwait(false);
-                    string plaintext = Encoding.UTF8.GetString(plaintextBytes);
-                    msg.Content = plaintext;
+                    if (content != null)
+                    {
+                        byte[] encrypted = Convert.FromBase64String(content);
+                        byte[] plaintextBytes = await EncryptionHelpers.DecryptDataAsync(encrypted, _encryptionKey).ConfigureAwait(false);
+                        string plaintext = Encoding.UTF8.GetString(plaintextBytes);
+                        msg.Content = plaintext;
+                    }
                 }
                 catch (Exception ex)
                 {

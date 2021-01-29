@@ -278,18 +278,18 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
             }
         }
 
-        private void OnConnectionFailure(object sender, ConnectionFailedEventArgs e)
+        private void OnConnectionFailure(object? sender, ConnectionFailedEventArgs e)
         {
             Log.Logger.Error(e.Exception, "Redis Connection Failure {Type} on {Name} {Context} at Endpoint {Endpoint}", e.FailureType, _errorContextName, _errorContextValue, e.EndPoint);
             Log.Logger.Warning("Redis Connection Failure at {Name} {Value}", _errorContextName, _errorContextValue);
         }
 
-        private void OnConnectionRestored(object sender, ConnectionFailedEventArgs e)
+        private void OnConnectionRestored(object? sender, ConnectionFailedEventArgs e)
         {
             Log.Logger.Warning("Redis Connection Restored at {Name} {Value}", _errorContextName, _errorContextValue);
         }
 
-        private void OnRedisInternalError(object sender, InternalErrorEventArgs e)
+        private void OnRedisInternalError(object? sender, InternalErrorEventArgs e)
         {
             Log.Logger.Error(e.Exception, "Redis Internal Failure: {Type} on {Name} {Context} at {Endpoint}", e.Origin, _errorContextName, _errorContextValue, e.EndPoint);
             Log.Logger.Warning("Redis Internal Failure at {Name} {Value}", _errorContextName, _errorContextValue);

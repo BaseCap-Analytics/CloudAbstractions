@@ -39,10 +39,20 @@ namespace BaseCap.CloudAbstractions.Implementations.GenericLegacy
             try
             {
                 using (Stream? blobStream = await _storage.GetBlobReadStreamAsync(path))
-                using (StreamReader sr = new StreamReader(blobStream))
                 {
-                    value = sr.ReadToEnd()?.Trim();
-                    Log.Logger.Warning("Not Checkpoint Found on Partition {Partition}", id);
+                    if (blobStream != null)
+                    {
+                        using (StreamReader sr = new StreamReader(blobStream))
+                        {
+                            value = sr.ReadToEnd()?.Trim();
+                            Log.Logger.Warning("Not Checkpoint Found on Partition {Partition}", id);
+                        }
+                    }
+                    else
+                    {
+                        value = null;
+                        Log.Logger.Warning("Stream is null");
+                    }
                 }
             }
             catch
@@ -63,9 +73,12 @@ namespace BaseCap.CloudAbstractions.Implementations.GenericLegacy
             string path = GetBlobName(id);
 
             using (Stream? blobStream = await _storage.GetBlobWriteStreamAsync(path))
-            using (StreamWriter sw = new StreamWriter(blobStream))
+            if (blobStream != null)
             {
-                await sw.WriteLineAsync(value);
+                using (StreamWriter sw = new StreamWriter(blobStream))
+                {
+                    await sw.WriteLineAsync(value);
+                }
             }
         }
     }
