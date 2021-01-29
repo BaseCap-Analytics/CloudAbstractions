@@ -2,8 +2,6 @@
 using BaseCap.CloudAbstractions.Implementations.Redis;
 using Xunit;
 using System.Collections.Generic;
-using System;
-using Microsoft.Extensions.Configuration;
 
 namespace BaseCap.Tests.Unit.CloudAbstraction
 {
@@ -60,10 +58,10 @@ namespace BaseCap.Tests.Unit.CloudAbstraction
         public async void Cache_IncrementsFieldsByOne()
         {
             string fieldKey = "initialKey";
-            long initialValue = 1;
-            long maximumValue = 5;
+            int initialValue = 1;
+            int maximumValue = 5;
 
-            for (long i = 0; i < maximumValue; i++)
+            for (int i = 0; i < maximumValue; i++)
             {
                 Assert.Equal(initialValue, await _cache.IncrementHashKeyAsync(validTestKey, fieldKey, true));
                 initialValue++;

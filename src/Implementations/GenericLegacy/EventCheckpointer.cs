@@ -51,7 +51,7 @@ namespace BaseCap.CloudAbstractions.Implementations.GenericLegacy
                     else
                     {
                         value = null;
-                        Log.Logger.Warning("Stream is null");
+                        Log.Logger.Warning("No stream found");
                     }
                 }
             }
