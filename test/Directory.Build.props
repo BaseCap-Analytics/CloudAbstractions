@@ -1,0 +1,15 @@
+<Project>
+    <PropertyGroup>
+        <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+        <LangVersion>preview</LangVersion>
+        <Nullable>enable</Nullable>
+        <NullableContextOptions>enable</NullableContextOptions>
+        <Deterministic>true</Deterministic>
+        <RootNamespace>BaseCap.Test</RootNamespace>
+        <Product>Data Data Quality Management Platform Tests</Product>
+        <Authors>BaseCap Analytics Inc</Authors>
+        <Copyright>BaseCap Analytics Inc</Copyright>
+    </PropertyGroup>
+</Project>

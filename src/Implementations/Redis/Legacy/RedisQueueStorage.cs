@@ -52,7 +52,10 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis
         public async Task StopAsync()
         {
             _keepPolling = false;
-            await Task.WhenAny(new [] { _pollingFallback, Task.Delay(TimeSpan.FromSeconds(3)) }).ConfigureAwait(false);
+            if (_pollingFallback != null)
+            {
+                await Task.WhenAny(new [] { _pollingFallback, Task.Delay(TimeSpan.FromSeconds(3)) }).ConfigureAwait(false);
+            }
             await base.CleanupAsync().ConfigureAwait(false);
         }
 

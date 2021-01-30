@@ -75,7 +75,7 @@ namespace BaseCap.CloudAbstractions.Abstractions
         /// <param name="e">The Azure EventHub data</param>
         internal EventMessage(EventData e)
         {
-            string decoded = Encoding.UTF8.GetString(e.Body.Array);
+            string decoded = (e.Body.Array == null) ? string.Empty : Encoding.UTF8.GetString(e.Body.Array);
             IEnumerable<KeyValuePair<string, string>> value = JsonConvert.DeserializeObject<IEnumerable<KeyValuePair<string, string>>>(decoded);
             Content = value.FirstOrDefault().Value;
             EnqueuedTimeUtc = e.SystemProperties.EnqueuedTimeUtc;
