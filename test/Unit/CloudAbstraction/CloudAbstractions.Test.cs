@@ -1,7 +1,7 @@
 ﻿using BaseCap.CloudAbstractions.Abstractions;
 using BaseCap.CloudAbstractions.Implementations.Redis;
-using Xunit;
 using System.Collections.Generic;
+using Xunit;
 
 namespace BaseCap.Tests.Unit.CloudAbstraction
 {

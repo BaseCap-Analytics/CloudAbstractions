@@ -59,6 +59,10 @@ namespace BaseCap.CloudAbstractions.Implementations.Redis.Secure
                         string plaintext = Encoding.UTF8.GetString(plaintextBytes);
                         msg.Content = plaintext;
                     }
+                    else
+                    {
+                        msg.Content = string.Empty;
+                    }
                 }
                 catch (Exception ex)
                 {
