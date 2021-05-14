@@ -174,7 +174,7 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
         }
 
         /// <inheritdoc />
-        public async Task MoveBlobAsync(string path, string newDirectory, CancellationToken token = default(CancellationToken))
+        public async Task MoveBlobAsync(string path, string newDirectory, bool stripFolder = false, CancellationToken token = default(CancellationToken))
         {
             CloudBlockBlob currentBlob = _blobStorage.GetBlockBlobReference(path);
             if (await currentBlob.ExistsAsync() == false)
@@ -183,7 +183,12 @@ namespace BaseCap.CloudAbstractions.Implementations.Azure
             }
 
             CloudBlobDirectory newParent = _blobStorage.GetDirectoryReference(newDirectory);
-            CloudBlockBlob newBlob = newParent.GetBlockBlobReference(currentBlob.Name);
+            string targetLocation = currentBlob.Name;
+            if (stripFolder)
+            {
+                targetLocation = targetLocation.Split('/').LastOrDefault();
+            }
+            CloudBlockBlob newBlob = newParent.GetBlockBlobReference(targetLocation);
             await newBlob.StartCopyAsync(currentBlob, token).ConfigureAwait(false);
             await currentBlob.DeleteAsync();
         }
